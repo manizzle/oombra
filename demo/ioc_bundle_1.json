@@ -1,0 +1,78 @@
+{
+  "iocs": [
+    {
+      "ioc_type": "domain",
+      "value_raw": "update-service-cdn.com",
+      "detected_by": [
+        "crowdstrike"
+      ],
+      "missed_by": [
+        "sentinelone"
+      ],
+      "threat_actor": "APT28",
+      "campaign": "Q4-2025-credential-harvest"
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "secure-login-verify.net",
+      "detected_by": [
+        "crowdstrike",
+        "palo-alto"
+      ],
+      "missed_by": [],
+      "threat_actor": "APT28",
+      "campaign": "Q4-2025-credential-harvest"
+    },
+    {
+      "ioc_type": "ip",
+      "value_raw": "185.220.101.42",
+      "detected_by": [
+        "palo-alto"
+      ],
+      "missed_by": [
+        "crowdstrike"
+      ],
+      "threat_actor": "APT28"
+    },
+    {
+      "ioc_type": "ip",
+      "value_raw": "91.234.56.78",
+      "detected_by": [],
+      "missed_by": [
+        "crowdstrike",
+        "sentinelone"
+      ],
+      "threat_actor": "APT28"
+    },
+    {
+      "ioc_type": "hash-sha256",
+      "value_raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "detected_by": [
+        "crowdstrike",
+        "sentinelone"
+      ],
+      "threat_actor": "APT28"
+    },
+    {
+      "ioc_type": "url",
+      "value_raw": "https://update-service-cdn.com/payload/stage2.exe",
+      "detected_by": [
+        "proofpoint"
+      ],
+      "missed_by": [],
+      "campaign": "Q4-2025-credential-harvest"
+    }
+  ],
+  "tools_in_scope": [
+    "crowdstrike",
+    "sentinelone",
+    "palo-alto",
+    "proofpoint"
+  ],
+  "source": "incident",
+  "notes": "IOCs extracted from APT28 incident. C2 infrastructure used Cobalt Strike.",
+  "context": {
+    "industry": "government",
+    "org_size": "5000-10000"
+  }
+}

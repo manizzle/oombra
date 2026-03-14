@@ -1,0 +1,16 @@
+{
+  "vendor": "Wiz",
+  "category": "cnapp",
+  "overall_score": 9.0,
+  "detection_rate": 94.0,
+  "fp_rate": 3.0,
+  "deploy_days": 1,
+  "would_buy": true,
+  "top_strength": "Agentless scanning found critical misconfigs in first hour",
+  "top_friction": "Runtime protection still maturing compared to established players",
+  "context": {
+    "industry": "tech",
+    "org_size": "100-500",
+    "role": "security-engineer"
+  }
+}

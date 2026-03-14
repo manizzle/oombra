@@ -1,0 +1,13 @@
+
+Security Tool Evaluation Report - Q1 2026
+
+Vendor: CrowdStrike
+Category: EDR
+Score: 9.2
+Detection Rate: 98.5%
+Deploy Days: 3
+
+Tested across 500 endpoints in manufacturing environment.
+Exceptional real-time detection with minimal performance impact.
+Caught 3 zero-days during 90-day evaluation period.
+Pricing prohibitive for organizations under 1000 employees.

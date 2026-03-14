@@ -1,0 +1,17 @@
+{
+  "vendor": "Splunk",
+  "category": "siem",
+  "overall_score": 7.5,
+  "detection_rate": 85.0,
+  "fp_rate": 5.2,
+  "deploy_days": 30,
+  "would_buy": true,
+  "top_strength": "Unmatched search and correlation capabilities across log sources",
+  "top_friction": "License costs scale painfully with data volume",
+  "notes": "Running Splunk Cloud with 2TB/day ingest. Detection rules need constant tuning.",
+  "context": {
+    "industry": "tech",
+    "org_size": "500-1000",
+    "role": "security-engineer"
+  }
+}

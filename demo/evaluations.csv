@@ -1,0 +1,6 @@
+vendor,category,overall_score,detection_rate,fp_rate,deploy_days,would_buy
+CrowdStrike,edr,9.2,98.5,0.8,3,True
+SentinelOne,edr,8.8,97.2,1.5,2,True
+Splunk,siem,7.5,85.0,5.2,30,True
+Wiz,cnapp,9.0,94.0,3.0,1,True
+Palo Alto Prisma Cloud,cnapp,7.8,89.0,4.5,14,False

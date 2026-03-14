@@ -1,0 +1,50 @@
+{
+  "threat_name": "LockBit 3.0 Ransomware Simulation",
+  "techniques": [
+    {
+      "technique_id": "T1190",
+      "technique_name": "Exploit Public-Facing Application",
+      "tactic": "initial-access",
+      "observed": false,
+      "detected_by": [
+        "palo-alto-firewall"
+      ],
+      "missed_by": []
+    },
+    {
+      "technique_id": "T1486",
+      "technique_name": "Data Encrypted for Impact",
+      "tactic": "impact",
+      "observed": false,
+      "detected_by": [
+        "crowdstrike",
+        "sentinelone"
+      ],
+      "missed_by": []
+    },
+    {
+      "technique_id": "T1490",
+      "technique_name": "Inhibit System Recovery",
+      "tactic": "impact",
+      "observed": false,
+      "detected_by": [
+        "sentinelone"
+      ],
+      "missed_by": [
+        "crowdstrike"
+      ],
+      "notes": "VSS deletion caught by behavioral analysis only"
+    }
+  ],
+  "tools_in_scope": [
+    "crowdstrike",
+    "sentinelone",
+    "palo-alto-firewall"
+  ],
+  "source": "simulation",
+  "context": {
+    "industry": "healthcare",
+    "org_size": "1000-5000",
+    "role": "security-engineer"
+  }
+}

@@ -115,6 +115,78 @@ def budget():
             click.echo(f"    epsilon={s['epsilon']:.2f}  {s.get('description', '')}")
 
 
+# ── Attestation ──────────────────────────────────────────────────────────────
+
+@main.command()
+@click.argument("file", type=click.Path(exists=True))
+@click.option("--epsilon", type=float, default=None, help="Apply DP noise")
+@click.option("--json-out", is_flag=True, help="Output full attestation as JSON")
+@click.option("--verify-only", is_flag=True, help="Verify an existing attestation chain")
+def attest(file, epsilon, json_out, verify_only):
+    """Generate or verify an ADTC attestation chain for a file."""
+    from .attest import attest_pipeline, verify_chain
+
+    if verify_only:
+        import json as json_mod
+        chain_data = json_mod.loads(open(file).read())
+        from .attest.chain import AttestationChain
+        chain = AttestationChain.from_dict(chain_data.get("attestation", chain_data))
+        payload = chain_data.get("payload")
+        result = verify_chain(chain, payload)
+        click.echo(f"\n  {result.summary}")
+        if result.errors:
+            for e in result.errors:
+                click.echo(f"    ERROR: {e}")
+        if result.stage_results:
+            for sr in result.stage_results:
+                click.echo(f"    Stage {sr['stage_id']}: {'OK' if sr['valid'] else 'FAIL'}")
+        return
+
+    results = attest_pipeline(file, epsilon=epsilon)
+
+    for ac in results:
+        if json_out:
+            click.echo(ac.to_json())
+        else:
+            chain = ac.attestation
+            click.echo(f"\n  ADTC Attestation Chain")
+            click.echo(f"  {'=' * 50}")
+            click.echo(f"  Chain ID:  {chain.chain_id[:16]}...")
+            click.echo(f"  Org Key:   {chain.org_key_fingerprint[:16]}...")
+            click.echo(f"  Root CDI:  {chain.root_cdi[:16]}...")
+            click.echo(f"  Stages:    {chain.stage_count}")
+            click.echo(f"  Version:   {chain.version}")
+            click.echo()
+            for stage in chain.stages:
+                click.echo(f"  Stage {stage.stage_num}: {stage.stage_id}")
+                click.echo(f"    CDI:     {stage.cdi[:16]}...")
+                click.echo(f"    Input:   {stage.input_hash[:16]}...")
+                click.echo(f"    Output:  {stage.output_hash[:16]}...")
+                if stage.stage_id == "anonymize":
+                    vap = stage.evidence.get("vap", {})
+                    scrubbed = stage.evidence.get("total_items_scrubbed", 0)
+                    clean = vap.get("scan_clean", "?")
+                    click.echo(f"    VAP:     {'CLEAN' if clean else 'DIRTY'}")
+                    click.echo(f"    Scrubbed: {scrubbed} items")
+                elif stage.stage_id == "dp":
+                    eps = stage.evidence.get("epsilon", "?")
+                    fields = stage.evidence.get("field_count", 0)
+                    click.echo(f"    Epsilon: {eps}")
+                    click.echo(f"    Fields:  {fields} noised")
+                elif stage.stage_id == "extract":
+                    count = stage.evidence.get("contributions_extracted", 0)
+                    click.echo(f"    Extracted: {count} contributions")
+            click.echo()
+
+            # Self-verify
+            vr = verify_chain(chain, ac.payload)
+            status = "VALID" if vr.valid else "INVALID"
+            click.echo(f"  Self-verification: {status}")
+            if vr.vap_clean:
+                click.echo(f"  VAP: No PII patterns detected in output")
+            click.echo()
+
+
 # ── Server ───────────────────────────────────────────────────────────────────
 
 @main.command()

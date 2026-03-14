@@ -1,0 +1,17 @@
+{
+  "vendor": "SentinelOne",
+  "category": "edr",
+  "overall_score": 8.8,
+  "detection_rate": 97.2,
+  "fp_rate": 1.5,
+  "deploy_days": 2,
+  "cpu_overhead": 1.8,
+  "would_buy": true,
+  "top_strength": "Autonomous response and rollback capabilities are game-changing",
+  "top_friction": "Console can be overwhelming for junior analysts",
+  "context": {
+    "industry": "financial",
+    "org_size": "5000-10000",
+    "role": "security-director"
+  }
+}

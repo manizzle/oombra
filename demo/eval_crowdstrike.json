@@ -1,0 +1,19 @@
+{
+  "vendor": "CrowdStrike",
+  "category": "edr",
+  "overall_score": 9.2,
+  "detection_rate": 98.5,
+  "fp_rate": 0.8,
+  "deploy_days": 3,
+  "cpu_overhead": 2.1,
+  "ttfv_hours": 4.0,
+  "would_buy": true,
+  "top_strength": "Exceptional real-time detection with minimal endpoint impact",
+  "top_friction": "Pricing can be prohibitive for smaller orgs",
+  "notes": "Evaluated across 500 endpoints in our manufacturing environment. Caught 3 zero-days that other tools missed during our 90-day eval.",
+  "context": {
+    "industry": "manufacturing",
+    "org_size": "1000-5000",
+    "role": "ciso"
+  }
+}

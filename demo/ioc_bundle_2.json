@@ -1,0 +1,49 @@
+{
+  "iocs": [
+    {
+      "ioc_type": "domain",
+      "value_raw": "lockbit-decryptor.onion.ws",
+      "detected_by": [
+        "palo-alto"
+      ],
+      "threat_actor": "LockBit"
+    },
+    {
+      "ioc_type": "hash-sha256",
+      "value_raw": "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456",
+      "detected_by": [
+        "crowdstrike",
+        "sentinelone"
+      ],
+      "threat_actor": "LockBit",
+      "campaign": "lockbit-3.0-healthcare"
+    },
+    {
+      "ioc_type": "ip",
+      "value_raw": "45.33.32.156",
+      "detected_by": [
+        "palo-alto"
+      ],
+      "missed_by": [],
+      "threat_actor": "LockBit"
+    },
+    {
+      "ioc_type": "email",
+      "value_raw": "lockbit-support@protonmail.com",
+      "detected_by": [],
+      "missed_by": [],
+      "threat_actor": "LockBit"
+    }
+  ],
+  "tools_in_scope": [
+    "crowdstrike",
+    "sentinelone",
+    "palo-alto"
+  ],
+  "source": "threat-hunt",
+  "notes": "IOCs from proactive threat hunt based on LockBit 3.0 TTPs.",
+  "context": {
+    "industry": "healthcare",
+    "org_size": "1000-5000"
+  }
+}

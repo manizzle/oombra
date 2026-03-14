@@ -1,0 +1,16 @@
+{
+  "vendor": "Palo Alto Prisma Cloud",
+  "category": "cnapp",
+  "overall_score": 7.8,
+  "detection_rate": 89.0,
+  "fp_rate": 4.5,
+  "deploy_days": 14,
+  "would_buy": false,
+  "top_strength": "Comprehensive coverage across cloud, containers, and code",
+  "top_friction": "Too many modules to manage, UI feels fragmented across acquisitions",
+  "context": {
+    "industry": "financial",
+    "org_size": "10000+",
+    "role": "security-director"
+  }
+}

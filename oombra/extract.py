@@ -101,7 +101,11 @@ def _parse_json_obj(data: Any, ctx: ContribContext) -> list[Contribution]:
     if isinstance(data, dict) and "techniques" in data:
         return [_parse_attack_map_dict(data, ctx)]
 
-    raise ValueError("Could not detect contribution type from JSON. Expected STIX bundle, MISP event, eval dict, or attack map.")
+    # IOCBundle-like structure
+    if isinstance(data, dict) and "iocs" in data:
+        return [_parse_ioc_bundle_dict(data, ctx)]
+
+    raise ValueError("Could not detect contribution type from JSON. Expected STIX bundle, MISP event, eval dict, attack map, or IOC bundle.")
 
 
 def _parse_stix_bundle(bundle: dict, ctx: ContribContext) -> list[Contribution]:
@@ -260,6 +264,28 @@ def _parse_attack_map_dict(d: dict, ctx: ContribContext) -> AttackMap:
         context=ctx,
         threat_name=d.get("threat_name") or d.get("threat"),
         techniques=techniques,
+        tools_in_scope=d.get("tools_in_scope", []),
+        source=d.get("source", "practitioner"),
+        notes=d.get("notes"),
+    )
+
+
+def _parse_ioc_bundle_dict(d: dict, ctx: ContribContext) -> IOCBundle:
+    raw_iocs = d.get("iocs", [])
+    iocs = []
+    for ioc in raw_iocs:
+        iocs.append(IOCEntry(
+            ioc_type=ioc.get("ioc_type", "unknown"),
+            value_raw=ioc.get("value_raw"),
+            value_hash=ioc.get("value_hash"),
+            detected_by=ioc.get("detected_by", []),
+            missed_by=ioc.get("missed_by", []),
+            threat_actor=ioc.get("threat_actor"),
+            campaign=ioc.get("campaign"),
+        ))
+    return IOCBundle(
+        context=ctx,
+        iocs=iocs,
         tools_in_scope=d.get("tools_in_scope", []),
         source=d.get("source", "practitioner"),
         notes=d.get("notes"),
