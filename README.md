@@ -620,6 +620,9 @@ Test coverage:
 | `test_extract.py` | 7 | JSON, CSV, STIX 2.1, text extraction |
 | `test_models.py` | 15 | Pydantic validation, round-trips, bounds |
 | `test_secagg.py` | 10 | Additive splitting, Shamir's scheme, multi-party aggregation |
+| `test_fl.py` | 29 | ML models, aggregators, FL client, full FL round, protocol serialization |
+| `test_graph.py` | 25 | Graph construction, embeddings, correlation, clustering, federated graph |
+| `test_zkp.py` | ~20 | Pedersen commitments, range/membership/non-zero proofs, contribution proofs |
 
 Property-based tests (via [Hypothesis](https://hypothesis.readthedocs.io/)):
 - "No generated email survives `scrub()`"
@@ -651,6 +654,25 @@ oombra/
 │   ├── pipeline.py          # Attested pipeline orchestration
 │   ├── stages.py            # Per-stage attestation + VAP
 │   └── verify.py            # Chain verification
+├── fl/
+│   ├── __init__.py          # Federated learning package
+│   ├── models.py            # Numpy-only ML models (MalwareClassifier, AnomalyDetector, IOCScorer)
+│   ├── aggregator.py        # FedAvg, trimmed mean, Krum, geometric median, poisoning detection
+│   ├── client.py            # FL client (local training + DP-noised updates)
+│   ├── protocol.py          # FL session/update/result protocol models
+│   └── server.py            # FL coordinator FastAPI routes
+├── graph/
+│   ├── __init__.py          # Graph intelligence package
+│   ├── schema.py            # Threat graph schema (nodes, edges, types)
+│   ├── local.py             # Build graphs from contributions (AttackMap, IOCBundle)
+│   ├── embeddings.py        # Node2Vec + graph autoencoder (numpy-only)
+│   ├── correlate.py         # Campaign correlation, clustering, shared campaign detection
+│   └── federated.py         # Federated graph learning client
+├── zkp/
+│   ├── __init__.py          # Zero-knowledge proof package
+│   ├── proofs.py            # Core ZKP (Schnorr, range, membership, consistency, non-zero)
+│   ├── contrib_proofs.py    # Contribution-specific proof bundles
+│   └── verify.py            # Server-side ZKP verification
 ├── server/
 │   ├── app.py               # FastAPI application
 │   ├── db.py                # Async SQLAlchemy (SQLite/PostgreSQL)
@@ -693,9 +715,9 @@ Core oombra (anonymization, DP, attestation, secure aggregation) requires **zero
 - [x] **Phase 2** — Private Set Intersection: ECDH-based IOC comparison
 - [x] **Phase 3** — Secure Aggregation: Additive + Shamir secret sharing
 - [x] **ADTC** — Attested Data Transformation Chain (novel protocol)
-- [ ] **Phase 4** — Federated Learning: Collaborative model training
-- [ ] **Phase 5** — Federated Graph Intelligence: Cross-org attack chain reconstruction
-- [ ] **Phase 6** — Zero-Knowledge Proofs: Prove contributions are valid without revealing content
+- [x] **Phase 4** — Federated Learning: Collaborative model training (numpy-only models, robust aggregation, poisoning detection)
+- [x] **Phase 5** — Federated Graph Intelligence: Cross-org attack chain reconstruction (Node2Vec, graph autoencoder, campaign clustering)
+- [x] **Phase 6** — Zero-Knowledge Proofs: Prove contributions are valid without revealing content (Schnorr proofs, range/membership/consistency proofs)
 
 ---
 

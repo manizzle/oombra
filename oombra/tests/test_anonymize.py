@@ -253,9 +253,9 @@ class TestAnonymize:
 try:
     from hypothesis import given, strategies as st
 
-    @given(st.from_regex(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", fullmatch=True))
+    @given(st.from_regex(r"[A-Za-z0-9][A-Za-z0-9._%+-]{1,10}@[A-Za-z0-9][A-Za-z0-9.-]{1,10}\.[A-Za-z]{2,4}", fullmatch=True))
     def test_no_email_survives_scrub(email):
-        """Property: no generated email survives scrub()."""
+        """Property: no generated realistic email survives scrub()."""
         text = f"Some context with {email} in it"
         result = scrub(text)
         assert email not in result

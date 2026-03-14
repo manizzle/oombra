@@ -275,6 +275,126 @@ def psi_query(peer, file):
         click.echo(f"  PSI query error: {e}")
 
 
+# ── Graph Intelligence ──────────────────────────────────────────────────────
+
+@main.group()
+def graph():
+    """Threat graph intelligence — build and analyze attack graphs."""
+    pass
+
+
+@graph.command("build")
+@click.argument("files", nargs=-1, type=click.Path(exists=True))
+@click.option("--output", "-o", default=None, help="Output graph JSON")
+def graph_build(files, output):
+    """Build a local threat graph from contribution files."""
+    from .graph.local import build_graph
+
+    all_contribs = []
+    for f in files:
+        contribs = load_file(f)
+        all_contribs.extend(contribs)
+
+    if not all_contribs:
+        click.echo("  No contributions found in provided files.")
+        return
+
+    g = build_graph(all_contribs)
+    click.echo(f"  Built graph: {g.node_count()} nodes, {g.edge_count()} edges")
+
+    if output:
+        import json
+        with open(output, "w") as fp:
+            json.dump(g.to_dict(), fp, indent=2)
+        click.echo(f"  Saved to {output}")
+    else:
+        from collections import Counter
+        type_counts = Counter(n.node_type.value for n in g.nodes)
+        for t, c in sorted(type_counts.items()):
+            click.echo(f"    {t}: {c}")
+
+
+@graph.command("analyze")
+@click.argument("graph_file", type=click.Path(exists=True))
+@click.option("--clusters", type=int, default=5, help="Number of campaign clusters")
+def graph_analyze(graph_file, clusters):
+    """Analyze a threat graph — find campaigns and patterns."""
+    import json
+    from .graph.schema import ThreatGraph
+    from .graph.embeddings import Node2VecLite
+    from .graph.correlate import cluster_campaigns, campaign_summary
+
+    with open(graph_file) as fp:
+        data = json.load(fp)
+    g = ThreatGraph.from_dict(data)
+    click.echo(f"  Loaded graph: {g.node_count()} nodes, {g.edge_count()} edges")
+
+    if g.node_count() == 0:
+        click.echo("  Empty graph, nothing to analyze.")
+        return
+
+    n2v = Node2VecLite(dimensions=64, walk_length=10, num_walks=20)
+    embeddings = n2v.fit(g, epochs=5, lr=0.025)
+    click.echo(f"  Computed {len(embeddings)} node embeddings")
+
+    k = min(clusters, len(embeddings))
+    cluster_map = cluster_campaigns(embeddings, n_clusters=k)
+    summaries = campaign_summary(g, cluster_map)
+
+    click.echo(f"\n  Found {len(summaries)} campaign clusters:\n")
+    for s in summaries:
+        click.echo(f"  Cluster {s['cluster_id']} ({s['node_count']} nodes)")
+        if s["techniques"]:
+            click.echo(f"    Techniques: {', '.join(s['techniques'][:5])}")
+        if s["actors"]:
+            click.echo(f"    Actors: {', '.join(s['actors'])}")
+        if s["tools"]:
+            click.echo(f"    Tools: {', '.join(s['tools'][:5])}")
+        if s["ioc_types"]:
+            click.echo(f"    IOC types: {', '.join(s['ioc_types'])}")
+        click.echo()
+
+
+@graph.command("compare")
+@click.argument("our_graph", type=click.Path(exists=True))
+@click.argument("their_embeddings_file", type=click.Path(exists=True))
+@click.option("--threshold", type=float, default=0.75, help="Similarity threshold")
+def graph_compare(our_graph, their_embeddings_file, threshold):
+    """Compare graphs via embeddings to find shared campaigns."""
+    import json
+    import numpy as np
+    from .graph.schema import ThreatGraph
+    from .graph.embeddings import Node2VecLite
+    from .graph.correlate import detect_shared_campaigns
+
+    with open(our_graph) as fp:
+        g = ThreatGraph.from_dict(json.load(fp))
+    click.echo(f"  Our graph: {g.node_count()} nodes, {g.edge_count()} edges")
+
+    n2v = Node2VecLite(dimensions=64, walk_length=10, num_walks=20)
+    our_emb = n2v.fit(g, epochs=5, lr=0.025)
+
+    with open(their_embeddings_file) as fp:
+        their_raw = json.load(fp)
+    their_emb = {k: np.array(v) for k, v in their_raw.items()}
+    click.echo(f"  Their embeddings: {len(their_emb)} nodes")
+
+    campaigns = detect_shared_campaigns(g, our_emb, their_emb, threshold=threshold)
+
+    if not campaigns:
+        click.echo("\n  No shared campaigns detected at this threshold.")
+    else:
+        for c in campaigns:
+            click.echo(f"\n  Shared campaign detected:")
+            click.echo(f"    Shared techniques: {c['shared_technique_count']}")
+            click.echo(f"    Shared IOCs: {c['shared_ioc_count']}")
+            click.echo(f"    Confidence: {c['confidence']}")
+            click.echo(f"    Total matches: {c['total_matches']}")
+            if c.get("techniques"):
+                for t in c["techniques"][:5]:
+                    click.echo(f"      - {t['technique']} (sim={t['similarity']})")
+
+
 # ── Secure Aggregation ──────────────────────────────────────────────────────
 
 @main.command()
@@ -300,3 +420,296 @@ def aggregate(file, session, coordinator, n_parties):
             click.echo(f"  Submitted shares for {clean.vendor} to session {session}")
         else:
             click.echo(f"  Failed: {result.error}")
+
+
+# ── Federated Learning ────────────────────────────────────────────────────────
+
+@main.group()
+def fl():
+    """Federated learning — train models collaboratively."""
+    pass
+
+
+@fl.command("create")
+@click.option("--model", "model_type", type=click.Choice(["malware", "anomaly", "ioc_scorer"]),
+              required=True)
+@click.option("--rounds", type=int, default=10)
+@click.option("--min-clients", type=int, default=2)
+@click.option("--aggregation", type=click.Choice(
+    ["fedavg", "trimmed_mean", "krum", "geometric_median"]), default="fedavg")
+@click.option("--coordinator", required=True, help="Coordinator URL")
+def fl_create(model_type, rounds, min_clients, aggregation, coordinator):
+    """Create a new FL training session."""
+    try:
+        import httpx
+    except ImportError:
+        click.echo("  FL requires: pip install httpx")
+        raise SystemExit(1)
+
+    with httpx.Client(timeout=30) as http:
+        resp = http.post(f"{coordinator.rstrip('/')}/fl/create-session", json={
+            "model_type": model_type,
+            "max_rounds": rounds,
+            "min_clients": min_clients,
+            "aggregation": aggregation,
+        })
+    if resp.status_code == 200:
+        data = resp.json()
+        click.echo(f"  Session created: {data['session_id']}")
+        click.echo(f"  Model: {model_type}, Rounds: {rounds}, Aggregation: {aggregation}")
+    else:
+        click.echo(f"  Failed to create session: {resp.status_code} {resp.text}")
+
+
+@fl.command("join")
+@click.option("--session", required=True)
+@click.option("--coordinator", required=True)
+@click.argument("data_file", type=click.Path(exists=True))
+@click.option("--epsilon", type=float, default=None, help="DP budget for gradient noise")
+def fl_join(session, coordinator, data_file, epsilon):
+    """Join an FL session and train on local data."""
+    import uuid
+    try:
+        import httpx
+        import numpy as np
+    except ImportError:
+        click.echo("  FL requires: pip install httpx numpy")
+        raise SystemExit(1)
+
+    from .fl.models import MalwareClassifier, AnomalyDetector, IOCScorer
+    from .fl.client import FLClient
+    from .fl.protocol import serialize_params, deserialize_params
+
+    client_id = str(uuid.uuid4())[:8]
+
+    # Load data
+    data = np.load(data_file, allow_pickle=True)
+    if isinstance(data, np.lib.npyio.NpzFile):
+        X = data["X"]
+        y = data.get("y", None)
+    else:
+        X = data
+        y = None
+
+    with httpx.Client(timeout=60) as http:
+        # Join session
+        resp = http.post(f"{coordinator.rstrip('/')}/fl/join", json={
+            "session_id": session,
+            "client_id": client_id,
+        })
+        if resp.status_code != 200:
+            click.echo(f"  Failed to join: {resp.status_code}")
+            return
+
+        join_data = resp.json()
+        click.echo(f"  Joined session {session} as {client_id}")
+        click.echo(f"  Status: {join_data['status']}, Clients: {join_data['n_clients']}")
+
+        # Get session info for model type
+        resp = http.get(f"{coordinator.rstrip('/')}/fl/session/{session}")
+        session_info = resp.json()
+        model_type = session_info["model_type"]
+
+        # Create model
+        model_map = {
+            "malware": lambda: MalwareClassifier(input_dim=X.shape[1]),
+            "anomaly": lambda: AnomalyDetector(input_dim=X.shape[1]),
+            "ioc_scorer": lambda: IOCScorer(input_dim=X.shape[1]),
+        }
+        model = model_map[model_type]()
+
+        local_data = (X, y) if y is not None else X
+        fl_client = FLClient(model, local_data, epsilon=epsilon)
+
+        # Get global params and train
+        global_params = deserialize_params(join_data.get("global_params", {}))
+        if global_params:
+            delta = fl_client.train_round(global_params, epochs=3, lr=0.01)
+        else:
+            delta = fl_client.train_round(epochs=3, lr=0.01)
+
+        # Submit update
+        serialized = serialize_params(delta)
+        resp = http.post(f"{coordinator.rstrip('/')}/fl/submit-update", json={
+            "session_id": session,
+            "client_id": client_id,
+            "round_num": session_info["round_num"],
+            "params": serialized,
+            "metrics": fl_client.evaluate(local_data),
+            "n_samples": int(X.shape[0]),
+        })
+        if resp.status_code == 200:
+            result = resp.json()
+            click.echo(f"  Update submitted. Status: {result['status']}")
+        else:
+            click.echo(f"  Failed to submit update: {resp.status_code}")
+
+
+# ── Graph Intelligence ────────────────────────────────────────────────────────
+
+@main.group()
+def graph():
+    """Threat graph intelligence — build and analyze attack graphs."""
+    pass
+
+
+@graph.command("build")
+@click.argument("files", nargs=-1, type=click.Path(exists=True))
+@click.option("--output", "-o", default=None, help="Output graph JSON")
+def graph_build(files, output):
+    """Build a local threat graph from contribution files."""
+    if not files:
+        click.echo("  No files provided.")
+        return
+
+    from .graph.local import build_graph
+    all_contribs = []
+    for f in files:
+        all_contribs.extend(load_file(f))
+
+    g = build_graph(all_contribs)
+    click.echo(f"  Built graph: {g.node_count()} nodes, {g.edge_count()} edges")
+
+    # Show breakdown
+    from collections import Counter
+    type_counts = Counter(n.node_type.value for n in g.nodes)
+    for t, c in sorted(type_counts.items()):
+        click.echo(f"    {t}: {c}")
+
+    if output:
+        import json
+        with open(output, "w") as fp:
+            json.dump(g.to_dict(), fp, indent=2)
+        click.echo(f"  Saved to {output}")
+
+
+@graph.command("analyze")
+@click.argument("files", nargs=-1, type=click.Path(exists=True))
+@click.option("--clusters", type=int, default=3, help="Number of campaign clusters")
+def graph_analyze(files, clusters):
+    """Analyze threat data — find campaigns and patterns."""
+    if not files:
+        click.echo("  No files provided.")
+        return
+
+    from .graph.local import build_graph
+    from .graph.embeddings import Node2VecLite
+    from .graph.correlate import cluster_campaigns, campaign_summary
+
+    all_contribs = []
+    for f in files:
+        all_contribs.extend(load_file(f))
+
+    g = build_graph(all_contribs)
+    click.echo(f"  Graph: {g.node_count()} nodes, {g.edge_count()} edges")
+
+    if g.node_count() < 2:
+        click.echo("  Not enough nodes to analyze.")
+        return
+
+    # Compute embeddings
+    n2v = Node2VecLite(dimensions=32, walk_length=5, num_walks=10)
+    embeddings = n2v.fit(g)
+    click.echo(f"  Computed {len(embeddings)} node embeddings")
+
+    # Cluster
+    k = min(clusters, g.node_count())
+    campaign_clusters = cluster_campaigns(embeddings, n_clusters=k)
+    summaries = campaign_summary(g, campaign_clusters)
+
+    click.echo(f"\n  Found {len(summaries)} campaign clusters:")
+    for s in summaries:
+        click.echo(f"\n  Cluster {s['cluster_id']} ({s['node_count']} nodes)")
+        if s.get("techniques"):
+            click.echo(f"    Techniques: {', '.join(s['techniques'][:5])}")
+        if s.get("ioc_types"):
+            click.echo(f"    IOC types: {', '.join(f'{v}x {k}' for k, v in s['ioc_types'].items())}")
+        if s.get("tools"):
+            click.echo(f"    Tools: {', '.join(s['tools'][:5])}")
+
+
+@graph.command("compare")
+@click.argument("our_files", nargs=-1, type=click.Path(exists=True))
+@click.option("--their-embeddings", required=True, type=click.Path(exists=True),
+              help="Peer embeddings JSON file")
+@click.option("--threshold", type=float, default=0.75)
+def graph_compare(our_files, their_embeddings, threshold):
+    """Compare graphs via embeddings to find shared campaigns."""
+    import json
+    import numpy as np
+    from .graph.local import build_graph
+    from .graph.embeddings import Node2VecLite
+    from .graph.correlate import find_similar_nodes
+
+    all_contribs = []
+    for f in our_files:
+        all_contribs.extend(load_file(f))
+
+    g = build_graph(all_contribs)
+    n2v = Node2VecLite(dimensions=32, walk_length=5, num_walks=10)
+    our_emb = n2v.fit(g)
+
+    with open(their_embeddings) as fp:
+        their_data = json.load(fp)
+    their_emb = {k: np.array(v) for k, v in their_data.items()}
+
+    similar = find_similar_nodes(our_emb, their_emb, threshold=threshold)
+    click.echo(f"  Found {len(similar)} similar node pairs (threshold={threshold})")
+    for s in similar[:10]:
+        click.echo(f"    {s['our_node'][:16]}... ↔ {s['their_node'][:16]}... "
+                    f"(similarity={s['similarity']:.3f})")
+
+
+# ── Zero-Knowledge Proofs ─────────────────────────────────────────────────────
+
+@main.command()
+@click.argument("file", type=click.Path(exists=True))
+@click.option("--verify-only", is_flag=True, help="Verify existing proof bundle")
+@click.option("--json-out", is_flag=True, help="Output as JSON")
+def prove(file, verify_only, json_out):
+    """Generate or verify zero-knowledge proofs for a contribution."""
+    import json as json_mod
+
+    if verify_only:
+        data = json_mod.loads(open(file).read())
+        from .zkp.verify import ZKPVerifier
+        from .zkp.contrib_proofs import ContributionProofBundle
+        bundle = ContributionProofBundle.from_dict(data)
+        verifier = ZKPVerifier()
+        result = verifier.verify_contribution(bundle)
+        click.echo(f"\n  {result.summary}")
+        if not result.valid:
+            for f in result.failed_proofs:
+                click.echo(f"    FAILED: {f}")
+        return
+
+    contribs = load_file(file)
+    from .zkp.contrib_proofs import EvalRecordProof, AttackMapProof, IOCBundleProof
+    from .models import EvalRecord, AttackMap, IOCBundle
+
+    for c in contribs:
+        clean = anonymize(c)
+        if isinstance(clean, EvalRecord):
+            prover = EvalRecordProof()
+        elif isinstance(clean, AttackMap):
+            prover = AttackMapProof()
+        elif isinstance(clean, IOCBundle):
+            prover = IOCBundleProof()
+        else:
+            click.echo(f"  Unsupported type: {type(clean)}")
+            continue
+
+        bundle = prover.prove(clean)
+        if json_out:
+            click.echo(json_mod.dumps(bundle.to_dict(), indent=2))
+        else:
+            click.echo(f"\n  ZK Proof Bundle")
+            click.echo(f"  {'=' * 40}")
+            click.echo(f"  Type:   {bundle.contribution_type}")
+            click.echo(f"  Proofs: {len(bundle.proofs)}")
+            for p in bundle.proofs:
+                click.echo(f"    {p.get('proof_type', '?'):12s} {p.get('field', '')}")
+
+            # Self-verify
+            result = prover.verify(bundle)
+            click.echo(f"\n  Self-verification: {result.summary}")

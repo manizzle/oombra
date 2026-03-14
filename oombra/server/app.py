@@ -56,6 +56,13 @@ def create_app(db_url: str = "sqlite+aiosqlite:///oombra.db") -> FastAPI:
     app.include_router(query_router)
     app.include_router(secagg_router)
 
+    # Conditionally include FL router
+    try:
+        from ..fl.server import router as fl_router
+        app.include_router(fl_router)
+    except ImportError:
+        pass  # FL module not available (missing numpy)
+
     # ── Health ────────────────────────────────────────────────────────
 
     @app.get("/health")
