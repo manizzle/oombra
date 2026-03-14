@@ -49,24 +49,27 @@ class Database:
 
     async def store_eval_record(self, data: dict[str, Any]) -> str:
         """Store an EvalRecord contribution. Returns contribution ID."""
+        # Support both wire format {"context": {}, "data": {...}} and flat format {"vendor": ...}
+        d = data.get("data", data)
+        ctx = data.get("context", {})
         contrib = Contribution(
             contrib_type="eval",
-            industry=data.get("context", {}).get("industry"),
-            org_size=data.get("context", {}).get("org_size"),
-            role=data.get("context", {}).get("role"),
-            vendor=data.get("data", {}).get("vendor") or data.get("vendor"),
-            category=data.get("data", {}).get("category") or data.get("category"),
-            overall_score=data.get("data", {}).get("overall_score"),
-            detection_rate=data.get("data", {}).get("detection_rate"),
-            fp_rate=data.get("data", {}).get("fp_rate"),
-            deploy_days=data.get("data", {}).get("deploy_days"),
-            cpu_overhead=data.get("data", {}).get("cpu_overhead"),
-            ttfv_hours=data.get("data", {}).get("ttfv_hours"),
-            would_buy=data.get("data", {}).get("would_buy"),
-            eval_duration_days=data.get("data", {}).get("eval_duration_days"),
-            top_strength=data.get("data", {}).get("top_strength"),
-            top_friction=data.get("data", {}).get("top_friction"),
-            notes=data.get("data", {}).get("notes"),
+            industry=ctx.get("industry"),
+            org_size=ctx.get("org_size"),
+            role=ctx.get("role"),
+            vendor=d.get("vendor"),
+            category=d.get("category"),
+            overall_score=d.get("overall_score"),
+            detection_rate=d.get("detection_rate"),
+            fp_rate=d.get("fp_rate"),
+            deploy_days=d.get("deploy_days"),
+            cpu_overhead=d.get("cpu_overhead"),
+            ttfv_hours=d.get("ttfv_hours"),
+            would_buy=d.get("would_buy"),
+            eval_duration_days=d.get("eval_duration_days"),
+            top_strength=d.get("top_strength"),
+            top_friction=d.get("top_friction"),
+            notes=d.get("notes"),
         )
         async with self.session() as s:
             s.add(contrib)
