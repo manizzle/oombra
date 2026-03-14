@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "oombra"
-version = "0.1.0"
+version = "0.2.0"
 description = "Privacy-preserving federated threat intelligence and attack map sharing"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.11"
@@ -16,13 +16,30 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-pdf  = ["pypdf>=4.0"]
-stix = ["stix2>=3.0"]
-misp = ["pymisp>=2.4"]
-all  = ["pypdf>=4.0", "stix2>=3.0", "pymisp>=2.4"]
+pdf       = ["pypdf>=4.0"]
+stix      = ["stix2>=3.0"]
+misp      = ["pymisp>=2.4"]
+server    = ["fastapi>=0.115", "uvicorn>=0.30", "sqlalchemy>=2.0", "aiosqlite>=0.20"]
+server-pg = ["asyncpg>=0.29", "psycopg2-binary>=2.9"]
+crypto    = ["cryptography>=42.0"]
+fl        = ["flwr>=1.5", "torch>=2.0"]
+fl-lite   = ["flwr>=1.5", "scikit-learn>=1.3"]
+graph     = ["networkx>=3.0", "torch-geometric>=2.4"]
+zkp       = ["py_ecc>=6.0"]
+dev       = ["pytest>=8.0", "hypothesis>=6.0", "ruff>=0.4"]
+all       = [
+    "oombra[server,crypto,pdf,stix,misp]",
+]
 
 [project.scripts]
 oombra = "oombra.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["oombra"]
+
+[tool.pytest.ini_options]
+testpaths = ["oombra/tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100

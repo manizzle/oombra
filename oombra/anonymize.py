@@ -1,15 +1,16 @@
 """
 Anonymization engine — the trust core of oombra.
 
-Everything sent to Bakeoff passes through here first. Three passes:
+Everything passes through here first. Four passes:
 
   1. PII          — emails, phones, URLs, titled names
   2. Security     — IPs, MACs, internal hostnames, API keys, cert serials,
                     private domains (but NOT public vendor domains)
   3. Bucketing    — org name → industry, headcount → size range,
                     job title → role tier, strips all org-identifying fields
+  4. DP (opt)     — calibrated noise on numeric fields (epsilon parameter)
 
-IOC values are SHA-256 hashed separately (never sent in plaintext).
+IOC values are HMAC-SHA256 hashed with org-local secret (never sent in plaintext).
 
 Nothing leaves the machine until the user approves the result in review.py.
 """
@@ -238,15 +239,30 @@ def bucket_context_dict(fields: dict) -> dict:
 # ══════════════════════════════════════════════════════════════════════════════
 
 def hash_ioc(value: str) -> str:
-    """SHA-256 of the normalized IOC value. Raw value never leaves machine."""
+    """SHA-256 of the normalized IOC value. Raw value never leaves machine.
+    NOTE: Prefer hmac_ioc() from keystore.py for rainbow-table resistance.
+    """
     return hashlib.sha256(value.strip().lower().encode()).hexdigest()
 
 
-def _hash_ioc_entries(bundle: IOCBundle) -> IOCBundle:
+def hmac_hash_ioc(value: str, secret: bytes | None = None) -> str:
+    """HMAC-SHA256 of IOC value with org-local secret. Rainbow-table resistant."""
+    from .keystore import hmac_ioc
+    return hmac_ioc(value, secret=secret)
+
+
+def _hash_ioc_entries(
+    bundle: IOCBundle,
+    hmac_secret: bytes | None = None,
+) -> IOCBundle:
     hashed = []
     for ioc in bundle.iocs:
         if ioc.value_raw and not ioc.value_hash:
-            ioc = ioc.model_copy(update={"value_hash": hash_ioc(ioc.value_raw)})
+            if hmac_secret is not None:
+                h = hmac_hash_ioc(ioc.value_raw, secret=hmac_secret)
+            else:
+                h = hash_ioc(ioc.value_raw)
+            ioc = ioc.model_copy(update={"value_hash": h})
         hashed.append(ioc.model_copy(update={"value_raw": None}))
     return bundle.model_copy(update={"iocs": hashed})
 
@@ -255,30 +271,47 @@ def _hash_ioc_entries(bundle: IOCBundle) -> IOCBundle:
 # Main entrypoint — works on typed Contribution objects
 # ══════════════════════════════════════════════════════════════════════════════
 
-def anonymize(contrib: Contribution) -> Contribution:
+def anonymize(
+    contrib: Contribution,
+    epsilon: float | None = None,
+    hmac_secret: bytes | None = None,
+) -> Contribution:
     """
     Full anonymization pipeline on a Contribution.
     Returns new object — original untouched.
+
+    Args:
+        contrib: The contribution to anonymize.
+        epsilon: If set, apply differential privacy noise (Phase 1).
+        hmac_secret: If set, use HMAC for IOC hashing instead of bare SHA-256.
     """
     if isinstance(contrib, EvalRecord):
-        return contrib.model_copy(update={
+        result = contrib.model_copy(update={
             "top_strength": scrub(contrib.top_strength) if contrib.top_strength else None,
             "top_friction": scrub(contrib.top_friction) if contrib.top_friction else None,
             "notes":        scrub(contrib.notes)        if contrib.notes        else None,
         })
+        if epsilon is not None:
+            from .dp import dp_eval_record
+            result = dp_eval_record(result, epsilon)
+        return result
 
     if isinstance(contrib, AttackMap):
         clean_techs = [
             t.model_copy(update={"notes": scrub(t.notes) if t.notes else None})
             for t in contrib.techniques
         ]
-        return contrib.model_copy(update={
+        result = contrib.model_copy(update={
             "techniques": clean_techs,
             "notes": scrub(contrib.notes) if contrib.notes else None,
         })
+        if epsilon is not None:
+            from .dp import dp_attack_map
+            result = dp_attack_map(result, epsilon)
+        return result
 
     if isinstance(contrib, IOCBundle):
-        b = _hash_ioc_entries(contrib)
+        b = _hash_ioc_entries(contrib, hmac_secret=hmac_secret)
         return b.model_copy(update={
             "notes": scrub(b.notes) if b.notes else None,
         })

@@ -13,6 +13,10 @@ Quick start:
 Or the full pipeline with terminal review:
     from oombra import pipeline
     pipeline("apt28_campaign.stix.json", api_url="https://your-platform.example.com")
+
+With differential privacy:
+    from oombra import anonymize, PrivacyBudget
+    clean = anonymize(record, epsilon=1.0)
 """
 from .models import (
     EvalRecord, AttackMap, IOCBundle, ObservedTechnique, IOCEntry,
@@ -22,10 +26,13 @@ from .extract import load_file, load_dict
 from .anonymize import (
     anonymize, scrub, strip_pii, strip_security,
     bucket_industry, bucket_org_size, bucket_role, bucket_context_dict,
-    hash_ioc,
+    hash_ioc, hmac_hash_ioc,
 )
 from .review import render, prompt_approve
 from .client import Client, UploadResult
+from .keystore import hmac_ioc, get_or_create_key
+from .audit import log_event, read_log
+from .dp import PrivacyBudget, dp_eval_record, dp_attack_map
 
 
 def submit(
@@ -43,13 +50,17 @@ def pipeline(
     context: "ContribContext | None" = None,
     api_key: str | None = None,
     auto_approve: bool = False,
+    epsilon: float | None = None,
 ) -> "list[UploadResult]":
     """
     Full extract -> anonymize -> review -> submit pipeline for a file.
     Nothing leaves the machine until the user approves at the review step.
+
+    Args:
+        epsilon: If set, apply differential privacy noise before submission.
     """
     contribs = load_file(path, context=context)
-    clean    = [anonymize(c) for c in contribs]
+    clean    = [anonymize(c, epsilon=epsilon) for c in contribs]
     results  = []
     for c in clean:
         if auto_approve or prompt_approve(c):

@@ -1,0 +1,42 @@
+services:
+  oombra:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OOMBRA_DB_URL=sqlite+aiosqlite:///oombra.db
+    volumes:
+      - oombra-data:/app/data
+
+  # Production mode with PostgreSQL
+  oombra-prod:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OOMBRA_DB_URL=postgresql+asyncpg://oombra:oombra@postgres:5432/oombra
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - production
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: oombra
+      POSTGRES_PASSWORD: oombra
+      POSTGRES_DB: oombra
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oombra"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - production
+
+volumes:
+  oombra-data:
+  pg-data:
