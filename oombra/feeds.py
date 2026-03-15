@@ -14,11 +14,21 @@ Supported feeds:
   - Emerging Threats         — compromised IPs
   - Dataplane SSH            — SSH brute force attacker IPs
   - Spamhaus DROP            — hijacked IP ranges
+  - DigitalSide              — malware-related IPs from OSINT analysis
+  - CINS Score               — poorly-rated suspicious IPs
+  - BruteForceBlocker        — SSH brute force attacker IPs
+  - NVD                      — recent CVEs with CVSS scores
+  - AbuseIPDB               — reported malicious IPs (API key required)
+  - OTX AlienVault          — community threat pulses (API key required)
+  - Pulsedive               — community threat intel (API key required)
+  - GreyNoise               — internet scanner classification (API key required)
 """
 from __future__ import annotations
 
 import json
+import os
 import urllib.request
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
 
@@ -28,6 +38,23 @@ from urllib.parse import urlparse
 def _fetch(url: str, timeout: int = 30) -> str:
     """Fetch URL content. Returns empty string on failure."""
     req = urllib.request.Request(url)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.read().decode("utf-8", errors="replace")
+    except Exception:
+        return ""
+
+
+def _fetch_with_headers(
+    url: str,
+    headers: dict[str, str] | None = None,
+    timeout: int = 30,
+) -> str:
+    """Fetch URL with custom headers. Returns empty string on failure."""
+    req = urllib.request.Request(url)
+    if headers:
+        for key, value in headers.items():
+            req.add_header(key, value)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return resp.read().decode("utf-8", errors="replace")
@@ -393,6 +420,286 @@ def scrape_spamhaus_drop(url: str) -> list[dict]:
     return iocs[:100]
 
 
+def scrape_digitalside(url: str) -> list[dict]:
+    """DigitalSide — malware-related IPs from OSINT analysis. Capped at 300."""
+    raw = _fetch(url)
+    if not raw:
+        return []
+
+    iocs: list[dict] = []
+    for line in raw.strip().split("\n"):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        iocs.append({
+            "ioc_type": "ip",
+            "value_raw": line,
+            "threat_actor": "malware",
+            "campaign": "digitalside-feed",
+            "detected_by": [],
+            "missed_by": [],
+        })
+
+    return iocs[:300]
+
+
+def scrape_cinsscore(url: str) -> list[dict]:
+    """CINS Score — poorly-rated suspicious IPs. Capped at 300."""
+    raw = _fetch(url)
+    if not raw:
+        return []
+
+    iocs: list[dict] = []
+    for line in raw.strip().split("\n"):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        iocs.append({
+            "ioc_type": "ip",
+            "value_raw": line,
+            "threat_actor": "suspicious",
+            "campaign": "cinsscore-feed",
+            "detected_by": [],
+            "missed_by": [],
+        })
+
+    return iocs[:300]
+
+
+def scrape_bruteforceblocker(url: str) -> list[dict]:
+    """BruteForceBlocker — SSH brute force attacker IPs. Capped at 200."""
+    raw = _fetch(url)
+    if not raw:
+        return []
+
+    iocs: list[dict] = []
+    for line in raw.strip().split("\n"):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        iocs.append({
+            "ioc_type": "ip",
+            "value_raw": line,
+            "threat_actor": "brute-force",
+            "campaign": "ssh-brute-force",
+            "detected_by": [],
+            "missed_by": [],
+        })
+
+    return iocs[:200]
+
+
+def scrape_nvd(url: str) -> list[dict]:
+    """NVD — recent CVEs with CVSS scores. Capped at 50."""
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    full_url = (
+        f"{url}?resultsPerPage=50"
+        f"&pubStartDate={today}T00:00:00.000"
+        f"&pubEndDate={today}T23:59:59.999"
+    )
+    raw = _fetch(full_url, timeout=45)
+    if not raw:
+        return []
+
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return []
+
+    iocs: list[dict] = []
+    for item in data.get("vulnerabilities", []):
+        cve = item.get("cve", {})
+        cve_id = cve.get("id", "")
+        source = cve.get("sourceIdentifier", "unknown")
+        if not cve_id:
+            continue
+
+        # Extract CVSS score from metrics (try v31 first, then v30, then v2)
+        cvss_score = None
+        metrics = cve.get("metrics", {})
+        for key in ("cvssMetricV31", "cvssMetricV30", "cvssMetricV2"):
+            metric_list = metrics.get(key, [])
+            if metric_list:
+                cvss_data = metric_list[0].get("cvssData", {})
+                cvss_score = cvss_data.get("baseScore")
+                if cvss_score is not None:
+                    break
+
+        entry: dict = {
+            "ioc_type": "cve",
+            "value_raw": cve_id,
+            "threat_actor": source,
+            "campaign": "nvd-recent",
+            "detected_by": [],
+            "missed_by": [],
+        }
+        if cvss_score is not None:
+            entry["cvss_score"] = cvss_score
+
+        iocs.append(entry)
+
+    return iocs[:50]
+
+
+# ── API-key-dependent scrapers ──────────────────────────────────────────────
+
+def scrape_abuseipdb(url: str) -> list[dict]:
+    """AbuseIPDB — reported malicious IPs with confidence scores. Capped at 200.
+
+    Requires ABUSEIPDB_API_KEY environment variable.
+    """
+    api_key = os.environ.get("ABUSEIPDB_API_KEY", "")
+    if not api_key:
+        print("[oombra] ABUSEIPDB_API_KEY not set — skipping abuseipdb feed")
+        return []
+
+    full_url = f"{url}?confidenceMinimum=90&limit=200"
+    headers = {"Key": api_key, "Accept": "application/json"}
+    raw = _fetch_with_headers(full_url, headers)
+    if not raw:
+        return []
+
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return []
+
+    iocs: list[dict] = []
+    for entry in data.get("data", []):
+        ip = entry.get("ipAddress", "")
+        confidence = entry.get("abuseConfidenceScore", 0)
+        if not ip:
+            continue
+        iocs.append({
+            "ioc_type": "ip",
+            "value_raw": ip,
+            "threat_actor": "abuse-reported",
+            "campaign": f"abuseipdb-{confidence}",
+            "detected_by": [],
+            "missed_by": [],
+        })
+
+    return iocs[:200]
+
+
+def scrape_otx_alienvault(url: str) -> list[dict]:
+    """OTX AlienVault — community threat pulses with IOCs. Capped at 300.
+
+    Requires OTX_API_KEY environment variable.
+    """
+    api_key = os.environ.get("OTX_API_KEY", "")
+    if not api_key:
+        print("[oombra] OTX_API_KEY not set — skipping OTX AlienVault feed")
+        return []
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    full_url = f"{url}?limit=10&modified_since={today}"
+    headers = {"X-OTX-API-KEY": api_key}
+    raw = _fetch_with_headers(full_url, headers)
+    if not raw:
+        return []
+
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return []
+
+    type_map = {
+        "IPv4": "ip",
+        "IPv6": "ip",
+        "domain": "domain",
+        "hostname": "domain",
+        "URL": "url",
+        "FileHash-SHA256": "hash-sha256",
+        "FileHash-SHA1": "hash-sha1",
+        "FileHash-MD5": "hash-md5",
+        "email": "email",
+    }
+
+    iocs: list[dict] = []
+    for pulse in data.get("results", []):
+        pulse_name = pulse.get("name", "unknown-pulse")
+        for indicator in pulse.get("indicators", []):
+            ioc_type_raw = indicator.get("type", "")
+            oombra_type = type_map.get(ioc_type_raw)
+            if not oombra_type:
+                continue
+            value = indicator.get("indicator", "")
+            if not value:
+                continue
+            iocs.append({
+                "ioc_type": oombra_type,
+                "value_raw": value,
+                "threat_actor": pulse_name,
+                "campaign": pulse_name,
+                "detected_by": [],
+                "missed_by": [],
+            })
+
+    return iocs[:300]
+
+
+def scrape_pulsedive(url: str) -> list[dict]:
+    """Pulsedive — community threat intelligence with risk scoring. Capped at 200.
+
+    Requires PULSEDIVE_API_KEY environment variable.
+    """
+    api_key = os.environ.get("PULSEDIVE_API_KEY", "")
+    if not api_key:
+        print("[oombra] PULSEDIVE_API_KEY not set — skipping Pulsedive feed")
+        return []
+
+    full_url = f"{url}?q=feed&limit=100&key={api_key}"
+    raw = _fetch(full_url)
+    if not raw:
+        return []
+
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return []
+
+    type_map = {"ip": "ip", "domain": "domain", "url": "url"}
+
+    iocs: list[dict] = []
+    results = data if isinstance(data, list) else data.get("results", [])
+    for entry in results:
+        raw_type = str(entry.get("type", "")).lower()
+        oombra_type = type_map.get(raw_type)
+        if not oombra_type:
+            continue
+        value = entry.get("indicator", "")
+        if not value:
+            continue
+        risk = entry.get("risk", "unknown")
+        iocs.append({
+            "ioc_type": oombra_type,
+            "value_raw": value,
+            "threat_actor": str(risk),
+            "campaign": "pulsedive-feed",
+            "detected_by": [],
+            "missed_by": [],
+        })
+
+    return iocs[:200]
+
+
+def scrape_greynoise(url: str) -> list[dict]:
+    """GreyNoise — internet scanner classification. Capped at 100.
+
+    Requires GREYNOISE_API_KEY environment variable.
+    Note: GreyNoise bulk feed requires a paid API plan.
+    """
+    api_key = os.environ.get("GREYNOISE_API_KEY", "")
+    if not api_key:
+        print("[oombra] GREYNOISE_API_KEY not set — skipping GreyNoise feed")
+        return []
+
+    # GreyNoise bulk noise context endpoint requires paid API
+    print("[oombra] GreyNoise bulk feed requires paid API — returning empty")
+    return []  # Cap at 100 (when implemented)
+
+
 # ── Feed registry ────────────────────────────────────────────────────────────
 
 FEEDS: dict[str, dict[str, Any]] = {
@@ -455,6 +762,46 @@ FEEDS: dict[str, dict[str, Any]] = {
         "url": "https://www.spamhaus.org/drop/drop.txt",
         "scraper": scrape_spamhaus_drop,
         "description": "Spamhaus DROP — hijacked IP ranges",
+    },
+    "digitalside": {
+        "url": "https://osint.digitalside.it/Threat-Intel/lists/latestips.txt",
+        "scraper": scrape_digitalside,
+        "description": "DigitalSide — malware-related IPs from OSINT analysis",
+    },
+    "cinsscore": {
+        "url": "https://cinsscore.com/list/ci-badguys.txt",
+        "scraper": scrape_cinsscore,
+        "description": "CINS Score — poorly-rated suspicious IPs",
+    },
+    "bruteforceblocker": {
+        "url": "https://danger.rulez.sk/projects/bruteforceblocker/blist.php",
+        "scraper": scrape_bruteforceblocker,
+        "description": "BruteForceBlocker — SSH brute force attacker IPs",
+    },
+    "nvd": {
+        "url": "https://services.nvd.nist.gov/rest/json/cves/2.0",
+        "scraper": scrape_nvd,
+        "description": "NVD — recent CVEs with CVSS scores",
+    },
+    "abuseipdb": {
+        "url": "https://api.abuseipdb.com/api/v2/blacklist",
+        "scraper": scrape_abuseipdb,
+        "description": "AbuseIPDB — reported malicious IPs with confidence scores (requires API key)",
+    },
+    "otx-alienvault": {
+        "url": "https://otx.alienvault.com/api/v1/pulses/subscribed",
+        "scraper": scrape_otx_alienvault,
+        "description": "OTX AlienVault — community threat pulses with IOCs (requires API key)",
+    },
+    "pulsedive": {
+        "url": "https://pulsedive.com/api/explore.php",
+        "scraper": scrape_pulsedive,
+        "description": "Pulsedive — community threat intelligence with risk scoring (requires API key)",
+    },
+    "greynoise": {
+        "url": "https://api.greynoise.io/v2/noise/context",
+        "scraper": scrape_greynoise,
+        "description": "GreyNoise — internet scanner classification (requires API key)",
     },
 }
 

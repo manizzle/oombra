@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/sources-19_live_feeds-ff6b6b" />
+  <img src="https://img.shields.io/badge/sources-35_live-ff6b6b" />
   <img src="https://img.shields.io/badge/sources-45_catalogued-ffa502" />
   <img src="https://img.shields.io/badge/tests-281_passing-2ed573" />
   <img src="https://img.shields.io/badge/python-3.11%2B-1e90ff" />
@@ -131,16 +131,16 @@ Real data. Not vendor slides.
 
 ---
 
-## 📡 19 live data sources (45 catalogued)
+## 📡 35 live data sources (45 catalogued)
 
-oombra isn't an empty platform waiting for users. It scrapes real intelligence from public feeds and independent labs. **Day one, you have data.**
+oombra isn't an empty platform waiting for users. It scrapes real intelligence from public feeds, independent labs, review platforms, and community discussions. **Day one, you have 658,000+ data points.**
 
 ```bash
 oombra scrape --list           # see all sources
-oombra admin sources           # see all 45 with status
+oombra admin sources           # see all 45 with tier/status
 ```
 
-### IOC Feeds — *what's compromising us*
+### IOC Feeds (20) — *what's compromising us*
 
 | Source | Data | License |
 |--------|------|---------|
@@ -150,26 +150,42 @@ oombra admin sources           # see all 45 with status
 | [URLhaus](https://urlhaus.abuse.ch) | Malicious URLs (malware distribution) | CC0 |
 | [SSL Blacklist](https://sslbl.abuse.ch) | Malicious SSL certificate fingerprints | CC0 |
 | [CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) | Actively exploited CVEs (ransomware-tagged) | Public Domain |
+| [NVD](https://nvd.nist.gov) | CVE database with CVSS scores | Public Domain |
 | [FireHOL](https://iplists.firehol.org) | High-confidence malicious IPs (30+ feeds aggregated) | Open Source |
 | [IPsum](https://github.com/stamparm/ipsum) | Multi-blacklist scored IPs | Open Source |
 | [OpenPhish](https://openphish.com) | Phishing URLs | Free |
-| [Emerging Threats](https://rules.emergingthreats.net) | Compromised IPs (Snort/Suricata) | Free |
+| [Emerging Threats](https://rules.emergingthreats.net) | Compromised IPs | Free |
 | [Dataplane](https://dataplane.org) | SSH brute force attacker IPs | Free |
 | [Spamhaus DROP](https://www.spamhaus.org/drop/) | Hijacked IP ranges | Free |
+| [DigitalSide](https://osint.digitalside.it) | Malware-related IPs (STIX/MISP) | MIT |
+| [CINS Score](https://cinsscore.com) | Poorly-rated suspicious IPs | Free |
+| [BruteForceBlocker](https://danger.rulez.sk) | SSH brute force IPs | Free |
+| [AbuseIPDB](https://abuseipdb.com) | Reported malicious IPs *(API key)* | Free |
+| [AlienVault OTX](https://otx.alienvault.com) | Community threat pulses *(API key)* | Free |
+| [Pulsedive](https://pulsedive.com) | Community threat intel *(API key)* | Free |
+| [GreyNoise](https://greynoise.io) | Internet scanner classification *(API key)* | Free |
 
-### Vendor Intelligence — *what actually works*
+### Vendor Intelligence (15) — *what actually works*
 
-| Source | Data | Method |
+| Source | Data | Weight |
 |--------|------|--------|
-| [MITRE ATT&CK Evals](https://attackevals.mitre-engenuity.org) | EDR detection rates (8 vendors) | Public results (weight: 3.0) |
-| CISA KEV × Vendors | Security tools with exploited CVEs (risk signal) | Cross-reference 40+ keywords |
-| [Reddit](https://reddit.com/r/netsec) | Practitioner discussions (30 vendors) | Public API + optional LLM |
-| [Hacker News](https://news.ycombinator.com) | Security tool discussions (27 vendors) | Algolia API + optional LLM |
-| [AV-TEST](https://www.av-test.org) | Independent lab scores (8 vendors) | Public results (weight: 2.5) |
-| [SE Labs](https://selabs.uk) | UK lab endpoint protection (10 vendors) | Public results (weight: 2.5) |
-| Vendor Metadata | Pricing, certs, insurance, deploy time (36 vendors) | Curated |
+| [MITRE ATT&CK Evals](https://attackevals.mitre-engenuity.org) | EDR detection rates (8 vendors) | 3.0 |
+| [AV-TEST](https://www.av-test.org) | Independent lab scores (8 vendors) | 2.5 |
+| [SE Labs](https://selabs.uk) | UK lab endpoint protection (10 vendors) | 2.5 |
+| [AV-Comparatives](https://av-comparatives.org) | Real-world protection test (8 vendors) | 2.5 |
+| CISA KEV × Vendors | Security tools with exploited CVEs | 2.0 |
+| [Reddit](https://reddit.com/r/netsec) | Practitioner discussions (30 vendors) | 1.0 |
+| [Hacker News](https://news.ycombinator.com) | Security tool discussions (27 vendors) | 1.0 |
+| [Stack Exchange](https://security.stackexchange.com) | Security Q&A (30 vendors) | 1.0 |
+| [G2](https://g2.com) | Peer review scores (10 vendors) | 0.8 |
+| [Gartner Peer Insights](https://gartner.com/reviews) | Enterprise practitioner reviews | 0.8 |
+| [PeerSpot](https://peerspot.com) | Verified enterprise reviews | 0.8 |
+| [Capterra](https://capterra.com) | SMB/mid-market ratings | 0.8 |
+| [TrustRadius](https://trustradius.com) | Verified business reviews | 0.8 |
+| [GitHub](https://github.com) | Open-source tool popularity signals | 0.5 |
+| Vendor Metadata | Pricing, certs, insurance (36 vendors) | 0.3 |
 
-**26 more sources planned** — NVD, AV-Comparatives, FedRAMP, PhishTank, CertStream, AbuseIPDB, G2, Gartner, PeerSpot, StackExchange, GitHub, GreyNoise, Shodan, AlienVault OTX, MISP feeds, OpenCTI, IBM X-Force, Pulsedive, CrowdSec, and more.
+Raw data snapshots available in `data/feeds/` (658,000+ records, CDLA-Permissive-2.0).
 
 ---
 

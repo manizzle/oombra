@@ -2,6 +2,150 @@
   "iocs": [
     {
       "ioc_type": "domain",
+      "value_raw": "steel-base-x.vitaserena.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "moon-orbit-v1.vitaserena.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "open-space-z.espacesombre.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "vast-field-1.espacesombre.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "area-zone-v3.espacesombre.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "outer-rim-09.espacesombre.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "vision-sync-v.kaltemech.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "scan-point-2.kaltemech.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "light-bridge-x.kaltemech.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "dark-room-v5.kaltemech.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "user-auth-x3.fiumeveloce.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "core-shell-z8.fiumeveloce.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "alpha-trace-v.fiumeveloce.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "point-entry-4.grandestat.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "data-base-v5.grandestat.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "base-infra-99.grandestat.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "global-net-v1.grandestat.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "local-hub-x9.mondolibre.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
       "value_raw": "power-link-z5.mondolibre.in.net",
       "threat_actor": "ClearFake",
       "campaign": "js.clearfake",
@@ -51,150 +195,6 @@
     {
       "ioc_type": "domain",
       "value_raw": "rock-core-v2.grandevision.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "moon-orbit-x.grandevision.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "vast-field-z.silberpfad.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "area-zone-99.silberpfad.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "outer-rim-v1.silberpfad.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "vision-sync-x.altovelocita.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "scan-point-0.altovelocita.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "remote-access-7.petitreseau.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "internal-sys.petitreseau.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "core-shell-v4.froidespace.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "user-auth-11.froidespace.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "dark-room-z.altovelocita.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "light-bridge-1.altovelocita.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "ghost-node-x.froidespace.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "alpha-trace-9.froidespace.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "point-entry-z.mondolavoro.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "data-base-00.mondolavoro.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "base-infra-77.mondolavoro.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "global-net-x.mondolavoro.in.net",
       "threat_actor": "ClearFake",
       "campaign": "js.clearfake",
       "detected_by": [],

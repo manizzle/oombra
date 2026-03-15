@@ -81,7 +81,7 @@ TIER_1_FEEDS = {
         "format": "json_api",
         "license": "Public Domain (US Gov)",
         "refresh": "real-time",
-        "status": "planned",
+        "status": "implemented",
     },
 
     # ── Open-source IP/domain blocklists ───────────────────────────────────
@@ -137,7 +137,7 @@ TIER_1_FEEDS = {
         "format": "json_api",
         "license": "Free (API key required)",
         "refresh": "real-time",
-        "status": "planned",
+        "status": "implemented",
     },
     "spamhaus-drop": {
         "url": "https://www.spamhaus.org/drop/drop.txt",
@@ -173,7 +173,7 @@ TIER_1_FEEDS = {
         "format": "text",
         "license": "MIT",
         "refresh": "daily",
-        "status": "planned",
+        "status": "implemented",
     },
     "cinsscore": {
         "url": "https://cinsscore.com/list/ci-badguys.txt",
@@ -182,7 +182,7 @@ TIER_1_FEEDS = {
         "format": "text",
         "license": "Free",
         "refresh": "daily",
-        "status": "planned",
+        "status": "implemented",
     },
     "bruteforceblocker": {
         "url": "https://danger.rulez.sk/projects/bruteforceblocker/blist.php",
@@ -191,7 +191,7 @@ TIER_1_FEEDS = {
         "format": "text",
         "license": "Free",
         "refresh": "daily",
-        "status": "planned",
+        "status": "implemented",
     },
 }
 
@@ -232,7 +232,7 @@ TIER_2_LABS = {
         "data": "real-world protection test results (20+ vendors)",
         "weight": 2.5,
         "license": "Public (scrape)",
-        "status": "planned",
+        "status": "implemented",
     },
     "cisa-kev-vendors": {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
@@ -281,47 +281,47 @@ TIER_3_COMMUNITY = {
         "data": "Security Stack Exchange Q&A about tools",
         "weight": 1.0,
         "method": "SE API + LLM extraction",
-        "status": "planned",
+        "status": "implemented",
     },
     "g2-reviews": {
         "url": "https://www.g2.com/categories/endpoint-detection-and-response",
         "type": "vendor_eval",
         "data": "G2 peer review scores and sentiment",
         "weight": 0.8,
-        "method": "HTML scrape + LLM extraction",
-        "status": "planned",
+        "method": "hardcoded (public aggregate data)",
+        "status": "implemented",
     },
     "gartner-peer-insights": {
         "url": "https://www.gartner.com/reviews/market/endpoint-detection-and-response",
         "type": "vendor_eval",
         "data": "Gartner Peer Insights practitioner reviews",
         "weight": 0.8,
-        "method": "HTML scrape + LLM extraction",
-        "status": "planned",
+        "method": "hardcoded (public aggregate data)",
+        "status": "implemented",
     },
     "peerspot": {
         "url": "https://www.peerspot.com/categories/endpoint-detection-and-response-edr",
         "type": "vendor_eval",
         "data": "PeerSpot (formerly IT Central Station) reviews",
         "weight": 0.8,
-        "method": "HTML scrape + LLM extraction",
-        "status": "planned",
+        "method": "hardcoded (public aggregate data)",
+        "status": "implemented",
     },
     "capterra": {
         "url": "https://www.capterra.com/endpoint-detection-and-response-software/",
         "type": "vendor_eval",
         "data": "Capterra ratings and reviews",
         "weight": 0.8,
-        "method": "HTML scrape + LLM extraction",
-        "status": "planned",
+        "method": "hardcoded (public aggregate data)",
+        "status": "implemented",
     },
     "trustradius": {
         "url": "https://www.trustradius.com/endpoint-detection-and-response-edr",
         "type": "vendor_eval",
         "data": "TrustRadius verified reviews (requires work email)",
         "weight": 0.8,
-        "method": "HTML scrape + LLM extraction",
-        "status": "planned",
+        "method": "hardcoded (public aggregate data)",
+        "status": "implemented",
     },
 }
 
@@ -345,7 +345,7 @@ TIER_4_MARKET = {
         "data": "open-source security tool stars, activity, community size",
         "weight": 0.5,
         "method": "GitHub API",
-        "status": "planned",
+        "status": "implemented",
     },
     "indeed-jobs": {
         "url": "https://www.indeed.com/jobs",
@@ -361,7 +361,7 @@ TIER_4_MARKET = {
         "data": "internet scanner classification (benign vs malicious)",
         "weight": 1.5,
         "license": "Free (community API)",
-        "status": "planned",
+        "status": "implemented",
     },
     "shodan": {
         "url": "https://api.shodan.io",
@@ -384,7 +384,7 @@ TIER_5_PLATFORMS = {
         "type": "ioc_feed",
         "data": "community threat pulses with IOCs, tags, references",
         "license": "Free (API key required)",
-        "status": "planned",
+        "status": "implemented",
     },
     "misp-feeds": {
         "url": "https://www.misp-project.org/feeds/",
@@ -419,7 +419,7 @@ TIER_5_PLATFORMS = {
         "type": "ioc_feed",
         "data": "community threat intelligence with risk scoring",
         "license": "Free (API key required)",
-        "status": "planned",
+        "status": "implemented",
     },
     "crowdsec": {
         "url": "https://app.crowdsec.net/hub/collections",

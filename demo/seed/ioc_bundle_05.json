@@ -10,6 +10,14 @@
     },
     {
       "ioc_type": "ip",
+      "value_raw": "137.184.38.192",
+      "threat_actor": "AsyncRAT",
+      "campaign": "win.asyncrat",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "ip",
       "value_raw": "178.16.52.58",
       "threat_actor": "AsyncRAT",
       "campaign": "win.asyncrat",
@@ -187,14 +195,6 @@
     {
       "ioc_type": "domain",
       "value_raw": "smtp1.sidesunberkhotel.com",
-      "threat_actor": "AsyncRAT",
-      "campaign": "win.asyncrat",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "smtp1.spicensweet.com",
       "threat_actor": "AsyncRAT",
       "campaign": "win.asyncrat",
       "detected_by": [],

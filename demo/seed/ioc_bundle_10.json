@@ -2,95 +2,7 @@
   "iocs": [
     {
       "ioc_type": "domain",
-      "value_raw": "58.255.45.207",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "ip",
-      "value_raw": "58.255.45.207",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "158.94.208.7",
-      "threat_actor": "dropped-by-amadey",
-      "campaign": "dropped-by-amadey",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "ip",
-      "value_raw": "158.94.208.7",
-      "threat_actor": "dropped-by-amadey",
-      "campaign": "dropped-by-amadey",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "work-flow-v0.mondolibre.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "ClearFake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "110.37.39.88",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "ip",
-      "value_raw": "110.37.39.88",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "123.11.77.92",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "ip",
-      "value_raw": "123.11.77.92",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "42.235.7.78",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "ip",
-      "value_raw": "42.235.7.78",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "power-link-z5.mondolibre.in.net",
+      "value_raw": "steel-base-x.vitaserena.in.net",
       "threat_actor": "ACRStealer",
       "campaign": "ACRStealer",
       "detected_by": [],
@@ -98,71 +10,7 @@
     },
     {
       "ioc_type": "domain",
-      "value_raw": "110.37.44.250",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "ip",
-      "value_raw": "110.37.44.250",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "110.37.28.65",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "ip",
-      "value_raw": "110.37.28.65",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "119.179.8.199",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "ip",
-      "value_raw": "119.179.8.199",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "115.57.232.2",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "ip",
-      "value_raw": "115.57.232.2",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "backend-node-v.stillewasser.in.net",
+      "value_raw": "moon-orbit-v1.vitaserena.in.net",
       "threat_actor": "ACRStealer",
       "campaign": "ACRStealer",
       "detected_by": [],
@@ -170,7 +18,7 @@
     },
     {
       "ioc_type": "domain",
-      "value_raw": "222.141.43.157",
+      "value_raw": "110.37.106.54",
       "threat_actor": "32-bit",
       "campaign": "32-bit",
       "detected_by": [],
@@ -178,7 +26,7 @@
     },
     {
       "ioc_type": "ip",
-      "value_raw": "222.141.43.157",
+      "value_raw": "110.37.106.54",
       "threat_actor": "32-bit",
       "campaign": "32-bit",
       "detected_by": [],
@@ -186,7 +34,7 @@
     },
     {
       "ioc_type": "domain",
-      "value_raw": "app-data-hub.fortezzarossa.in.net",
+      "value_raw": "open-space-z.espacesombre.in.net",
       "threat_actor": "ACRStealer",
       "campaign": "ACRStealer",
       "detected_by": [],
@@ -194,7 +42,7 @@
     },
     {
       "ioc_type": "domain",
-      "value_raw": "222.137.144.93",
+      "value_raw": "110.37.115.21",
       "threat_actor": "32-bit",
       "campaign": "32-bit",
       "detected_by": [],
@@ -202,41 +50,193 @@
     },
     {
       "ioc_type": "ip",
-      "value_raw": "222.137.144.93",
+      "value_raw": "110.37.115.21",
       "threat_actor": "32-bit",
       "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "219.155.194.54",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "ip",
+      "value_raw": "219.155.194.54",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "vast-field-1.espacesombre.in.net",
+      "threat_actor": "ACRStealer",
+      "campaign": "ACRStealer",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "120.61.255.229",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "ip",
+      "value_raw": "120.61.255.229",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "139.218.43.94",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "ip",
+      "value_raw": "139.218.43.94",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "110.36.95.252",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "ip",
+      "value_raw": "110.36.95.252",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "117.247.210.196",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "ip",
+      "value_raw": "117.247.210.196",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "area-zone-v3.espacesombre.in.net",
+      "threat_actor": "ACRStealer",
+      "campaign": "ACRStealer",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "outer-rim-09.espacesombre.in.net",
+      "threat_actor": "ACRStealer",
+      "campaign": "ACRStealer",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "vision-sync-v.kaltemech.in.net",
+      "threat_actor": "ACRStealer",
+      "campaign": "ACRStealer",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "115.49.25.47",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "ip",
+      "value_raw": "115.49.25.47",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "scan-point-2.kaltemech.in.net",
+      "threat_actor": "ACRStealer",
+      "campaign": "ACRStealer",
       "detected_by": [],
       "missed_by": []
     },
     {
       "ioc_type": "domain",
       "value_raw": "github.com",
-      "threat_actor": "SmartLoader",
-      "campaign": "SmartLoader",
+      "threat_actor": "zip",
+      "campaign": "zip",
       "detected_by": [],
       "missed_by": []
     },
     {
       "ioc_type": "domain",
-      "value_raw": "raw.githubusercontent.com",
-      "threat_actor": "SmartLoader",
-      "campaign": "SmartLoader",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "web-proxy-alt.fortezzarossa.in.net",
-      "threat_actor": "ACRStealer",
-      "campaign": "ACRStealer",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "115.55.244.62",
+      "value_raw": "222.127.71.141",
       "threat_actor": "32-bit",
       "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "ip",
+      "value_raw": "222.127.71.141",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "110.38.220.112",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "ip",
+      "value_raw": "110.38.220.112",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "light-bridge-x.kaltemech.in.net",
+      "threat_actor": "ACRStealer",
+      "campaign": "ACRStealer",
       "detected_by": [],
       "missed_by": []
     }

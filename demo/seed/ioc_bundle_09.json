@@ -2,6 +2,22 @@
   "iocs": [
     {
       "ioc_type": "ip",
+      "value_raw": "31.57.112.8",
+      "threat_actor": "Quasar RAT",
+      "campaign": "win.quasar_rat",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "Kaka56436346-61220.portmap.host",
+      "threat_actor": "Quasar RAT",
+      "campaign": "win.quasar_rat",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "ip",
       "value_raw": "185.241.208.20",
       "threat_actor": "Quasar RAT",
       "campaign": "win.quasar_rat",
@@ -179,22 +195,6 @@
     {
       "ioc_type": "domain",
       "value_raw": "open88-2.com",
-      "threat_actor": "Quasar RAT",
-      "campaign": "win.quasar_rat",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "hash-md5",
-      "value_raw": "73c802a90f917e01f7841acceeb45b80",
-      "threat_actor": "Quasar RAT",
-      "campaign": "win.quasar_rat",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "hash-sha1",
-      "value_raw": "0d1bfd6eadff86a2cccf4b5e5d8d182a61c0db70",
       "threat_actor": "Quasar RAT",
       "campaign": "win.quasar_rat",
       "detected_by": [],

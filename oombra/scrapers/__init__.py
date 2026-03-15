@@ -20,6 +20,14 @@ from .hackernews import scrape as scrape_hackernews
 from .avtest import scrape as scrape_avtest
 from .selabs import scrape as scrape_selabs
 from .vendor_meta import scrape as scrape_vendor_meta
+from .stackexchange import scrape as scrape_stackexchange
+from .github_oss import scrape as scrape_github_oss
+from .av_comparatives import scrape as scrape_av_comparatives
+from .g2 import scrape as scrape_g2
+from .gartner import scrape as scrape_gartner
+from .peerspot import scrape as scrape_peerspot
+from .capterra import scrape as scrape_capterra
+from .trustradius import scrape as scrape_trustradius
 
 
 SCRAPERS: dict[str, dict[str, Any]] = {
@@ -50,6 +58,38 @@ SCRAPERS: dict[str, dict[str, Any]] = {
     "vendor-meta": {
         "scraper": scrape_vendor_meta,
         "description": "Vendor metadata (pricing, certs, insurance)",
+    },
+    "stackexchange": {
+        "scraper": scrape_stackexchange,
+        "description": "Security Stack Exchange community Q&A intelligence",
+    },
+    "github-oss": {
+        "scraper": scrape_github_oss,
+        "description": "GitHub open-source security tool popularity signals",
+    },
+    "av-comparatives": {
+        "scraper": scrape_av_comparatives,
+        "description": "AV-Comparatives Real-World Protection Test results",
+    },
+    "g2": {
+        "scraper": scrape_g2,
+        "description": "G2 peer review scores (hardcoded public data)",
+    },
+    "gartner": {
+        "scraper": scrape_gartner,
+        "description": "Gartner Peer Insights practitioner reviews (hardcoded public data)",
+    },
+    "peerspot": {
+        "scraper": scrape_peerspot,
+        "description": "PeerSpot verified enterprise reviews (hardcoded public data)",
+    },
+    "capterra": {
+        "scraper": scrape_capterra,
+        "description": "Capterra SMB/mid-market ratings (hardcoded public data)",
+    },
+    "trustradius": {
+        "scraper": scrape_trustradius,
+        "description": "TrustRadius verified business reviews (hardcoded public data)",
     },
 }
 

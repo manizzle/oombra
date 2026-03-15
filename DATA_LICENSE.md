@@ -1,44 +1,53 @@
 # Data License
 
-## Threat Intelligence Data
+## oombra Curated Data
 
-The threat intelligence data in `oombra/data/` (capabilities, integrations, MITRE mappings, vendor metadata) is licensed under the **GNU Lesser General Public License v3.0 (LGPL-3.0)**.
+The curated threat intelligence data in `oombra/data/` (capabilities, integrations, MITRE mappings, vendor metadata) is licensed under the **Community Data License Agreement – Permissive, Version 2.0 (CDLA-Permissive-2.0)**.
+
+Full text: https://cdla.dev/permissive-2-0/
 
 This means:
-- You can **use** this data in any project (commercial or open-source)
-- You can **modify** this data
-- If you **distribute modified versions** of the data files themselves, you must share your modifications under the same LGPL-3.0 license
-- Using oombra (which loads this data) does **not** require your application to be open-source
+- You can **use** this data for any purpose (commercial or non-commercial)
+- You can **modify, combine, and redistribute** this data
+- You must **include the license notice** when redistributing
+- No copyleft / share-alike requirement — use it however you want
 
-## Third-Party Data Sources
+The CDLA-Permissive-2.0 is maintained by the Linux Foundation and is specifically designed for data sharing. It's the Apache 2.0 equivalent for data.
 
-oombra ingests data from public threat intelligence feeds. These sources have their own terms:
+## Scraped Feed Data (`data/feeds/`)
 
-| Source | License/Terms | URL |
-|--------|--------------|-----|
-| ThreatFox (abuse.ch) | CC0 1.0 | https://threatfox.abuse.ch/faq/#tos |
-| Feodo Tracker (abuse.ch) | CC0 1.0 | https://feodotracker.abuse.ch/ |
-| MalwareBazaar (abuse.ch) | CC0 1.0 | https://bazaar.abuse.ch/about/ |
-| URLhaus (abuse.ch) | CC0 1.0 | https://urlhaus.abuse.ch/api/ |
-| CISA KEV | Public domain (US Gov) | https://www.cisa.gov/known-exploited-vulnerabilities-catalog |
-| MITRE ATT&CK | Apache 2.0 | https://attack.mitre.org/resources/terms-of-use/ |
+The `data/feeds/` directory contains snapshots from public threat intelligence feeds. Each feed has its own license:
 
-All scraped data is used in compliance with the respective terms of service.
+| Feed | License | Attribution |
+|------|---------|------------|
+| ThreatFox | CC0 1.0 (public domain) | abuse.ch |
+| Feodo Tracker | CC0 1.0 | abuse.ch |
+| MalwareBazaar | CC0 1.0 | abuse.ch |
+| URLhaus | CC0 1.0 | abuse.ch |
+| SSL Blacklist | CC0 1.0 | abuse.ch |
+| CISA KEV | Public Domain (US Government) | CISA |
+| FireHOL | Open Source | FireHOL project |
+| IPsum | Open Source | stamparm |
+| Emerging Threats | Free | Proofpoint |
+| Spamhaus DROP | Free (non-commercial) | Spamhaus Project |
+| MITRE ATT&CK | Apache 2.0 | MITRE Corporation |
+| NVD | Public Domain (US Government) | NIST |
 
 ## User-Contributed Data
 
-Data contributed by users through `oombra report` or `oombra upload` is:
-- **Anonymized locally** before submission (HMAC-hashed IOCs, scrubbed PII, bucketed context)
+Data contributed by users through `oombra report` or `oombra upload`:
+- **Anonymized locally** before submission
 - **Owned by the contributor** — oombra does not claim ownership
-- **Licensed for aggregation** — by contributing, you grant oombra the right to include your anonymized data in aggregate statistics and intelligence reports
-- **Never returned individually** — only aggregates are exposed via query/intelligence endpoints
+- **Licensed for aggregation** — by contributing, you grant oombra the right to include your anonymized data in aggregate reports
+- **Never returned individually** — only aggregates via query endpoints
 
 ## Open Data Principles
 
-oombra follows the [Open Data Charter](https://opendatacharter.net/) principles:
-1. **Open by default** — aggregated threat intelligence is available to all contributors
-2. **Timely and comprehensive** — live feed ingestion keeps data current
-3. **Accessible and usable** — JSON API, CLI with `--json`, Python SDK
+oombra follows the [Open Data Charter](https://opendatacharter.net/):
+
+1. **Open by default** — all aggregated intelligence available to contributors
+2. **Timely and comprehensive** — 19+ live feeds, hourly refresh
+3. **Accessible and usable** — JSON API, CLI `--json`, Python SDK
 4. **Comparable and interoperable** — MITRE ATT&CK aligned, STIX 2.1 compatible
-5. **For improved governance and citizen engagement** — collective defense is a public good
-6. **For inclusive development and innovation** — open source, deployable by anyone
+5. **For improved governance** — collective defense is a public good
+6. **For inclusive development** — open source, deployable by anyone

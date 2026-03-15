@@ -1,0 +1,56 @@
+{
+  "scraped_at": "2026-03-14T22:04:08.052079",
+  "feeds": {
+    "threatfox": {
+      "file": "feeds/threatfox.csv",
+      "records": 1763,
+      "license": "CC0 1.0"
+    },
+    "feodo": {
+      "file": "feeds/feodo.json",
+      "records": 5,
+      "license": "CC0 1.0"
+    },
+    "bazaar": {
+      "file": "feeds/bazaar_hashes.txt",
+      "records": 740,
+      "license": "CC0 1.0"
+    },
+    "cisa_kev": {
+      "file": "feeds/cisa_kev.json",
+      "records": 1542,
+      "ransomware_cves": 312,
+      "license": "Public Domain (US Gov)"
+    },
+    "urlhaus": {
+      "file": "feeds/urlhaus.csv",
+      "records": 19658,
+      "license": "CC0 1.0"
+    },
+    "ssl_blacklist": {
+      "file": "feeds/ssl_blacklist.csv",
+      "records": 9263,
+      "license": "CC0 1.0"
+    },
+    "firehol": {
+      "file": "feeds/firehol_level1.txt",
+      "records": 4568,
+      "license": "Open Source"
+    },
+    "ipsum": {
+      "file": "feeds/ipsum.txt",
+      "records": 618265,
+      "license": "Open Source"
+    },
+    "emergingthreats": {
+      "file": "feeds/emergingthreats.txt",
+      "records": 665,
+      "license": "Free"
+    },
+    "spamhaus_drop": {
+      "file": "feeds/spamhaus_drop.txt",
+      "records": 1532,
+      "license": "Free (non-commercial)"
+    }
+  }
+}
