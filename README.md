@@ -1,11 +1,11 @@
-<h1 align="center">oombra</h1>
+<h1 align="center">vigil</h1>
 
 <p align="center"><strong>Collective security intelligence for industries. Give data, get smarter.</strong></p>
 
 <p align="center">Your industry should be smarter together than any single company is alone.</p>
 
 <p align="center">
-  <img src="demo/oombra-demo.gif" alt="oombra demo" width="750" />
+  <img src="demo/vigil-demo.gif" alt="vigil demo" width="750" />
 </p>
 
 <p align="center">
@@ -21,7 +21,7 @@
 
 Every hospital buys security tools based on vendor marketing. Every bank figures out their detection gaps by getting hacked. Every energy company fights the same APT without knowing three other utilities already beat it.
 
-oombra fixes this. Two questions, one platform:
+vigil fixes this. Two questions, one platform:
 
 - **What's compromising us?** — IOCs, attack patterns, campaigns hitting your sector
 - **What actually works?** — which tools catch what, real practitioner scores from real incidents
@@ -36,9 +36,9 @@ Three assumptions the security industry is built on — and why they're wrong:
 
 | Assumption | Reality |
 |-----------|---------|
-| "Sharing is altruistic" | Nobody shares out of goodness. oombra makes it selfish: **no contribution = no report**. Give to get. |
+| "Sharing is altruistic" | Nobody shares out of goodness. vigil makes it selfish: **no contribution = no report**. Give to get. |
 | "Threat intel = IOCs" | IOCs are one piece. Practitioners need: what tools catch this? What scores are others giving their EDR? What techniques are being missed sector-wide? |
-| "You need a dashboard" | You need a CLI that works in SOAR pipelines, that AI agents can call, that scripts automate. `oombra report` — one command, JSON output, done. |
+| "You need a dashboard" | You need a CLI that works in SOAR pipelines, that AI agents can call, that scripts automate. `vigil report` — one command, JSON output, done. |
 
 ---
 
@@ -46,15 +46,15 @@ Three assumptions the security industry is built on — and why they're wrong:
 
 ```bash
 git clone https://github.com/manizzle/oombra.git
-cd oombra
+cd vigil
 pip install -e ".[all,dev]"
-oombra up --vertical healthcare
+vigil up --vertical healthcare
 ```
 
 That starts the platform, scrapes **19 real data sources**, and you're ready.
 
 ```bash
-oombra report your_incident_data.json
+vigil report your_incident_data.json
 ```
 
 Two commands. Full loop. No config files.
@@ -64,7 +64,7 @@ Two commands. Full loop. No config files.
 ## ⚔️ When you're under attack
 
 ```bash
-oombra report incident_iocs.json
+vigil report incident_iocs.json
 ```
 
 ```
@@ -85,10 +85,10 @@ You gave IOCs. You got campaign correlation, detection gaps, and a prioritized t
 ## 🛡️ When you're building defenses
 
 ```bash
-oombra market edr                                    # who leads?
-oombra search vendor crowdstrike                     # real scores
-oombra search compare crowdstrike sentinelone        # side-by-side
-oombra threat-map "ransomware" --tools crowdstrike   # coverage gaps
+vigil market edr                                    # who leads?
+vigil search vendor crowdstrike                     # real scores
+vigil search compare crowdstrike sentinelone        # side-by-side
+vigil threat-map "ransomware" --tools crowdstrike   # coverage gaps
 ```
 
 ```
@@ -112,9 +112,9 @@ Real data from 19 sources. Not vendor marketing. Not analyst reports funded by v
 **2:17 AM** — Ohio Children's Hospital. LockBit. EHR encrypted. NICU monitors offline.
 
 ```bash
-oombra report lockbit_iocs.json         # Campaign Match: Yes. 12 shared IOCs.
-oombra report lockbit_attack_map.json   # 7 detection gaps. T1490 critical.
-oombra report our_crowdstrike.json      # 9.2 avg. 5 known gaps. Supplement.
+vigil report lockbit_iocs.json         # Campaign Match: Yes. 12 shared IOCs.
+vigil report lockbit_attack_map.json   # 7 detection gaps. T1490 critical.
+vigil report our_crowdstrike.json      # 9.2 avg. 5 known gaps. Supplement.
 ```
 
 **4:30 AM** — West Virginia gets the same ransom note. Their report is *better* — because Ohio contributed.
@@ -122,9 +122,9 @@ oombra report our_crowdstrike.json      # 9.2 avg. 5 known gaps. Supplement.
 **Next week** — Ohio's CISO needs data for the board:
 
 ```bash
-oombra market edr
-oombra search compare crowdstrike sentinelone
-oombra threat-map "ransomware" --tools crowdstrike
+vigil market edr
+vigil search compare crowdstrike sentinelone
+vigil threat-map "ransomware" --tools crowdstrike
 ```
 
 Real data. Not vendor slides.
@@ -133,11 +133,11 @@ Real data. Not vendor slides.
 
 ## 📡 35 live data sources (45 catalogued)
 
-oombra isn't an empty platform waiting for users. It scrapes real intelligence from public feeds, independent labs, review platforms, and community discussions. **Day one, you have 658,000+ data points.**
+vigil isn't an empty platform waiting for users. It scrapes real intelligence from public feeds, independent labs, review platforms, and community discussions. **Day one, you have 658,000+ data points.**
 
 ```bash
-oombra scrape --list           # see all sources
-oombra admin sources           # see all 45 with tier/status
+vigil scrape --list           # see all sources
+vigil admin sources           # see all 45 with tier/status
 ```
 
 ### IOC Feeds (20) — *what's compromising us*
@@ -193,13 +193,13 @@ Raw data snapshots available in `data/feeds/` (658,000+ records, CDLA-Permissive
 
 ## 🏗️ Deploy for your industry
 
-oombra is a stack. Deploy it for hospitals. Deploy it for banks. **Build a company on it.**
+vigil is a stack. Deploy it for hospitals. Deploy it for banks. **Build a company on it.**
 
 ```bash
-oombra up --vertical healthcare     # LockBit, HIPAA, hospital playbooks
-oombra up --vertical financial      # APT28/Lazarus, PCI DSS, SWIFT isolation
-oombra up --vertical energy         # Sandworm, NERC CIP, ICS/OT focus
-oombra up --vertical government     # APT29, FISMA, supply chain
+vigil up --vertical healthcare     # LockBit, HIPAA, hospital playbooks
+vigil up --vertical financial      # APT28/Lazarus, PCI DSS, SWIFT isolation
+vigil up --vertical energy         # Sandworm, NERC CIP, ICS/OT focus
+vigil up --vertical government     # APT29, FISMA, supply chain
 ```
 
 **Docker (production):**
@@ -210,14 +210,14 @@ docker compose --profile production up -d
 
 | Variable | Default | What it does |
 |----------|---------|-------------|
-| `OOMBRA_API_KEY` | — | API key for write endpoints |
-| `OOMBRA_MIN_K` | `3` | Min contributors before showing aggregates |
-| `OOMBRA_AUTO_INGEST` | `0` | `1` = hourly feed scraping |
-| `OOMBRA_PORT` | `8000` | Port to expose |
+| `VIGIL_API_KEY` | — | API key for write endpoints |
+| `VIGIL_MIN_K` | `3` | Min contributors before showing aggregates |
+| `VIGIL_AUTO_INGEST` | `0` | `1` = hourly feed scraping |
+| `VIGIL_PORT` | `8000` | Port to expose |
 
 **Your users:**
 ```bash
-pip install oombra && oombra init && oombra report incident.json
+pip install vigil && vigil init && vigil report incident.json
 ```
 
 ---
@@ -226,18 +226,18 @@ pip install oombra && oombra init && oombra report incident.json
 
 **Python:**
 ```python
-from oombra import load_file, anonymize, submit
+from vigil import load_file, anonymize, submit
 
 data  = load_file("incident.json")          # JSON, STIX, MISP, CSV, PDF
 clean = [anonymize(d) for d in data]         # anonymize locally
-[submit(c, api_url="http://oombra:8000") for c in clean]
+[submit(c, api_url="http://vigil:8000") for c in clean]
 ```
 
 **CLI + JSON (AI agents, SOAR, scripts):**
 ```bash
-oombra report incident.json --json | jq '.intelligence.actions'
-oombra market edr --json | jq '.tiers.leaders'
-oombra search vendor crowdstrike --json
+vigil report incident.json --json | jq '.intelligence.actions'
+vigil market edr --json | jq '.tiers.leaders'
+vigil search vendor crowdstrike --json
 ```
 
 **API:**
@@ -276,11 +276,11 @@ Server returns aggregates only. Never individual contributions. Min-k enforcemen
 ## 🔧 Admin
 
 ```bash
-oombra admin status         # server health + feed freshness
-oombra admin sources        # all 45 data sources by tier
-oombra admin db-stats       # detailed database breakdown
-oombra admin export         # dump all aggregated data as JSON
-oombra admin rotate-key     # generate new API key
+vigil admin status         # server health + feed freshness
+vigil admin sources        # all 45 data sources by tier
+vigil admin db-stats       # detailed database breakdown
+vigil admin export         # dump all aggregated data as JSON
+vigil admin rotate-key     # generate new API key
 ```
 
 ---

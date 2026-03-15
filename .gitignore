@@ -7,4 +7,4 @@ build/
 .hypothesis/
 .pytest_cache/
 *.db
-.oombra/
+.vigil/

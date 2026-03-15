@@ -1,4 +1,4 @@
-# oombra Threat Model
+# vigil Threat Model
 
 ## What We're Protecting
 
@@ -60,7 +60,7 @@ Sensitive data at risk:
 **Threat**: SHA-256("evil.com") is deterministic. An attacker pre-computes hashes for all known domains/IPs and matches against submitted IOC hashes.
 
 **Defense**: `keystore.py` — HMAC-SHA256 with org-local secret
-- Each org has a unique 256-bit key at `~/.oombra/key`
+- Each org has a unique 256-bit key at `~/.vigil/key`
 - `HMAC(org_key, "evil.com")` differs between orgs
 - Attacker needs the org's key to build a rainbow table
 
@@ -148,7 +148,7 @@ Sensitive data at risk:
 ### Attack 9: Traffic analysis
 **Threat**: Network observer sees timing, size, and frequency of submissions to infer what happened (e.g., burst of IOC submissions = active incident).
 
-**Defense**: HTTPS (transport layer). No oombra-specific defense currently.
+**Defense**: HTTPS (transport layer). No vigil-specific defense currently.
 
 **Mitigation needed**: Padding, batching, or scheduled submissions to mask traffic patterns.
 

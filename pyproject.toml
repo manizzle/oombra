@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "oombra"
+name = "vigil"
 version = "0.2.0"
 description = "Privacy-preserving federated threat intelligence and attack map sharing"
 license = { text = "Apache-2.0" }
@@ -29,17 +29,17 @@ graph     = ["networkx>=3.0", "torch-geometric>=2.4"]
 zkp       = ["py_ecc>=6.0"]
 dev       = ["pytest>=8.0", "hypothesis>=6.0", "ruff>=0.4"]
 all       = [
-    "oombra[server,crypto,pdf,stix,misp]",
+    "vigil[server,crypto,pdf,stix,misp]",
 ]
 
 [project.scripts]
-oombra = "oombra.cli:main"
+vigil = "vigil.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["oombra"]
+packages = ["vigil"]
 
 [tool.pytest.ini_options]
-testpaths = ["oombra/tests"]
+testpaths = ["vigil/tests"]
 
 [tool.ruff]
 target-version = "py311"

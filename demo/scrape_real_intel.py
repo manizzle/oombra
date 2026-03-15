@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Scrape REAL threat intelligence from public feeds and create oombra contribution files.
+Scrape REAL threat intelligence from public feeds and create vigil contribution files.
 
 Sources:
   - abuse.ch ThreatFox   — real IOCs (domains, IPs, hashes) with malware tags
@@ -13,7 +13,7 @@ Sources:
 Usage:
     python demo/scrape_real_intel.py demo/seed/
 
-Generates oombra-format contribution files from live threat feeds.
+Generates vigil-format contribution files from live threat feeds.
 """
 from __future__ import annotations
 
@@ -81,18 +81,18 @@ def scrape_threatfox_csv() -> list[dict]:
             malware = parts[5].strip('"')
             threat_actor = parts[7].strip('"') if len(parts) > 7 else None
 
-            # Map ThreatFox types to oombra types
+            # Map ThreatFox types to vigil types
             type_map = {"domain": "domain", "ip:port": "ip", "url": "url",
                         "md5_hash": "hash-md5", "sha256_hash": "hash-sha256",
                         "sha1_hash": "hash-sha1"}
-            oombra_type = type_map.get(ioc_type_raw, ioc_type_raw)
+            vigil_type = type_map.get(ioc_type_raw, ioc_type_raw)
 
             # Clean up IP:port
-            if oombra_type == "ip" and ":" in ioc_value:
+            if vigil_type == "ip" and ":" in ioc_value:
                 ioc_value = ioc_value.split(":")[0]
 
             iocs.append({
-                "ioc_type": oombra_type,
+                "ioc_type": vigil_type,
                 "value_raw": ioc_value,
                 "threat_actor": threat_actor if threat_actor and threat_actor != "None" else malware,
                 "campaign": malware,
@@ -205,7 +205,7 @@ def build_hospital_lockbit_bundles() -> list[dict]:
     """Build IOC bundles simulating multiple hospitals seeing the same LockBit campaign.
 
     These share overlapping IOCs with demo/ioc_bundle_2.json so that when the Ohio
-    hospital runs `oombra report`, it gets real campaign matches.
+    hospital runs `vigil report`, it gets real campaign matches.
     """
     # Shared LockBit IOCs (same values as ioc_bundle_2.json)
     shared_iocs = [
@@ -274,7 +274,7 @@ def build_ioc_bundles(
     urlhaus: list[dict],
     bazaar: list[dict],
 ) -> list[dict]:
-    """Build oombra IOC bundle files from real scraped data."""
+    """Build vigil IOC bundle files from real scraped data."""
     bundles = []
 
     # Hospital LockBit campaign bundles (overlapping IOCs for campaign matching)

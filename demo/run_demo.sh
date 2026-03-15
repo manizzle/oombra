@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════
-#  oombra Real-World Demo: Healthcare Sector Incident Response
+#  vigil Real-World Demo: Healthcare Sector Incident Response
 # ═══════════════════════════════════════════════════════════════════════
 #
 #  SCENARIO: Three hospitals are being targeted by the same ransomware
@@ -11,7 +11,7 @@
 #    3. See which tools caught what (anonymized benchmarking)
 #    4. Get cryptographic proof that privacy was preserved
 #
-#  This demo shows exactly how oombra makes that possible.
+#  This demo shows exactly how vigil makes that possible.
 # ═══════════════════════════════════════════════════════════════════════
 
 set -e
@@ -41,10 +41,10 @@ pause() {
 # ── Setup ─────────────────────────────────────────────────────────────
 echo -e "${RED}"
 echo "  ╔═══════════════════════════════════════════════════════════╗"
-echo "  ║         oombra — Real-World Healthcare Demo              ║"
+echo "  ║         vigil — Real-World Healthcare Demo              ║"
 echo "  ║                                                           ║"
 echo "  ║  Three hospitals. Same ransomware. No one knows.         ║"
-echo "  ║  oombra lets them figure it out — privately.             ║"
+echo "  ║  vigil lets them figure it out — privately.             ║"
 echo "  ╚═══════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
@@ -71,13 +71,13 @@ echo -e "  ${RED}Problem:${NC} They can't share this raw — it reveals their ne
 
 pause
 
-# ── Step 2: oombra anonymizes locally ─────────────────────────────────
+# ── Step 2: vigil anonymizes locally ─────────────────────────────────
 
-step 2 "oombra anonymizes LOCALLY — nothing leaves the machine"
+step 2 "vigil anonymizes LOCALLY — nothing leaves the machine"
 
-echo -e "  ${GREEN}Running: oombra preview demo/ioc_bundle_2.json${NC}"
+echo -e "  ${GREEN}Running: vigil preview demo/ioc_bundle_2.json${NC}"
 echo ""
-oombra preview demo/ioc_bundle_2.json
+vigil preview demo/ioc_bundle_2.json
 echo ""
 echo -e "  ${GREEN}✓ Raw IOC values → HMAC-SHA256 hashed with org-local secret${NC}"
 echo -e "  ${GREEN}✓ Only hash fingerprints would be sent, never raw values${NC}"
@@ -91,9 +91,9 @@ step 3 "Hospital B shares their attack map (which tools caught what)"
 
 echo -e "  Hospital B ran a LockBit simulation. Here's what they saw:"
 echo ""
-echo -e "  ${GREEN}Running: oombra preview demo/attack_map_lockbit.json${NC}"
+echo -e "  ${GREEN}Running: vigil preview demo/attack_map_lockbit.json${NC}"
 echo ""
-oombra preview demo/attack_map_lockbit.json
+vigil preview demo/attack_map_lockbit.json
 echo ""
 echo -e "  ${GREEN}✓ MITRE ATT&CK techniques with detection/miss attribution${NC}"
 echo -e "  ${GREEN}✓ No org name, no analyst names, no internal details${NC}"
@@ -108,10 +108,10 @@ echo -e "  Hospital C wants to share their EDR evaluation but is extra cautious.
 echo -e "  They add differential privacy noise (epsilon=5.0):"
 echo ""
 echo -e "  ${YELLOW}WITHOUT noise:${NC}"
-oombra preview demo/eval_crowdstrike.json
+vigil preview demo/eval_crowdstrike.json
 echo ""
 echo -e "  ${YELLOW}WITH noise (epsilon=5.0):${NC}"
-oombra preview demo/eval_crowdstrike.json --epsilon 5.0
+vigil preview demo/eval_crowdstrike.json --epsilon 5.0
 echo ""
 echo -e "  ${GREEN}✓ Scores have calibrated Laplace noise — can't pinpoint exact values${NC}"
 echo -e "  ${GREEN}✓ But aggregate across many contributors → noise cancels out${NC}"
@@ -123,11 +123,11 @@ pause
 step 5 "Generate attestation chain (ADTC) — cryptographic proof of privacy"
 
 echo -e "  The receiving platform needs PROOF that data was properly anonymized."
-echo -e "  oombra's Attested Data Transformation Chain provides this:"
+echo -e "  vigil's Attested Data Transformation Chain provides this:"
 echo ""
-echo -e "  ${GREEN}Running: oombra attest demo/eval_crowdstrike.json --epsilon 5.0${NC}"
+echo -e "  ${GREEN}Running: vigil attest demo/eval_crowdstrike.json --epsilon 5.0${NC}"
 echo ""
-oombra attest demo/eval_crowdstrike.json --epsilon 5.0
+vigil attest demo/eval_crowdstrike.json --epsilon 5.0
 echo ""
 echo -e "  ${GREEN}✓ Each CDI is HMAC-linked to the previous — break any step, chain fails${NC}"
 echo -e "  ${GREEN}✓ VAP (Verifiable Absence Proof) confirms ZERO PII patterns in output${NC}"
@@ -137,10 +137,10 @@ pause
 
 # ── Step 6: Server receives and aggregates ────────────────────────────
 
-step 6 "Start oombra server and upload anonymized contributions"
+step 6 "Start vigil server and upload anonymized contributions"
 
 echo -e "  Starting server in background..."
-oombra serve --port 8765 --db sqlite+aiosqlite:///demo_oombra.db &
+vigil serve --port 8765 --db sqlite+aiosqlite:///demo_vigil.db &
 SERVER_PID=$!
 sleep 2
 echo -e "  ${GREEN}✓ Server running on http://localhost:8765${NC}"
@@ -151,20 +151,20 @@ echo ""
 
 for f in demo/eval_crowdstrike.json demo/eval_sentinelone.json demo/eval_splunk.json demo/eval_wiz.json demo/eval_palo_alto_prisma_cloud.json; do
     NAME=$(basename "$f" .json | sed 's/eval_//')
-    oombra upload "$f" --api-url http://localhost:8765 --yes 2>/dev/null
+    vigil upload "$f" --api-url http://localhost:8765 --yes 2>/dev/null
     echo -e "  ${GREEN}✓ Uploaded${NC} $NAME"
 done
 
-oombra upload demo/attack_map_apt28.json --api-url http://localhost:8765 --yes 2>/dev/null
+vigil upload demo/attack_map_apt28.json --api-url http://localhost:8765 --yes 2>/dev/null
 echo -e "  ${GREEN}✓ Uploaded${NC} APT28 attack map"
 
-oombra upload demo/attack_map_lockbit.json --api-url http://localhost:8765 --yes 2>/dev/null
+vigil upload demo/attack_map_lockbit.json --api-url http://localhost:8765 --yes 2>/dev/null
 echo -e "  ${GREEN}✓ Uploaded${NC} LockBit attack map"
 
-oombra upload demo/ioc_bundle_1.json --api-url http://localhost:8765 --yes 2>/dev/null
+vigil upload demo/ioc_bundle_1.json --api-url http://localhost:8765 --yes 2>/dev/null
 echo -e "  ${GREEN}✓ Uploaded${NC} IOC bundle (APT28)"
 
-oombra upload demo/ioc_bundle_2.json --api-url http://localhost:8765 --yes 2>/dev/null
+vigil upload demo/ioc_bundle_2.json --api-url http://localhost:8765 --yes 2>/dev/null
 echo -e "  ${GREEN}✓ Uploaded${NC} IOC bundle (LockBit)"
 
 pause
@@ -199,11 +199,11 @@ pause
 
 step 8 "Build threat graph and find campaign clusters"
 
-echo -e "  ${GREEN}Running: oombra graph build + analyze${NC}"
+echo -e "  ${GREEN}Running: vigil graph build + analyze${NC}"
 echo ""
-oombra graph build demo/attack_map_apt28.json demo/attack_map_lockbit.json demo/ioc_bundle_1.json demo/ioc_bundle_2.json -o /tmp/threat_graph.json
+vigil graph build demo/attack_map_apt28.json demo/attack_map_lockbit.json demo/ioc_bundle_1.json demo/ioc_bundle_2.json -o /tmp/threat_graph.json
 echo ""
-oombra graph analyze demo/attack_map_apt28.json demo/attack_map_lockbit.json demo/ioc_bundle_1.json demo/ioc_bundle_2.json --clusters 2
+vigil graph analyze demo/attack_map_apt28.json demo/attack_map_lockbit.json demo/ioc_bundle_1.json demo/ioc_bundle_2.json --clusters 2
 echo ""
 echo -e "  ${GREEN}✓ Graph built from anonymized data — no raw IOCs in the graph${NC}"
 echo -e "  ${GREEN}✓ Campaign clusters identified using embedding similarity${NC}"
@@ -217,17 +217,17 @@ step 9 "Verify the audit trail"
 
 echo -e "  Everything that happened is logged locally:"
 echo ""
-oombra audit --last 5
+vigil audit --last 5
 echo ""
 echo -e "  ${GREEN}Receipts:${NC}"
-oombra receipts
+vigil receipts
 echo ""
 echo -e "  ${GREEN}✓ Compliance can verify exactly what left the machine${NC}"
 echo -e "  ${GREEN}✓ Receipts prove you contributed without revealing content${NC}"
 
 # ── Cleanup ───────────────────────────────────────────────────────────
 kill $SERVER_PID 2>/dev/null
-rm -f demo_oombra.db
+rm -f demo_vigil.db
 
 echo ""
 echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}"
@@ -243,6 +243,6 @@ echo -e "  3. ${GREEN}Benchmarking${NC} — Anonymous aggregate: CrowdStrike 9.2
 echo -e "  4. ${GREEN}Privacy${NC} — Zero patient data, zero network details, zero org names exposed"
 echo -e "  5. ${GREEN}Proof${NC} — ADTC attestation chain + VAP = cryptographic guarantee"
 echo ""
-echo -e "  ${BOLD}Without oombra:${NC} Each hospital fights alone, misses the campaign connection."
-echo -e "  ${BOLD}With oombra:${NC} Collaborative defense with mathematical privacy guarantees."
+echo -e "  ${BOLD}Without vigil:${NC} Each hospital fights alone, misses the campaign connection."
+echo -e "  ${BOLD}With vigil:${NC} Collaborative defense with mathematical privacy guarantees."
 echo ""

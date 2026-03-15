@@ -5,8 +5,8 @@ __pycache__
 .ruff_cache
 *.egg-info
 .env
-oombra.db
+vigil.db
 demo_*.db
-demo/oombra-demo.cast
-demo/oombra-demo.gif
+demo/vigil-demo.cast
+demo/vigil-demo.gif
 demo/seed/

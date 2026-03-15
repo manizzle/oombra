@@ -1,8 +1,8 @@
 # Data License
 
-## oombra Curated Data
+## vigil Curated Data
 
-The curated threat intelligence data in `oombra/data/` (capabilities, integrations, MITRE mappings, vendor metadata) is licensed under the **Community Data License Agreement – Permissive, Version 2.0 (CDLA-Permissive-2.0)**.
+The curated threat intelligence data in `vigil/data/` (capabilities, integrations, MITRE mappings, vendor metadata) is licensed under the **Community Data License Agreement – Permissive, Version 2.0 (CDLA-Permissive-2.0)**.
 
 Full text: https://cdla.dev/permissive-2-0/
 
@@ -35,15 +35,15 @@ The `data/feeds/` directory contains snapshots from public threat intelligence f
 
 ## User-Contributed Data
 
-Data contributed by users through `oombra report` or `oombra upload`:
+Data contributed by users through `vigil report` or `vigil upload`:
 - **Anonymized locally** before submission
-- **Owned by the contributor** — oombra does not claim ownership
-- **Licensed for aggregation** — by contributing, you grant oombra the right to include your anonymized data in aggregate reports
+- **Owned by the contributor** — vigil does not claim ownership
+- **Licensed for aggregation** — by contributing, you grant vigil the right to include your anonymized data in aggregate reports
 - **Never returned individually** — only aggregates via query endpoints
 
 ## Open Data Principles
 
-oombra follows the [Open Data Charter](https://opendatacharter.net/):
+vigil follows the [Open Data Charter](https://opendatacharter.net/):
 
 1. **Open by default** — all aggregated intelligence available to contributors
 2. **Timely and comprehensive** — 19+ live feeds, hourly refresh
