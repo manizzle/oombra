@@ -141,6 +141,20 @@ class APIKeyRecord(Base):
     )
 
 
+class PendingVerification(Base):
+    """Pending email verification — magic link flow."""
+    __tablename__ = "pending_verifications"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    email: Mapped[str] = mapped_column(String(200), nullable=False)
+    org_name: Mapped[str | None] = mapped_column(String(200))
+    token: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
 class AggregatedScore(Base):
     """Pre-computed aggregate scores per vendor (materialized for fast reads)."""
     __tablename__ = "aggregated_scores"

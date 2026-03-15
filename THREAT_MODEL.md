@@ -211,27 +211,34 @@ Sensitive data at risk:
 
 ## Known Gaps (ordered by severity)
 
-### High Priority
-1. **No minimum-k enforcement on aggregates** — Server returns vendor averages even with 1 contributor. Should require k≥3 before releasing.
-2. **No transport layer enforcement** — Code doesn't enforce HTTPS. Server could run on plain HTTP.
-3. **No client integrity verification** — A modified client could skip anonymization and forge attestation.
+### Resolved ✅
+1. ~~No minimum-k enforcement on aggregates~~ — **Fixed.** `NUR_MIN_K=3` enforced on all query endpoints. No vendor data returned with fewer than 3 contributors.
+2. ~~No transport layer enforcement~~ — **Fixed.** Production deployment uses Caddy with auto-HTTPS (Let's Encrypt). Live instance at nur.saramena.us is HTTPS-only.
+3. ~~No API key enforcement~~ — **Fixed.** Registration requires work email (free/disposable domains blocked). API key required for all write endpoints.
 
 ### Medium Priority
-4. **Bucketing quasi-identifiers** — Industry + size + role combinations may be unique enough to fingerprint.
-5. **IOC hash correlation within same org** — Same HMAC key means same IOC always hashes the same within that org's contributions.
-6. **No rate limiting on PSI queries** — Attacker could probe specific IOCs by submitting targeted sets.
+4. **Client integrity verification** — A modified client could skip anonymization and forge attestation. Mitigated by ADTC chain verification on server side.
+5. **Bucketing quasi-identifiers** — Industry + size + role combinations may be unique enough to fingerprint. Mitigated by min-k enforcement.
+6. **IOC hash correlation within same org** — Same HMAC key means same IOC always hashes the same within that org's contributions.
+7. **No rate limiting on PSI queries** — Attacker could probe specific IOCs by submitting targeted sets.
+8. **Data poisoning via fake contributions** — Malicious actor could submit fraudulent evaluations. Mitigated by work email requirement and ZKP range proofs.
 
 ### Low Priority (theoretical)
-7. **Gradient inversion on FL** — Active research area, DP noise is the standard defense.
-8. **ZKP proves range, not honesty** — Can prove score ∈ [0,10] but not that it's truthful.
-9. **Traffic analysis** — Submission patterns could reveal incident timing.
+9. **Gradient inversion on FL** — Active research area, DP noise is the standard defense.
+10. **ZKP proves range, not honesty** — Can prove score ∈ [0,10] but not that it's truthful.
+11. **Traffic analysis** — Submission patterns could reveal incident timing.
 
 ---
 
-## Recommendations
+## Anti-Spam Measures
 
-1. **Add k-anonymity threshold to query API** — Don't return vendor aggregates with fewer than 3 contributors
-2. **Enforce HTTPS in client** — Reject non-TLS API URLs by default
-3. **Add submission batching** — Collect contributions and submit in fixed-size batches on schedule
-4. **Per-session IOC key derivation** — Derive HMAC key per submission to prevent cross-submission correlation
-5. **Reproducible client builds** — Enable verification that the client code hasn't been tampered with
+| Measure | Status |
+|---------|--------|
+| Work email required for API keys | ✅ Implemented — gmail, yahoo, hotmail, etc. blocked |
+| API key required for write endpoints | ✅ Implemented |
+| Min-k enforcement on aggregates | ✅ Implemented (default k=3) |
+| HTTPS enforcement (production) | ✅ Implemented via Caddy |
+| Rate limiting per API key | Planned |
+| Submission batching (traffic analysis defense) | Planned |
+| Per-session IOC key derivation | Planned |
+| Reproducible client builds | Planned |

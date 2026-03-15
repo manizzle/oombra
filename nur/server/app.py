@@ -360,9 +360,22 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
 
     # ── Register ─────────────────────────────────────────────────────
 
+    # Free email providers that can't be used for registration
+    _FREE_EMAIL_DOMAINS = {
+        "gmail.com", "yahoo.com", "yahoo.co.uk", "hotmail.com", "outlook.com",
+        "live.com", "aol.com", "icloud.com", "me.com", "mac.com",
+        "mail.com", "protonmail.com", "proton.me", "tutanota.com", "tuta.io",
+        "yandex.com", "yandex.ru", "gmx.com", "gmx.net", "zoho.com",
+        "fastmail.com", "hushmail.com", "inbox.com", "mail.ru",
+        "163.com", "qq.com", "naver.com", "daum.net",
+        "guerrillamail.com", "tempmail.com", "throwaway.email",
+        "mailinator.com", "sharklasers.com", "guerrillamailblock.com",
+        "grr.la", "dispostable.com", "yopmail.com", "temp-mail.org",
+    }
+
     @app.post("/register")
     async def register(body: dict[str, Any]):
-        """Register for a free API key. Email required."""
+        """Register for a free API key. Work email required."""
         import secrets as _secrets
         from sqlalchemy import select
         from .models import APIKeyRecord
@@ -372,8 +385,17 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
         if not email or "@" not in email:
             raise HTTPException(status_code=400, detail="Valid email required")
 
+        # Block free/personal email providers
+        domain = email.split("@")[1]
+        if domain in _FREE_EMAIL_DOMAINS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Work email required. {domain} is not accepted. Use your organization's email.",
+            )
+
         db = get_db()
         async with db.session() as s:
+            # Check if already registered
             existing = await s.execute(
                 select(APIKeyRecord).where(APIKeyRecord.email == email)
             )
@@ -386,15 +408,76 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
                     "message": "API key already exists for this email",
                 }
 
-            key = "nur_" + _secrets.token_urlsafe(32)
-            s.add(APIKeyRecord(email=email, api_key=key, org_name=org or None, tier="community"))
+            # Create pending verification with magic link token
+            from .models import PendingVerification
+            token = _secrets.token_urlsafe(32)
+            s.add(PendingVerification(email=email, org_name=org or None, token=token))
+
+        # Build the magic link
+        host = os.environ.get("NUR_DOMAIN", "nur.saramena.us")
+        scheme = "https" if host != "localhost" else "http"
+        verify_url = f"{scheme}://{host}/verify/{token}"
 
         return {
-            "status": "created",
-            "api_key": key,
-            "tier": "community",
-            "message": "Welcome to nur. Set this key with: nur init",
+            "status": "pending",
+            "verify_url": verify_url,
+            "message": f"Verification link generated. In production, this would be emailed to {email}. For now, visit the link directly.",
         }
+
+    @app.get("/verify/{token}", response_class=HTMLResponse)
+    async def verify_email(token: str):
+        """Magic link — click to verify email and get API key."""
+        import secrets as _secrets
+        from sqlalchemy import select
+        from .models import PendingVerification, APIKeyRecord
+
+        db = get_db()
+        async with db.session() as s:
+            result = await s.execute(
+                select(PendingVerification).where(PendingVerification.token == token)
+            )
+            pending = result.scalar_one_or_none()
+            if not pending:
+                return """<!DOCTYPE html><html><body style="background:#0a0a0a;color:#d55;font-family:monospace;display:flex;align-items:center;justify-content:center;min-height:100vh"><div style="text-align:center"><h1>invalid or expired link</h1><p><a href="/register" style="color:#888">try again</a></p></div></body></html>"""
+
+            if pending.verified:
+                # Already verified — find the key
+                existing = await s.execute(
+                    select(APIKeyRecord).where(APIKeyRecord.email == pending.email)
+                )
+                record = existing.scalar_one_or_none()
+                api_key = record.api_key if record else "already used"
+            else:
+                # Verify and create API key
+                pending.verified = True
+                api_key = "nur_" + _secrets.token_urlsafe(32)
+                s.add(APIKeyRecord(
+                    email=pending.email, api_key=api_key,
+                    org_name=pending.org_name, tier="community",
+                ))
+
+        return f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>nur — verified</title>
+<style>
+  body {{ background:#0a0a0a; color:#c0c0c0; font-family:'Courier New',monospace; display:flex; align-items:center; justify-content:center; min-height:100vh; }}
+  .box {{ text-align:center; max-width:500px; padding:40px; }}
+  h1 {{ color:#2a5; margin-bottom:16px; }}
+  .key {{ background:#111; border:1px solid #2a5; border-radius:4px; padding:16px; margin:24px 0; word-break:break-all; color:#2a5; font-size:1.1em; }}
+  .steps {{ text-align:left; color:#888; font-size:0.9em; line-height:2; }}
+  .steps code {{ color:#aaa; }}
+  a {{ color:#666; }}
+</style></head>
+<body><div class="box">
+  <h1>email verified</h1>
+  <p>your API key:</p>
+  <div class="key">{api_key}</div>
+  <div class="steps">
+    <code>pip install nur</code><br>
+    <code>nur init</code> &larr; paste your key<br>
+    <code>nur report incident.json</code><br>
+  </div>
+  <br><a href="/">&larr; back to nur</a>
+</div></body></html>"""
 
     @app.get("/register", response_class=HTMLResponse)
     async def register_page():
@@ -426,16 +509,17 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
 <body>
 <div class="container">
   <h1>get your API key</h1>
-  <div class="sub">free. takes 5 seconds.</div>
+  <div class="sub">free. work email required. takes 5 seconds.</div>
 
   <form id="reg" onsubmit="return doRegister(event)">
-    <label>email</label>
-    <input type="email" id="email" placeholder="you@company.com" required>
+    <label>work email (no gmail/yahoo)</label>
+    <input type="email" id="email" placeholder="you@yourhospital.org" required>
     <label>organization (optional)</label>
     <input type="text" id="org" placeholder="Acme Health System">
     <button type="submit">get key</button>
   </form>
 
+  <div id="error" style="display:none; margin-top:16px; padding:12px; background:#1a0a0a; border:1px solid #a33; border-radius:4px; color:#d55; font-size:0.9em;"></div>
   <div class="result" id="result">
     <div>your API key:</div>
     <code id="key"></code>
@@ -468,8 +552,21 @@ async function doRegister(e) {
     body: JSON.stringify({email: document.getElementById('email').value, org: document.getElementById('org').value})
   });
   const data = await res.json();
-  document.getElementById('key').textContent = data.api_key;
-  document.getElementById('result').style.display = 'block';
+  if (res.ok) {
+    if (data.api_key) {
+      document.getElementById('key').textContent = data.api_key;
+      document.getElementById('result').style.display = 'block';
+    } else if (data.verify_url) {
+      document.getElementById('result').innerHTML = '<div style="color:#888">Check your email for a verification link.</div><br><div style="color:#555;font-size:0.85em">Or click directly: <a href="' + data.verify_url + '" style="color:#2a5">' + data.verify_url + '</a></div>';
+      document.getElementById('result').style.display = 'block';
+    }
+    document.getElementById('result').style.borderColor = '#2a5';
+    document.getElementById('error').style.display = 'none';
+  } else {
+    document.getElementById('error').textContent = data.detail || 'Registration failed';
+    document.getElementById('error').style.display = 'block';
+    document.getElementById('result').style.display = 'none';
+  }
 }
 </script>
 </body>
