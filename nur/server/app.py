@@ -206,6 +206,8 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>nur</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YLL9Y97GG0"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments)}}gtag('js',new Date());gtag('config','G-YLL9Y97GG0');</script>
 <style>
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
   body {{
@@ -530,6 +532,8 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
 
         return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>nur — verified</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YLL9Y97GG0"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-YLL9Y97GG0");</script>
 <style>
   body {{ background:#0a0a0a; color:#c0c0c0; font-family:'Courier New',monospace; display:flex; align-items:center; justify-content:center; min-height:100vh; }}
   .box {{ text-align:center; max-width:500px; padding:40px; }}
@@ -559,6 +563,8 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>nur — get your API key</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YLL9Y97GG0"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-YLL9Y97GG0");</script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #0a0a0a; color: #c0c0c0; font-family: 'Courier New', monospace; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
