@@ -533,7 +533,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
         return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>nur — verified</title>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-YLL9Y97GG0"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-YLL9Y97GG0");</script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments)}}gtag("js",new Date());gtag("config","G-YLL9Y97GG0");</script>
 <style>
   body {{ background:#0a0a0a; color:#c0c0c0; font-family:'Courier New',monospace; display:flex; align-items:center; justify-content:center; min-height:100vh; }}
   .box {{ text-align:center; max-width:500px; padding:40px; }}
