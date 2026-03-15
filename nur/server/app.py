@@ -601,7 +601,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
 <style>
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
   body {{
-    background: #0a0a0a;
+    background: #1a1a1e;
     color: #c0c0c0;
     font-family: 'Courier New', monospace;
     min-height: 100vh;
@@ -612,7 +612,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
   .dash-header {{
     text-align: center;
     padding: 48px 24px 32px;
-    border-bottom: 1px solid #1a1a1a;
+    border-bottom: 1px solid #333338;
   }}
   .dash-header h1 {{
     font-size: 2.4em;
@@ -621,31 +621,31 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     margin-bottom: 12px;
   }}
   .dash-header h1 span {{
-    color: #2a5;
+    color: #3b7;
   }}
   .hero-stat {{
     font-size: 4.5em;
     font-weight: bold;
-    color: #2a5;
+    color: #3b7;
     line-height: 1;
     margin-bottom: 8px;
     text-shadow: 0 0 60px rgba(34,170,85,0.3);
   }}
   .hero-label {{
     font-size: 0.85em;
-    color: #666;
+    color: #999;
     letter-spacing: 0.1em;
   }}
   .dash-subtitle {{
     margin-top: 12px;
     font-size: 0.8em;
-    color: #444;
+    color: #777;
   }}
   .pulse {{
     display: inline-block;
     width: 6px;
     height: 6px;
-    background: #2a5;
+    background: #3b7;
     border-radius: 50%;
     margin-right: 6px;
     animation: pulse 2s infinite;
@@ -665,10 +665,10 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
   }}
   .dash-section {{
     padding: 32px 28px;
-    border-bottom: 1px solid #1a1a1a;
+    border-bottom: 1px solid #333338;
   }}
   .dash-section:nth-child(odd) {{
-    border-right: 1px solid #1a1a1a;
+    border-right: 1px solid #333338;
   }}
   .dash-section.full {{
     grid-column: 1 / -1;
@@ -678,12 +678,12 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     font-size: 0.7em;
     text-transform: uppercase;
     letter-spacing: 0.2em;
-    color: #555;
+    color: #888;
     margin-bottom: 20px;
   }}
   .section-title::before {{
     content: '/// ';
-    color: #333;
+    color: #666;
   }}
 
   /* ── Stat boxes ─────────────────────────────────── */
@@ -693,15 +693,15 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     gap: 16px;
   }}
   .stat-box {{
-    background: #111;
-    border: 1px solid #1a1a1a;
+    background: #222228;
+    border: 1px solid #333338;
     border-radius: 4px;
     padding: 20px 16px;
     text-align: center;
     transition: border-color 0.3s;
   }}
   .stat-box:hover {{
-    border-color: #2a5;
+    border-color: #3b7;
   }}
   .stat-box .num {{
     font-size: 2.2em;
@@ -712,7 +712,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
   }}
   .stat-box .label {{
     font-size: 0.65em;
-    color: #555;
+    color: #888;
     text-transform: uppercase;
     letter-spacing: 0.15em;
     margin-top: 6px;
@@ -723,8 +723,8 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
   .chart-wrap {{
     position: relative;
     width: 100%;
-    background: #0f0f0f;
-    border: 1px solid #1a1a1a;
+    background: #222228;
+    border: 1px solid #333338;
     border-radius: 4px;
     padding: 16px;
   }}
@@ -734,7 +734,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
   .chart-empty {{
     text-align: center;
     padding: 48px 16px;
-    color: #333;
+    color: #666;
     font-size: 0.85em;
   }}
 
@@ -749,7 +749,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     margin-bottom: 24px;
   }}
   .cta-install {{
-    background: #111;
+    background: #222228;
     border: 1px solid #222;
     border-radius: 4px;
     padding: 20px 28px;
@@ -760,7 +760,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
   }}
   .cta-install code {{ color: #aaa; }}
   .cta-install .cmd {{ color: #e0e0e0; }}
-  .cta-install .comment {{ color: #444; }}
+  .cta-install .comment {{ color: #777; }}
   .cta-links {{
     display: flex;
     justify-content: center;
@@ -776,12 +776,12 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     font-size: 0.9em;
   }}
   .cta-links a:hover {{
-    color: #2a5;
-    border-color: #2a5;
+    color: #3b7;
+    border-color: #3b7;
   }}
   .cta-btn {{
     display: inline-block;
-    background: #2a5;
+    background: #3b7;
     color: #0a0a0a;
     font-family: 'Courier New', monospace;
     font-weight: bold;
@@ -801,12 +801,12 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
   .dash-footer {{
     text-align: center;
     padding: 24px;
-    color: #333;
+    color: #666;
     font-size: 0.7em;
-    border-top: 1px solid #1a1a1a;
+    border-top: 1px solid #333338;
   }}
   .dash-footer a {{
-    color: #444;
+    color: #777;
     text-decoration: none;
   }}
 
@@ -944,7 +944,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
         document.getElementById('techniqueEmpty').style.display = 'block';
         return;
       }}
-      var labels = techs.map(function(t) {{ return t.technique_id + ' ' + t.name; }});
+      var labels = techs.map(function(t) {{ return t.technique_id + ' ' + (t.technique_name || ''); }});
       var counts = techs.map(function(t) {{ return t.count; }});
       var maxCount = Math.max.apply(null, counts);
       var colors = counts.map(function(c) {{ return greenGradient(c, maxCount); }});
@@ -972,13 +972,13 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
               backgroundColor: '#111',
               titleColor: '#f0f0f0',
               bodyColor: '#aaa',
-              borderColor: '#2a5',
+              borderColor: '#3b7',
               borderWidth: 1,
             }},
           }},
           scales: {{
             x: {{
-              grid: {{ color: '#151515' }},
+              grid: {{ color: '#2a2a30' }},
               ticks: {{ color: '#444' }},
             }},
             y: {{
@@ -1002,7 +1002,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
       var tiers = data.tiers || {{}};
       var all = [];
       var tierColors = {{
-        'leaders': '#2a5',
+        'leaders': '#3b7',
         'contenders': '#1a7a4a',
         'emerging': '#145530',
         'watch': '#333',
@@ -1057,13 +1057,13 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
               backgroundColor: '#111',
               titleColor: '#f0f0f0',
               bodyColor: '#aaa',
-              borderColor: '#2a5',
+              borderColor: '#3b7',
               borderWidth: 1,
             }},
           }},
           scales: {{
             x: {{
-              grid: {{ color: '#151515' }},
+              grid: {{ color: '#2a2a30' }},
               ticks: {{ color: '#444' }},
               max: 10,
             }},
@@ -1113,17 +1113,17 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-YLL9Y97GG0");</script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #0a0a0a; color: #c0c0c0; font-family: 'Courier New', monospace; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  body { background: #1a1a1e; color: #c0c0c0; font-family: 'Courier New', monospace; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
   .container { max-width: 520px; padding: 40px 24px; text-align: center; }
   h1 { font-size: 2em; color: #f0f0f0; margin-bottom: 8px; }
-  .sub { color: #666; margin-bottom: 32px; font-size: 0.9em; }
-  .install { background: #111; border: 1px solid #222; border-radius: 4px; padding: 20px; text-align: left; font-size: 0.9em; margin-bottom: 32px; }
+  .sub { color: #999; margin-bottom: 32px; font-size: 0.9em; }
+  .install { background: #222228; border: 1px solid #222; border-radius: 4px; padding: 20px; text-align: left; font-size: 0.9em; margin-bottom: 32px; }
   .install code { color: #aaa; }
   .install .cmd { color: #e0e0e0; }
-  .install .comment { color: #444; }
-  .tiers { text-align: left; font-size: 0.8em; color: #555; line-height: 1.8; }
+  .install .comment { color: #777; }
+  .tiers { text-align: left; font-size: 0.8em; color: #888; line-height: 1.8; }
   .tiers strong { color: #888; }
-  a { color: #666; }
+  a { color: #999; }
 </style>
 </head>
 <body>
