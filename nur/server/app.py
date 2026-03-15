@@ -272,7 +272,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
   }}
   .meaning-text {{
     font-size: 0.85em;
-    color: #444;
+    color: #999;
     font-style: italic;
   }}
   .tagline {{
@@ -298,18 +298,18 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
   }}
   .stat-label {{
     font-size: 0.75em;
-    color: #555;
+    color: #999;
     text-transform: uppercase;
     letter-spacing: 0.15em;
   }}
   .divider {{
     border: none;
-    border-top: 1px solid #1a1a1a;
+    border-top: 1px solid #333;
     margin: 40px 0;
   }}
   .install {{
-    background: #111;
-    border: 1px solid #222;
+    background: #222228;
+    border: 1px solid #333;
     border-radius: 4px;
     padding: 20px;
     margin-bottom: 32px;
@@ -323,7 +323,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     color: #e0e0e0;
   }}
   .install .comment {{
-    color: #444;
+    color: #777;
   }}
   .links {{
     display: flex;
@@ -345,13 +345,13 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     border-color: #666;
   }}
   .footer {{
-    color: #333;
-    font-size: 0.75em;
+    color: #999;
+    font-size: 0.8em;
     margin-top: 48px;
     line-height: 1.8;
   }}
   .footer a {{
-    color: #444;
+    color: #aaa;
     text-decoration: none;
   }}
   .pulse {{
@@ -419,9 +419,12 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     </code>
   </div>
 
+  <div style="text-align:center;margin-bottom:24px;">
+    <a href="/register" style="display:inline-block;background:#3b7;color:#1a1a1e;font-family:'Courier New',monospace;font-weight:bold;font-size:0.9em;padding:10px 28px;border-radius:3px;text-decoration:none;letter-spacing:0.05em;">get started</a>
+  </div>
+
   <div class="links">
     <a href="/dashboard">dashboard</a>
-    <a href="/register">register</a>
     <a href="/docs">api docs</a>
     <a href="https://github.com/manizzle/nur">github</a>
     <a href="https://github.com/manizzle/nur/issues/4">add your feed</a>
