@@ -15,10 +15,22 @@ The privacy layer is what makes people actually willing to participate. Everythi
   <img src="demo/oombra-demo.gif" alt="oombra demo" width="700" />
 </p>
 
-[![Tests](https://img.shields.io/badge/tests-281%20passing-brightgreen)](#-tests)
+[![Tests](https://img.shields.io/badge/tests-281%20passing-brightgreen)](#tests)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://python.org)
 [![Code](https://img.shields.io/badge/code-Apache%202.0-blue)](LICENSE)
 [![Data](https://img.shields.io/badge/data-LGPL--3.0-orange)](DATA_LICENSE.md)
+
+---
+
+## Why this exists
+
+Three assumptions the security industry is built on — and why they're wrong:
+
+**1. "Sharing threat intel is altruistic."** Wrong. Nobody shares out of goodness. oombra makes sharing selfish: you can't get a report without contributing. Your data makes the next person's report better. Their data made yours possible. Give to get.
+
+**2. "Threat intel = IOCs."** Wrong. IOCs are one piece. What practitioners actually need is: what tools catch this attack? What are other orgs in my industry scoring their EDR? What MITRE techniques are being missed across the sector? It's collective intelligence about tools AND compromise, not just indicator feeds.
+
+**3. "You need a dashboard."** Wrong. You need a CLI that works in SOAR pipelines, that AI agents can call, that scripts can automate. The interface is `oombra report incident.json` — one command, structured JSON output, done.
 
 ---
 
@@ -31,21 +43,19 @@ pip install -e ".[all,dev]"
 oombra up --vertical healthcare
 ```
 
-That starts the platform, scrapes live threat feeds, and you're ready. In another terminal:
+That starts the platform, scrapes 11 real data sources, and you're ready. In another terminal:
 
 ```bash
 oombra report your_incident_data.json
 ```
 
-You give your data. You get back what everyone else knows. No contribution, no report.
+> ✅ Everything is anonymized on your machine. Nothing leaves without your approval.
 
 ---
 
 ## What you get
 
 ### When you're under attack
-
-You got breached. You have IOCs and MITRE observations. You need answers now.
 
 ```bash
 oombra report incident_iocs.json
@@ -61,11 +71,9 @@ oombra report incident_iocs.json
     [HIGH]     Hunt for RDP lateral movement
 ```
 
-You contributed your IOCs. In return, you learned it's a campaign, what you're missing, and what to do. Seconds, not days.
+You gave IOCs. You got campaign correlation, detection gaps, and a to-do list. Seconds, not days.
 
 ### When you're building defenses
-
-No incident. You're planning, budgeting, justifying purchases to the board.
 
 ```bash
 oombra market edr                                    # who leads in EDR?
@@ -74,37 +82,97 @@ oombra search compare crowdstrike sentinelone        # objective side-by-side
 oombra threat-map "ransomware" --tools crowdstrike   # where are your gaps?
 ```
 
-Real practitioner data from real incidents across your industry. Not vendor marketing. Not analyst reports funded by vendors. Actual collective intelligence from people doing the same job as you.
+Real data from 11 sources. Not vendor marketing. Not analyst reports funded by vendors. Collective intelligence from practitioners, independent labs, and public threat feeds.
 
 ---
 
-## Why people contribute
+## The hospital scenario
 
-Because they're selfish. You can't get a report without contributing. Your data makes the next person's report better. Their data made yours possible.
-
-A hospital in Ohio contributes their LockBit IOCs at 2AM. At 4:30AM, a hospital in West Virginia gets the same ransom note. Their report is *better* — because Ohio shared. Ohio's CISO gets real tool benchmarks for the board next week — because West Virginia shared their CrowdStrike eval last month.
-
-Everyone gets back more than they give. That's the loop.
-
----
-
-## Deploy it for your industry
-
-oombra is a stack anyone can deploy. Run it for hospitals. Run it for banks. Run it for energy companies. Your users contribute anonymized data, you run the platform, everyone gets smarter.
+It's 2AM. Ohio Children's Hospital gets hit with LockBit. EHR encrypted. NICU monitors offline.
 
 ```bash
-# Pick your vertical
-oombra up --vertical healthcare     # hospitals, clinics, pharma
-oombra up --vertical financial      # banks, insurance, fintech
-oombra up --vertical energy         # power grids, oil & gas, ICS/OT
-oombra up --vertical government     # federal, state, local
+oombra report lockbit_iocs.json         # Campaign Match: Yes. 12 shared IOCs.
+oombra report lockbit_attack_map.json   # 7 detection gaps. T1490 critical.
+oombra report our_crowdstrike.json      # 9.2 avg. 5 known gaps. Supplement.
+```
 
-# Or Docker for production
+At 4:30 AM, West Virginia gets the same ransom note. Their report is better — because Ohio contributed. Every hospital that shares makes the next one safer.
+
+Next week, Ohio's CISO needs data for the board:
+
+```bash
+oombra market edr
+oombra search compare crowdstrike sentinelone
+oombra threat-map "ransomware" --tools crowdstrike
+```
+
+Real data. Not vendor slides. The board sees objective scores from across the industry.
+
+---
+
+## 11 data sources
+
+oombra isn't an empty platform waiting for users. It scrapes real intelligence from public feeds and independent labs. Day one, you have data.
+
+```bash
+oombra scrape --list
+```
+
+**IOC Feeds** (what's compromising us):
+
+| Source | Data | License |
+|--------|------|---------|
+| [ThreatFox](https://threatfox.abuse.ch) | Domains, IPs, hashes with malware tags | CC0 |
+| [Feodo Tracker](https://feodotracker.abuse.ch) | C2 server IPs (Emotet, QakBot) | CC0 |
+| [MalwareBazaar](https://bazaar.abuse.ch) | Malware SHA-256 hashes | CC0 |
+| [CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) | Actively exploited CVEs | Public Domain |
+
+**Vendor Intelligence** (what actually works):
+
+| Source | Data | Method |
+|--------|------|--------|
+| [MITRE ATT&CK Evals](https://attackevals.mitre-engenuity.org) | EDR detection rates (8 vendors) | Hardcoded public results |
+| CISA KEV × Vendors | Which security tools have exploited CVEs | Cross-reference 40+ vendor keywords |
+| [Reddit](https://reddit.com/r/netsec) | Practitioner discussions (30 vendors) | Public JSON API + optional LLM |
+| [Hacker News](https://news.ycombinator.com) | Security tool discussions (27 vendors) | Algolia API + optional LLM |
+| [AV-TEST](https://www.av-test.org) | Independent lab scores (8 vendors) | Hardcoded public results |
+| [SE Labs](https://selabs.uk) | UK lab endpoint protection (10 vendors) | Hardcoded public results |
+| Vendor Metadata | Pricing, certs, insurance, deploy time (36 vendors) | Curated |
+
+```bash
+oombra scrape                    # scrape all 11 sources
+oombra scrape --feed mitre       # just MITRE evals
+oombra scrape --dry-run          # preview without uploading
+```
+
+`oombra up` scrapes everything automatically on startup.
+
+---
+
+## Deploy for your industry
+
+oombra is a stack. Deploy it for hospitals. Deploy it for banks. Build a company on it.
+
+```bash
+oombra up --vertical healthcare     # LockBit, HIPAA, hospital action templates
+oombra up --vertical financial      # APT28/Lazarus, PCI DSS, SWIFT isolation
+oombra up --vertical energy         # Sandworm, NERC CIP, ICS/OT isolation
+oombra up --vertical government     # APT29, FISMA, supply chain focus
+```
+
+Or Docker for production:
+
+```bash
 cp .env.example .env
 docker compose --profile production up -d
 ```
 
-Each vertical comes pre-loaded with relevant threat actors, MITRE techniques, compliance frameworks, and action templates. Healthcare gets LockBit + HIPAA. Financial gets APT28 + PCI DSS. Energy gets Sandworm + NERC CIP.
+| Variable | Default | What it does |
+|----------|---------|-------------|
+| `OOMBRA_API_KEY` | *(none)* | API key for write endpoints |
+| `OOMBRA_MIN_K` | `3` | Min contributors before showing aggregates |
+| `OOMBRA_AUTO_INGEST` | `0` | Set `1` for hourly feed scraping |
+| `OOMBRA_PORT` | `8000` | Port to expose |
 
 Your users just need:
 ```bash
@@ -115,24 +183,9 @@ oombra report their_incident.json
 
 ---
 
-## How privacy works
-
-Everything is anonymized **on your machine** before anything touches the network. You review what leaves. You approve what's sent.
-
-| What you share | What leaves your machine |
-|---------------|------------------------|
-| Raw IOCs (IPs, domains, hashes) | HMAC-SHA256 fingerprints — can't be reversed |
-| Attack observations with notes | Technique IDs + scrubbed text — no org details |
-| Org context (name, size, industry) | Bucketed: `healthcare`, `1000-5000` — never your name |
-| Tool scores | DP-noised values — can't pinpoint your exact score |
-
-The server only sees anonymized data. Queries return aggregates — never individual contributions. Min-k enforcement means no data is returned with fewer than 3 contributors. Full analysis: [THREAT_MODEL.md](THREAT_MODEL.md)
-
----
-
 ## Integrate anywhere
 
-**Python (3 lines):**
+**Python:**
 ```python
 from oombra import load_file, anonymize, submit
 
@@ -141,40 +194,40 @@ clean = [anonymize(d) for d in data]
 [submit(c, api_url="http://oombra:8000") for c in clean]
 ```
 
-**CLI with JSON (for AI agents / SOAR / automation):**
+**CLI + JSON (for AI agents, SOAR, scripts):**
 ```bash
 oombra report incident.json --json | jq '.intelligence.actions'
 oombra market edr --json | jq '.tiers.leaders'
+oombra search vendor crowdstrike --json
 ```
 
-**API endpoints:**
+**API:**
 
 | Endpoint | What it does |
 |----------|-------------|
 | `POST /analyze` | Give data, get intelligence report |
-| `GET /intelligence/market/{category}` | Market map — leaders, contenders, emerging |
-| `POST /intelligence/threat-map` | Map a threat to MITRE, find coverage gaps |
-| `GET /intelligence/danger-radar` | Vendors with hidden risks |
-| `GET /search/vendor/{name}` | Vendor lookup with weighted scores |
+| `GET /intelligence/market/{cat}` | Market map |
+| `POST /intelligence/threat-map` | MITRE coverage gaps |
+| `GET /intelligence/danger-radar` | Hidden vendor risks |
+| `GET /search/vendor/{name}` | Vendor scores |
 | `GET /search/category/{name}` | Category ranking |
-| `GET /search/compare?a=X&b=Y` | Side-by-side comparison |
-| `POST /contribute/*` | Submit IOCs, attack maps, tool evals |
-| `GET /query/techniques` | Top MITRE techniques across contributors |
+| `POST /contribute/*` | Submit IOCs, attack maps, evals |
+| `GET /query/techniques` | Top MITRE techniques |
 
 ---
 
-## Live threat feeds
+## How privacy works
 
-The platform auto-ingests real IOCs from public feeds so your reports match against the full threat landscape — not just other users' contributions.
+Everything is anonymized **on your machine** before anything touches the network.
 
-| Feed | Source | What it provides |
-|------|--------|-----------------|
-| ThreatFox | abuse.ch (CC0) | Domains, IPs, hashes with malware family tags |
-| Feodo Tracker | abuse.ch (CC0) | C2 server IPs — Emotet, QakBot |
-| MalwareBazaar | abuse.ch (CC0) | Malware SHA-256 hashes |
-| CISA KEV | cisa.gov (public domain) | Ransomware-exploited CVEs |
+| What you share | What leaves your machine |
+|---------------|------------------------|
+| Raw IOCs | HMAC-SHA256 fingerprints — can't be reversed |
+| Attack notes | Scrubbed text — no org details |
+| Org context | Bucketed: `healthcare`, `1000-5000` |
+| Tool scores | DP-noised values |
 
-`oombra up` scrapes all feeds on startup. `oombra scrape` to refresh manually.
+Server returns aggregates only. Never individual contributions. Min-k enforcement. Full analysis: [THREAT_MODEL.md](THREAT_MODEL.md)
 
 ---
 
@@ -189,5 +242,5 @@ pytest    # 281 tests
 ## License
 
 - **Code**: [Apache 2.0](LICENSE)
-- **Data**: [LGPL 3.0](DATA_LICENSE.md) — open data, free to use
+- **Data**: [LGPL 3.0](DATA_LICENSE.md) — open data
 - **Feeds**: CC0 (abuse.ch), Public Domain (CISA), Apache 2.0 (MITRE ATT&CK)
