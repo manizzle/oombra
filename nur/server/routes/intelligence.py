@@ -306,3 +306,103 @@ async def danger_radar():
 
     results.sort(key=lambda x: x["danger_score"], reverse=True)
     return {"vendors": results}
+
+
+# -- Attack pattern intelligence endpoints -----------------------------------
+
+
+@router.get("/patterns/{vertical}")
+async def attack_patterns(vertical: str):
+    """Get attack methodology patterns for an industry vertical.
+
+    Returns aggregated attack patterns, technique frequency, tool effectiveness,
+    remediation insights, and minimum viable stack recommendations.
+    """
+    from ..app import get_db
+    from ...intelligence import extract_attack_patterns
+    from ...verticals import VERTICALS
+
+    if vertical not in VERTICALS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown vertical: {vertical!r}. Available: {', '.join(VERTICALS.keys())}",
+        )
+
+    db = get_db()
+    stats = await db.get_stats()
+    techniques = await db.get_top_techniques(100)
+
+    # Get all attack_map contributions for remediation data
+    from sqlalchemy import select
+    from ..models import Contribution, AttackTechnique
+    contributions_raw: list[dict] = []
+    techniques_detailed: list[dict] = []
+
+    async with db.session() as s:
+        # Get contributions
+        result = await s.execute(
+            select(Contribution).where(Contribution.contrib_type == "attack_map")
+        )
+        for row in result.scalars().all():
+            contributions_raw.append({
+                "contrib_type": row.contrib_type,
+                "industry": row.industry,
+                "remediation_json": row.remediation_json,
+                "time_to_detect": row.time_to_detect,
+                "time_to_contain": row.time_to_contain,
+                "time_to_recover": row.time_to_recover,
+                "ransom_paid": row.ransom_paid,
+                "data_exfiltrated": row.data_exfiltrated,
+                "severity": row.severity,
+            })
+
+        # Get detailed technique data with detected_by/missed_by
+        tech_result = await s.execute(select(AttackTechnique))
+        for row in tech_result.scalars().all():
+            techniques_detailed.append({
+                "technique_id": row.technique_id,
+                "technique_name": row.technique_name,
+                "tactic": row.tactic,
+                "detected_by": row.detected_by,
+                "missed_by": row.missed_by,
+            })
+
+    patterns = extract_attack_patterns(
+        stats, techniques_detailed, contributions_raw, vertical,
+    )
+    return patterns
+
+
+class SimulateRequest(BaseModel):
+    stack: list[str]
+    vertical: str = "healthcare"
+    attack_type: str | None = None
+
+
+@router.post("/simulate")
+async def simulate(body: SimulateRequest):
+    """Simulate an attack chain against a security stack.
+
+    Shows exactly where your defenses break, step by step.
+    """
+    from ...simulator import simulate_attack
+    from ...verticals import VERTICALS
+
+    if body.vertical not in VERTICALS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown vertical: {body.vertical!r}. Available: {', '.join(VERTICALS.keys())}",
+        )
+
+    if not body.stack:
+        raise HTTPException(
+            status_code=400,
+            detail="Stack cannot be empty. Provide at least one tool.",
+        )
+
+    result = simulate_attack(
+        stack=body.stack,
+        vertical=body.vertical,
+        attack_type=body.attack_type,
+    )
+    return result

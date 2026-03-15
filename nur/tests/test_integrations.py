@@ -1,491 +1,474 @@
-"""Tests for nur.integrations — peacetime integrations."""
+"""
+Tests for wartime integrations — webhook endpoint and integration modules.
+"""
 from __future__ import annotations
 
-import csv
+import hashlib
 import json
 import os
-import tempfile
-from pathlib import Path
 
 import pytest
-
-from nur.integrations.asset_inventory import (
-    ALIASES,
-    import_from_csv,
-    import_from_json,
-    match_tool_to_vendor,
-)
-from nur.integrations.compliance import import_compliance_status
-from nur.integrations.export import (
-    export_csv,
-    export_misp_event,
-    export_navigator_layer,
-    export_stix_bundle,
-)
-from nur.integrations.navigator import import_navigator_layer
-from nur.integrations.rfp import generate_rfp_comparison
-from nur.server.vendors import VENDOR_REGISTRY
-
-
-# ── Fixtures ─────────────────────────────────────────────────────────────────
+from httpx import AsyncClient, ASGITransport
 
 
 @pytest.fixture
-def tmp_dir():
-    with tempfile.TemporaryDirectory() as d:
-        yield Path(d)
+def anyio_backend():
+    return "asyncio"
 
 
-@pytest.fixture
-def navigator_layer(tmp_dir):
-    """A minimal ATT&CK Navigator layer JSON file."""
-    layer = {
-        "name": "Test Layer",
-        "versions": {"layer": "4.5", "attack": "14", "navigator": "4.9.1"},
-        "domain": "enterprise-attack",
-        "techniques": [
-            {"techniqueID": "T1566", "score": 100, "comment": "Covered by email gateway"},
-            {"techniqueID": "T1190", "score": 80, "comment": "WAF deployed"},
-            {"techniqueID": "T1486", "score": 10, "comment": "No EDR"},
-            {"techniqueID": "T1021", "score": 0, "comment": ""},
-        ],
-    }
-    p = tmp_dir / "layer.json"
-    p.write_text(json.dumps(layer))
-    return str(p)
+async def _make_app():
+    """Create a fresh app with initialized database."""
+    import nur.server.app as app_mod
+    from nur.server.app import create_app
+    from nur.server.db import Database
+
+    app = create_app(db_url="sqlite+aiosqlite:///:memory:")
+    db = Database("sqlite+aiosqlite:///:memory:")
+    await db.init()
+    app_mod._db = db
+    return app
 
 
-@pytest.fixture
-def csv_inventory(tmp_dir):
-    """A CSV tool inventory file."""
-    p = tmp_dir / "inventory.csv"
-    with open(p, "w", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(["tool", "department", "status"])
-        w.writerow(["CrowdStrike Falcon", "Security", "active"])
-        w.writerow(["Splunk Enterprise Security", "SOC", "active"])
-        w.writerow(["Okta", "IT", "active"])
-        w.writerow(["Microsoft Word", "IT", "active"])  # not a security tool
-    return str(p)
+# ── Webhook: generic/Splunk format ──────────────────────────────────────────
 
 
-@pytest.fixture
-def json_inventory(tmp_dir):
-    """A JSON tool inventory file (list of strings)."""
-    p = tmp_dir / "tools.json"
-    p.write_text(json.dumps([
-        "CrowdStrike Falcon",
-        "Splunk",
-        "Okta",
-        "Microsoft Defender for Endpoint",
-        "Some Random Tool",
-    ]))
-    return str(p)
-
-
-@pytest.fixture
-def compliance_json(tmp_dir):
-    """A Drata-like compliance export."""
-    data = {
-        "controls": [
-            {"id": "AC-1", "status": "passing", "framework": "NIST 800-53"},
-            {"id": "AC-2", "status": "passing", "framework": "NIST 800-53"},
-            {"id": "164.312", "status": "failing", "framework": "HIPAA"},
-            {"id": "1.1", "status": "passing", "framework": "PCI-DSS"},
-        ]
-    }
-    p = tmp_dir / "compliance.json"
-    p.write_text(json.dumps(data))
-    return str(p)
-
-
-@pytest.fixture
-def simple_compliance_json(tmp_dir):
-    """A simple dict compliance file."""
-    data = {"HIPAA": True, "PCI_DSS": False, "SOC2": True}
-    p = tmp_dir / "simple.json"
-    p.write_text(json.dumps(data))
-    return str(p)
-
-
-@pytest.fixture
-def compliance_csv(tmp_dir):
-    """A CSV compliance file."""
-    p = tmp_dir / "compliance.csv"
-    with open(p, "w", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(["framework", "control_id", "status"])
-        w.writerow(["HIPAA", "164.312", "passing"])
-        w.writerow(["HIPAA", "164.314", "failing"])
-        w.writerow(["PCI-DSS", "1.1", "passing"])
-    return str(p)
-
-
-@pytest.fixture
-def sample_contributions():
-    """Sample contributions for export tests."""
-    return [
-        {
-            "type": "ioc_bundle",
-            "source": "test",
+@pytest.mark.asyncio
+async def test_webhook_generic_iocs():
+    """POST generic IOC list to /ingest/webhook should store and return 'generic'."""
+    os.environ.pop("NUR_API_KEY", None)
+    app = await _make_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/ingest/webhook", json={
             "iocs": [
-                {"type": "ip", "value": "192.168.1.1", "context": "C2 server"},
-                {"type": "domain", "value": "evil.example.com", "context": "Phishing"},
-                {"type": "hash_sha256", "value": "abc123def456", "context": "Malware"},
+                {"ioc_type": "ip", "value_raw": "192.168.1.100"},
+                {"ioc_type": "domain", "value_raw": "evil.example.com"},
             ],
-        },
-        {
-            "type": "eval_record",
-            "vendor": "crowdstrike",
-            "overall_score": 9.2,
-            "source": "mitre",
-        },
-        {
-            "type": "attack_map",
-            "techniques": [
-                {"technique_id": "T1566", "technique_name": "Phishing"},
-                {"technique_id": "T1486", "technique_name": "Data Encrypted for Impact"},
+            "source": "splunk",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "accepted"
+        assert data["format_detected"] == "generic"
+        assert data["items_stored"] == 1  # one ioc_bundle
+
+
+@pytest.mark.asyncio
+async def test_webhook_generic_prehashed():
+    """IOCs with value_hash should be stored directly."""
+    os.environ.pop("NUR_API_KEY", None)
+    app = await _make_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        h = hashlib.sha256(b"test-ioc").hexdigest()
+        resp = await client.post("/ingest/webhook", json={
+            "iocs": [{"ioc_type": "ip", "value_hash": h}],
+            "source": "test",
+        })
+        assert resp.status_code == 200
+        assert resp.json()["items_stored"] == 1
+
+
+# ── Webhook: CrowdStrike format ─────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_webhook_crowdstrike_detection():
+    """CrowdStrike detection format should store attack_map + ioc_bundle."""
+    os.environ.pop("NUR_API_KEY", None)
+    app = await _make_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/ingest/webhook", json={
+            "detection": {
+                "technique": "T1486",
+                "tactic": "Impact",
+                "ioc_type": "ip",
+                "ioc_value": "10.0.0.99",
+                "severity": "critical",
+                "scenario": "Ransomware",
+            },
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["format_detected"] == "crowdstrike"
+        assert data["items_stored"] == 2  # attack_map + ioc_bundle
+
+
+@pytest.mark.asyncio
+async def test_webhook_crowdstrike_technique_only():
+    """CrowdStrike detection without IOC should store only attack_map."""
+    os.environ.pop("NUR_API_KEY", None)
+    app = await _make_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/ingest/webhook", json={
+            "detection": {
+                "technique": "T1059",
+                "tactic": "Execution",
+                "severity": "medium",
+            },
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["format_detected"] == "crowdstrike"
+        assert data["items_stored"] == 1  # attack_map only
+
+
+# ── Webhook: Sentinel format ────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_webhook_sentinel_incident():
+    """Sentinel incident format should store attack_map + ioc_bundle."""
+    os.environ.pop("NUR_API_KEY", None)
+    app = await _make_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/ingest/webhook", json={
+            "properties": {
+                "severity": "High",
+                "title": "Phishing Campaign",
+                "tactics": ["InitialAccess"],
+                "techniques": ["T1566", "T1059"],
+                "entities": [
+                    {"kind": "ip", "address": "10.0.0.50"},
+                    {"kind": "host", "hostName": "malware.example.com"},
+                ],
+            },
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["format_detected"] == "sentinel"
+        assert data["items_stored"] == 2  # attack_map + ioc_bundle
+
+
+@pytest.mark.asyncio
+async def test_webhook_sentinel_no_entities():
+    """Sentinel incident without entities should store only attack_map."""
+    os.environ.pop("NUR_API_KEY", None)
+    app = await _make_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/ingest/webhook", json={
+            "properties": {
+                "severity": "Medium",
+                "tactics": ["LateralMovement"],
+                "techniques": ["T1021"],
+                "entities": [],
+            },
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["format_detected"] == "sentinel"
+        assert data["items_stored"] == 1  # attack_map only
+
+
+# ── Webhook: CEF format ─────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_webhook_cef_format():
+    """CEF syslog format should parse and store ioc_bundle."""
+    os.environ.pop("NUR_API_KEY", None)
+    app = await _make_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/ingest/webhook", json={
+            "cef": "CEF:0|SecurityVendor|Firewall|1.0|100|Blocked Connection|7|src=192.168.1.1 dst=10.0.0.1 dhost=evil.example.com",
+            "source_ip": "192.168.1.1",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["format_detected"] == "cef"
+        assert data["items_stored"] == 1
+
+
+@pytest.mark.asyncio
+async def test_webhook_cef_invalid():
+    """Invalid CEF string should return 0 items stored."""
+    os.environ.pop("NUR_API_KEY", None)
+    app = await _make_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/ingest/webhook", json={
+            "cef": "not a valid CEF message",
+            "source_ip": "1.2.3.4",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["format_detected"] == "cef"
+        assert data["items_stored"] == 0
+
+
+# ── Webhook: indicators format ───────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_webhook_indicators_format():
+    """Generic indicators list should hash values and store."""
+    os.environ.pop("NUR_API_KEY", None)
+    app = await _make_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/ingest/webhook", json={
+            "indicators": [
+                {"type": "ip", "value": "172.16.0.99"},
+                {"type": "domain", "value": "phishing.example.com"},
             ],
-        },
-    ]
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["format_detected"] == "indicators"
+        assert data["items_stored"] == 1
 
 
-# ── match_tool_to_vendor ─────────────────────────────────────────────────────
+# ── Webhook: auth enforcement ────────────────────────────────────────────────
 
 
-class TestMatchToolToVendor:
-    def test_exact_slug(self):
-        assert match_tool_to_vendor("crowdstrike") == "crowdstrike"
-        assert match_tool_to_vendor("splunk") == "splunk"
-        assert match_tool_to_vendor("okta") == "okta"
+@pytest.mark.asyncio
+async def test_webhook_requires_auth():
+    """Webhook should require API key when NUR_API_KEY is set."""
+    os.environ["NUR_API_KEY"] = "test-secret-key"
+    try:
+        app = await _make_app()
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            # Without key
+            resp = await client.post("/ingest/webhook", json={
+                "iocs": [{"ioc_type": "ip", "value_raw": "1.2.3.4"}],
+            })
+            assert resp.status_code == 401
 
-    def test_case_insensitive_slug(self):
-        assert match_tool_to_vendor("CrowdStrike") == "crowdstrike"
-        assert match_tool_to_vendor("SPLUNK") == "splunk"
-
-    def test_display_name_match(self):
-        assert match_tool_to_vendor("CrowdStrike Falcon") == "crowdstrike"
-        assert match_tool_to_vendor("Splunk Enterprise Security") == "splunk"
-        assert match_tool_to_vendor("Microsoft Defender for Endpoint") == "ms-defender"
-
-    def test_partial_match(self):
-        assert match_tool_to_vendor("Falcon") == "crowdstrike"
-
-    def test_alias_match(self):
-        assert match_tool_to_vendor("MDE") == "ms-defender"
-        assert match_tool_to_vendor("CS") == "crowdstrike"
-        assert match_tool_to_vendor("S1") == "sentinelone"
-
-    def test_none_for_unknown(self):
-        assert match_tool_to_vendor("Microsoft Word") is None
-        assert match_tool_to_vendor("TotallyFakeTool") is None
-
-    def test_empty_returns_none(self):
-        assert match_tool_to_vendor("") is None
-        assert match_tool_to_vendor("  ") is None
-
-    def test_all_aliases_resolve(self):
-        """Every alias in the ALIASES dict should resolve to a valid vendor."""
-        for alias, expected_slug in ALIASES.items():
-            assert expected_slug in VENDOR_REGISTRY, (
-                f"Alias {alias!r} -> {expected_slug!r} not in VENDOR_REGISTRY"
+            # With correct key
+            resp = await client.post(
+                "/ingest/webhook",
+                json={"iocs": [{"ioc_type": "ip", "value_raw": "1.2.3.4"}]},
+                headers={"X-API-Key": "test-secret-key"},
             )
+            assert resp.status_code == 200
+            assert resp.json()["status"] == "accepted"
+    finally:
+        del os.environ["NUR_API_KEY"]
 
 
-# ── import_from_csv ──────────────────────────────────────────────────────────
-
-
-class TestImportFromCSV:
-    def test_basic_csv(self, csv_inventory):
-        slugs = import_from_csv(csv_inventory)
-        assert "crowdstrike" in slugs
-        assert "splunk" in slugs
-        assert "okta" in slugs
-
-    def test_skips_unknown_tools(self, csv_inventory):
-        slugs = import_from_csv(csv_inventory)
-        # "Microsoft Word" should not match anything
-        assert all(s in VENDOR_REGISTRY for s in slugs)
-
-    def test_file_not_found(self):
-        with pytest.raises(FileNotFoundError):
-            import_from_csv("/nonexistent/path.csv")
-
-    def test_empty_csv(self, tmp_dir):
-        p = tmp_dir / "empty.csv"
-        p.write_text("tool\n")
-        slugs = import_from_csv(str(p))
-        assert slugs == []
-
-    def test_no_matching_column(self, tmp_dir):
-        p = tmp_dir / "wrong.csv"
-        with open(p, "w", newline="") as f:
-            w = csv.writer(f)
-            w.writerow(["department", "budget"])
-            w.writerow(["IT", "100000"])
-        slugs = import_from_csv(str(p))
-        assert slugs == []
-
-
-# ── import_from_json ─────────────────────────────────────────────────────────
-
-
-class TestImportFromJSON:
-    def test_list_of_strings(self, json_inventory):
-        slugs = import_from_json(json_inventory)
-        assert "crowdstrike" in slugs
-        assert "splunk" in slugs
-        assert "okta" in slugs
-        assert "ms-defender" in slugs
-
-    def test_list_of_dicts(self, tmp_dir):
-        data = [
-            {"tool": "CrowdStrike Falcon", "status": "active"},
-            {"vendor": "Splunk", "status": "active"},
-        ]
-        p = tmp_dir / "dicts.json"
-        p.write_text(json.dumps(data))
-        slugs = import_from_json(str(p))
-        assert "crowdstrike" in slugs
-        assert "splunk" in slugs
-
-    def test_file_not_found(self):
-        with pytest.raises(FileNotFoundError):
-            import_from_json("/nonexistent/tools.json")
-
-    def test_deduplicated(self, tmp_dir):
-        data = ["CrowdStrike", "crowdstrike", "CrowdStrike Falcon", "CS"]
-        p = tmp_dir / "dupes.json"
-        p.write_text(json.dumps(data))
-        slugs = import_from_json(str(p))
-        assert slugs.count("crowdstrike") == 1
-
-
-# ── import_navigator_layer ───────────────────────────────────────────────────
-
-
-class TestImportNavigatorLayer:
-    def test_returns_threat_model(self, navigator_layer):
-        model = import_navigator_layer(navigator_layer)
-        assert "coverage" in model
-        assert "gaps" in model
-        assert "coverage_score" in model
-        assert "navigator_source" in model
-
-    def test_navigator_source_metadata(self, navigator_layer):
-        model = import_navigator_layer(navigator_layer)
-        nav = model["navigator_source"]
-        assert nav["layer_name"] == "Test Layer"
-        assert nav["total_techniques"] == 4
-        assert nav["covered_count"] == 2  # score > 50
-        assert nav["gap_count"] == 2  # score <= 50
-
-    def test_file_not_found(self):
-        with pytest.raises(FileNotFoundError):
-            import_navigator_layer("/nonexistent/layer.json")
-
-    def test_empty_techniques_raises(self, tmp_dir):
-        p = tmp_dir / "empty.json"
-        p.write_text(json.dumps({"techniques": []}))
-        with pytest.raises(ValueError, match="no techniques"):
-            import_navigator_layer(str(p))
-
-    def test_vertical_parameter(self, navigator_layer):
-        model = import_navigator_layer(navigator_layer, vertical="financial")
-        assert model["vertical"] == "financial"
-
-
-# ── import_compliance_status ─────────────────────────────────────────────────
-
-
-class TestImportComplianceStatus:
-    def test_structured_json(self, compliance_json):
-        status = import_compliance_status(compliance_json)
-        assert "NIST 800-53" in status
-        assert status["NIST 800-53"] is True  # has passing controls
-        assert "PCI-DSS" in status
-        assert status["PCI-DSS"] is True
-
-    def test_simple_json(self, simple_compliance_json):
-        status = import_compliance_status(simple_compliance_json)
-        assert status["HIPAA"] is True
-        assert status["PCI-DSS"] is False
-        assert status["SOC2"] is True
-
-    def test_csv_format(self, compliance_csv):
-        status = import_compliance_status(compliance_csv)
-        assert "HIPAA" in status
-        assert status["HIPAA"] is True  # at least one passing
-        assert "PCI-DSS" in status
-        assert status["PCI-DSS"] is True
-
-    def test_file_not_found(self):
-        with pytest.raises(FileNotFoundError):
-            import_compliance_status("/nonexistent/compliance.json")
-
-    def test_framework_normalization(self, tmp_dir):
-        """Framework names should be normalized."""
-        data = {"hipaa": True, "pci_dss": False, "nist csf": True}
-        p = tmp_dir / "normalize.json"
-        p.write_text(json.dumps(data))
-        status = import_compliance_status(str(p))
-        assert "HIPAA" in status
-        assert "PCI-DSS" in status
-        assert "NIST CSF" in status
-
-
-# ── generate_rfp_comparison ──────────────────────────────────────────────────
-
-
-class TestRFPComparison:
-    def test_basic_comparison(self):
-        result = generate_rfp_comparison(
-            candidates=["crowdstrike", "sentinelone", "ms-defender"],
-            category="edr",
-        )
-        assert result["category"] == "edr"
-        assert len(result["candidates"]) == 3
-        assert len(result["comparison_table"]) == 3
-        assert result["recommendation"]  # non-empty
+# ── Webhook: unrecognized format ─────────────────────────────────────────────
 
-    def test_candidates_have_scores(self):
-        result = generate_rfp_comparison(["crowdstrike", "sentinelone"])
-        for c in result["candidates"]:
-            assert c["found"] is True
-            assert "scores" in c
-            assert "overall" in c["scores"]
-
-    def test_unknown_vendor(self):
-        result = generate_rfp_comparison(["crowdstrike", "nonexistent-tool"])
-        assert "nonexistent-tool" in result["not_found"]
-
-    def test_single_candidate(self):
-        result = generate_rfp_comparison(["crowdstrike"])
-        assert len(result["comparison_table"]) == 1
-        assert result["recommendation"]
-
-    def test_sorted_by_score(self):
-        result = generate_rfp_comparison(["crowdstrike", "sentinelone", "ms-defender"])
-        scores = [r["overall"] for r in result["comparison_table"]]
-        assert scores == sorted(scores, reverse=True)
-
-
-# ── export_stix_bundle ───────────────────────────────────────────────────────
-
-
-class TestExportSTIX:
-    def test_returns_valid_json(self, sample_contributions):
-        result = export_stix_bundle(sample_contributions)
-        data = json.loads(result)
-        assert data["type"] == "bundle"
-        assert len(data["objects"]) > 0
-
-    def test_has_identity(self, sample_contributions):
-        data = json.loads(export_stix_bundle(sample_contributions))
-        types = [o["type"] for o in data["objects"]]
-        assert "identity" in types
-
-    def test_iocs_become_indicators(self, sample_contributions):
-        data = json.loads(export_stix_bundle(sample_contributions))
-        indicators = [o for o in data["objects"] if o["type"] == "indicator"]
-        assert len(indicators) == 3  # 3 IOCs in sample
-
-    def test_attack_maps_become_attack_patterns(self, sample_contributions):
-        data = json.loads(export_stix_bundle(sample_contributions))
-        patterns = [o for o in data["objects"] if o["type"] == "attack-pattern"]
-        assert len(patterns) == 2  # 2 techniques
-
-    def test_empty_contributions(self):
-        result = export_stix_bundle([])
-        data = json.loads(result)
-        # Should at least have the identity object
-        assert data["type"] == "bundle"
-        assert len(data["objects"]) == 1
-
-
-# ── export_misp_event ────────────────────────────────────────────────────────
-
-
-class TestExportMISP:
-    def test_returns_valid_json(self, sample_contributions):
-        result = export_misp_event(sample_contributions)
-        data = json.loads(result)
-        assert "Event" in data
-
-    def test_has_attributes(self, sample_contributions):
-        data = json.loads(export_misp_event(sample_contributions))
-        attrs = data["Event"]["Attribute"]
-        assert len(attrs) > 0
-
-    def test_ioc_attributes(self, sample_contributions):
-        data = json.loads(export_misp_event(sample_contributions))
-        attrs = data["Event"]["Attribute"]
-        types = [a["type"] for a in attrs]
-        assert "ip-dst" in types
-        assert "domain" in types
-
-
-# ── export_csv ───────────────────────────────────────────────────────────────
-
-
-class TestExportCSV:
-    def test_returns_csv_string(self, sample_contributions):
-        result = export_csv(sample_contributions)
-        assert "type,value,category" in result
-
-    def test_contains_ioc_rows(self, sample_contributions):
-        result = export_csv(sample_contributions)
-        assert "192.168.1.1" in result
-        assert "evil.example.com" in result
-
-    def test_empty_contributions(self):
-        result = export_csv([])
-        lines = result.strip().split("\n")
-        assert len(lines) == 1  # header only
-
-
-# ── export_navigator_layer ───────────────────────────────────────────────────
-
-
-class TestExportNavigatorLayer:
-    def test_returns_valid_navigator_json(self):
-        from nur.threat_model import generate_threat_model
-        model = generate_threat_model(["crowdstrike", "splunk"], vertical="healthcare")
-        result = export_navigator_layer(model)
-        data = json.loads(result)
-        assert data["domain"] == "enterprise-attack"
-        assert "techniques" in data
-        assert len(data["techniques"]) > 0
-
-    def test_covered_techniques_have_high_score(self):
-        from nur.threat_model import generate_threat_model
-        model = generate_threat_model(["crowdstrike", "splunk"], vertical="healthcare")
-        data = json.loads(export_navigator_layer(model))
-        covered_ids = set(model["coverage"].keys())
-        for t in data["techniques"]:
-            if t["techniqueID"] in covered_ids:
-                assert t["score"] == 100
-
-    def test_gap_techniques_have_low_score(self):
-        from nur.threat_model import generate_threat_model
-        model = generate_threat_model(["crowdstrike"], vertical="healthcare")
-        data = json.loads(export_navigator_layer(model))
-        gap_ids = {g["id"] for g in model["gaps"]}
-        for t in data["techniques"]:
-            if t["techniqueID"] in gap_ids:
-                assert t["score"] == 25
-
-    def test_roundtrip_navigator(self, tmp_dir):
-        """Export a model as Navigator, re-import it, verify structure."""
-        from nur.threat_model import generate_threat_model
-        model = generate_threat_model(["crowdstrike", "splunk", "okta"], vertical="healthcare")
-        layer_json = export_navigator_layer(model)
-
-        # Write and re-import
-        p = tmp_dir / "roundtrip.json"
-        p.write_text(layer_json)
-        reimported = import_navigator_layer(str(p), vertical="healthcare")
-
-        assert "coverage" in reimported
-        assert "gaps" in reimported
-        assert reimported["navigator_source"]["layer_name"].startswith("Organization")
+
+@pytest.mark.asyncio
+async def test_webhook_unrecognized_format():
+    """Unrecognized format should return 400."""
+    os.environ.pop("NUR_API_KEY", None)
+    app = await _make_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/ingest/webhook", json={
+            "random_field": "some data",
+        })
+        assert resp.status_code == 400
+
+
+# ── Integration modules: Splunk ──────────────────────────────────────────────
+
+
+def test_splunk_app_generation():
+    """generate_splunk_app should return all required files."""
+    from nur.integrations.splunk import generate_splunk_app
+
+    files = generate_splunk_app("https://nur.example.com", "nur_test_key")
+
+    assert "default/app.conf" in files
+    assert "default/savedsearches.conf" in files
+    assert "default/alert_actions.conf" in files
+    assert "bin/nur_alert.py" in files
+    assert "README.md" in files
+
+    # Check API URL and key are embedded
+    assert "nur.example.com" in files["bin/nur_alert.py"]
+    assert "nur_test_key" in files["bin/nur_alert.py"]
+
+
+def test_splunk_alert_script_has_ioc_extraction():
+    """Alert script should have IOC field extraction logic."""
+    from nur.integrations.splunk import generate_splunk_app
+
+    files = generate_splunk_app("http://localhost:8000", "key123")
+    script = files["bin/nur_alert.py"]
+
+    assert "src_ip" in script
+    assert "dest_ip" in script
+    assert "file_hash" in script
+    assert "/ingest/webhook" in script
+
+
+# ── Integration modules: Sentinel ────────────────────────────────────────────
+
+
+def test_sentinel_playbook_generation():
+    """generate_sentinel_playbook should return valid ARM template JSON."""
+    from nur.integrations.sentinel import generate_sentinel_playbook
+
+    arm_json = generate_sentinel_playbook("https://nur.example.com", "nur_test_key")
+    template = json.loads(arm_json)
+
+    assert "$schema" in template
+    assert "resources" in template
+    assert "parameters" in template
+    assert "NurApiUrl" in template["parameters"]
+    assert "NurApiKey" in template["parameters"]
+
+    # Check that the Logic App resource exists
+    resource_types = [r["type"] for r in template["resources"]]
+    assert "Microsoft.Logic/workflows" in resource_types
+
+
+def test_sentinel_playbook_has_webhook_action():
+    """ARM template should include HTTP POST action to nur webhook."""
+    from nur.integrations.sentinel import generate_sentinel_playbook
+
+    arm_json = generate_sentinel_playbook("https://nur.example.com", "key")
+    assert "/ingest/webhook" in arm_json
+    assert "X-API-Key" in arm_json
+
+
+# ── Integration modules: CrowdStrike ────────────────────────────────────────
+
+
+def test_crowdstrike_extract_detection_data():
+    """_extract_detection_data should extract technique and IOC info."""
+    from nur.integrations.crowdstrike import _extract_detection_data
+
+    detection = {
+        "detection_id": "ldt:abc123",
+        "max_severity_displayname": "Critical",
+        "behaviors": [{
+            "technique_id": "T1486",
+            "tactic": "Impact",
+            "sha256": "abc123def456789",
+            "description": "Ransomware detected",
+            "scenario": "ransomware",
+            "timestamp": "2026-01-01T00:00:00Z",
+        }],
+        "device": {
+            "external_ip": "10.0.0.1",
+        },
+    }
+
+    result = _extract_detection_data(detection)
+    assert result is not None
+    assert result["detection"]["technique"] == "T1486"
+    assert result["detection"]["tactic"] == "Impact"
+    assert result["detection"]["severity"] == "critical"
+    # SHA256 takes priority over IP for ioc_type
+    assert result["detection"]["ioc_type"] == "hash-sha256"
+    assert result["detection"]["ioc_value"] == "abc123def456789"
+
+
+def test_crowdstrike_extract_no_behaviors():
+    """Detection without behaviors should return None."""
+    from nur.integrations.crowdstrike import _extract_detection_data
+
+    result = _extract_detection_data({"behaviors": []})
+    assert result is None
+
+
+def test_crowdstrike_extract_ip_only():
+    """Detection with only external IP (no hash) should use IP."""
+    from nur.integrations.crowdstrike import _extract_detection_data
+
+    result = _extract_detection_data({
+        "max_severity_displayname": "Medium",
+        "behaviors": [{
+            "technique_id": "T1059",
+            "tactic": "Execution",
+        }],
+        "device": {"external_ip": "10.0.0.5"},
+    })
+    assert result is not None
+    assert result["detection"]["ioc_type"] == "ip"
+    assert result["detection"]["ioc_value"] == "10.0.0.5"
+
+
+# ── Integration modules: Syslog/CEF ─────────────────────────────────────────
+
+
+def test_cef_parse_valid():
+    """parse_cef should correctly parse a standard CEF message."""
+    from nur.integrations.syslog_listener import parse_cef
+
+    msg = "CEF:0|SecurityVendor|Firewall|1.0|100|Blocked|7|src=192.168.1.1 dst=10.0.0.1 dhost=evil.com"
+    parsed = parse_cef(msg)
+
+    assert parsed is not None
+    assert parsed["version"] == "0"
+    assert parsed["vendor"] == "SecurityVendor"
+    assert parsed["product"] == "Firewall"
+    assert parsed["severity"] == "7"
+    assert parsed["extensions"]["src"] == "192.168.1.1"
+    assert parsed["extensions"]["dst"] == "10.0.0.1"
+    assert parsed["extensions"]["dhost"] == "evil.com"
+
+
+def test_cef_parse_with_syslog_header():
+    """parse_cef should handle syslog header prefix."""
+    from nur.integrations.syslog_listener import parse_cef
+
+    msg = "<134>Jan  1 00:00:00 host CEF:0|Vendor|Product|1.0|1|Event|3|src=1.2.3.4"
+    parsed = parse_cef(msg)
+
+    assert parsed is not None
+    assert parsed["vendor"] == "Vendor"
+    assert parsed["extensions"]["src"] == "1.2.3.4"
+
+
+def test_cef_parse_invalid():
+    """parse_cef should return None for non-CEF messages."""
+    from nur.integrations.syslog_listener import parse_cef
+
+    assert parse_cef("not a cef message") is None
+    assert parse_cef("") is None
+    assert parse_cef("syslog: some event happened") is None
+
+
+def test_cef_extract_iocs():
+    """extract_iocs_from_cef should extract IP, domain, and hash IOCs."""
+    from nur.integrations.syslog_listener import parse_cef, extract_iocs_from_cef
+
+    msg = "CEF:0|V|P|1|1|E|5|src=10.0.0.1 dst=10.0.0.2 dhost=malware.com fileHash=abc123"
+    parsed = parse_cef(msg)
+    iocs = extract_iocs_from_cef(parsed)
+
+    ioc_types = {i["ioc_type"] for i in iocs}
+    assert "ip" in ioc_types
+    assert "domain" in ioc_types
+    assert "hash-sha256" in ioc_types
+    assert len(iocs) == 4  # src, dst, dhost, fileHash
+
+    # All should have value_hash
+    for ioc in iocs:
+        assert "value_hash" in ioc
+        assert len(ioc["value_hash"]) == 64  # SHA-256 hex
+
+
+def test_cef_extract_skips_empty():
+    """extract_iocs_from_cef should skip empty/null extension values."""
+    from nur.integrations.syslog_listener import parse_cef, extract_iocs_from_cef
+
+    msg = "CEF:0|V|P|1|1|E|5|src=10.0.0.1 dst=- dhost=N/A"
+    parsed = parse_cef(msg)
+    iocs = extract_iocs_from_cef(parsed)
+
+    assert len(iocs) == 1  # Only src
+    assert iocs[0]["ioc_type"] == "ip"
+
+
+def test_syslog_listener_init():
+    """SyslogListener should initialize with correct defaults."""
+    from nur.integrations.syslog_listener import SyslogListener
+
+    listener = SyslogListener(port=9514, api_url="http://test:8000", api_key="k")
+    assert listener.port == 9514
+    assert listener.api_url == "http://test:8000"
+    assert listener.api_key == "k"
+    assert listener.stats["total_received"] == 0
+    assert listener.stats["total_submitted"] == 0

@@ -2357,3 +2357,335 @@ def integrate_webhook_test(api_url, api_key, payload, fmt):
     except Exception as e:
         click.echo(f"  Error: {e}")
     click.echo()
+
+
+# -- Attack Pattern Intelligence & Simulator CLI commands --------------------
+
+
+@main.command("patterns")
+@click.argument("vertical", default="healthcare")
+@click.option("--json", "as_json", is_flag=True, help="Output raw JSON")
+@click.option("--api-url", default=None, help="nur API URL (default: from nur init)")
+@click.option("--api-key", default=None, help="nur API key (default: from nur init)")
+def patterns_cmd(vertical, as_json, api_url, api_key):
+    """Show attack methodology patterns for an industry vertical.
+
+    \b
+    Examples:
+      nur patterns healthcare
+      nur patterns financial --json
+      nur patterns energy
+    """
+    api_url = _get_api_url(api_url)
+
+    # Try server first, fall back to local analysis
+    if api_url:
+        try:
+            import httpx
+            headers = {}
+            api_key = _get_api_key(api_key)
+            if api_key:
+                headers["X-API-Key"] = api_key
+            with httpx.Client(timeout=30) as http:
+                resp = http.get(
+                    f"{api_url.rstrip('/')}/intelligence/patterns/{vertical}",
+                    headers=headers,
+                )
+            if resp.status_code == 200:
+                result = resp.json()
+            else:
+                click.echo(f"  Server error ({resp.status_code}): {resp.text[:200]}")
+                click.echo("  Falling back to local analysis...")
+                result = _local_patterns(vertical)
+        except Exception:
+            click.echo("  Server unreachable. Using local analysis...")
+            result = _local_patterns(vertical)
+    else:
+        result = _local_patterns(vertical)
+
+    if as_json:
+        click.echo(json.dumps(result, indent=2))
+        return
+
+    _render_patterns(result)
+
+
+def _local_patterns(vertical: str) -> dict:
+    """Generate patterns locally without a server."""
+    from .intelligence import extract_attack_patterns
+
+    return extract_attack_patterns(
+        db_stats={"total_contributions": 0, "by_type": {}},
+        techniques=[],
+        contributions=[],
+        vertical=vertical,
+    )
+
+
+def _render_patterns(result: dict) -> None:
+    """Render attack patterns in human-readable format."""
+    vertical_display = result.get("vertical_display", result.get("vertical", "?"))
+    click.echo()
+    click.echo(f"  Attack Pattern Intelligence: {vertical_display}")
+    click.echo("  " + "=" * 55)
+    click.echo()
+
+    actors = result.get("threat_actors", [])
+    if actors:
+        click.echo(f"  Threat Actors: {', '.join(actors[:5])}")
+        click.echo()
+
+    patterns = result.get("patterns", {})
+
+    # Initial access
+    ia = patterns.get("initial_access", {})
+    if ia:
+        click.echo("  Initial Access Vectors:")
+        for name, info in ia.items():
+            label = name.replace("_", " ").title()
+            click.echo(f"    {label:<25} {info['pct']:>3}%  ({info['technique']})")
+        click.echo()
+
+    # Common chains
+    chains = patterns.get("common_chains", [])
+    if chains:
+        click.echo("  Common Attack Chains:")
+        for chain in chains:
+            click.echo(f"    {chain['name']}")
+            click.echo(f"      Frequency:  {chain['frequency']}")
+            click.echo(f"      Dwell time: {chain['avg_dwell_time']}")
+            steps = chain.get("steps", [])
+            if steps:
+                step_str = " -> ".join(s.split("(")[0] for s in steps[:6])
+                click.echo(f"      Chain:      {step_str}")
+            click.echo()
+
+    # Tool effectiveness
+    tool_eff = patterns.get("tool_effectiveness", {})
+    if tool_eff:
+        click.echo("  Tool Effectiveness (from collective data):")
+        for tool, info in sorted(
+            tool_eff.items(),
+            key=lambda x: x[1].get("detection_pct", 0),
+            reverse=True,
+        )[:8]:
+            from .server.vendors import VENDOR_REGISTRY
+
+            display = VENDOR_REGISTRY.get(tool, {}).get("display_name", tool)
+            misses = info.get("misses", [])
+            miss_str = f"  Misses: {', '.join(misses[:3])}" if misses else ""
+            click.echo(
+                f"    {display:<30} {info['detection_pct']:>3}% detection"
+                f"  ({info['avg_detect_time']}){miss_str}"
+            )
+        click.echo()
+
+    # Remediation insights
+    rem = patterns.get("remediation_insights", {})
+    if rem:
+        click.echo("  Remediation Insights:")
+        click.echo(f"    Avg recovery time:  {rem.get('avg_recovery_time', '?')}")
+        click.echo(f"    With backups:       {rem.get('with_backups', '?')}")
+        click.echo(f"    Ransom paid:        {rem.get('ransom_paid_pct', '?')}%")
+        effective = rem.get("most_effective", [])
+        if effective:
+            click.echo("    Most effective actions:")
+            for a in effective[:4]:
+                click.echo(f"      - {a}")
+        click.echo()
+
+    # Minimum viable stack
+    mvs = patterns.get("minimum_viable_stack", {})
+    if mvs:
+        click.echo("  Minimum Viable Stack:")
+        click.echo(f"    Categories: {', '.join(mvs.get('tools', []))}")
+        click.echo(f"    Coverage:   {mvs.get('coverage', '?')}")
+        click.echo(f"    Est. cost:  {mvs.get('estimated_cost', '?')}")
+        click.echo()
+
+
+@main.command("simulate")
+@click.option(
+    "--stack", required=True,
+    help="Comma-separated tool list (e.g., crowdstrike,splunk,okta)",
+)
+@click.option("--vertical", default="healthcare", help="Industry vertical")
+@click.option(
+    "--attack", default=None,
+    help="Attack type (ransomware, apt, ics, supply-chain, bec)",
+)
+@click.option("--json", "as_json", is_flag=True, help="Output raw JSON")
+@click.option("--api-url", default=None, help="nur API URL (default: from nur init)")
+@click.option("--api-key", default=None, help="nur API key (default: from nur init)")
+def simulate_cmd(stack, vertical, attack, as_json, api_url, api_key):
+    """Simulate an attack chain against your security stack.
+
+    \b
+    Examples:
+      nur simulate --stack crowdstrike,splunk,okta --vertical healthcare
+      nur simulate --stack crowdstrike,splunk --vertical financial --attack apt
+      nur simulate --stack crowdstrike --json
+    """
+    stack_list = [s.strip() for s in stack.split(",") if s.strip()]
+    if not stack_list:
+        click.echo("  Error: --stack must contain at least one tool")
+        raise SystemExit(1)
+
+    api_url = _get_api_url(api_url)
+
+    # Try server first, fall back to local
+    if api_url:
+        try:
+            import httpx
+
+            headers = {"Content-Type": "application/json"}
+            api_key_val = _get_api_key(api_key)
+            if api_key_val:
+                headers["X-API-Key"] = api_key_val
+            body = {"stack": stack_list, "vertical": vertical}
+            if attack:
+                body["attack_type"] = attack
+            with httpx.Client(timeout=30) as http:
+                resp = http.post(
+                    f"{api_url.rstrip('/')}/intelligence/simulate",
+                    json=body,
+                    headers=headers,
+                )
+            if resp.status_code == 200:
+                result = resp.json()
+            else:
+                click.echo(f"  Server error ({resp.status_code}): {resp.text[:200]}")
+                click.echo("  Falling back to local simulation...")
+                result = _local_simulate(stack_list, vertical, attack)
+        except Exception:
+            click.echo("  Server unreachable. Using local simulation...")
+            result = _local_simulate(stack_list, vertical, attack)
+    else:
+        result = _local_simulate(stack_list, vertical, attack)
+
+    if as_json:
+        click.echo(json.dumps(result, indent=2))
+        return
+
+    _render_simulation(result)
+
+
+def _local_simulate(stack: list[str], vertical: str, attack_type: str | None) -> dict:
+    """Run simulation locally without a server."""
+    from .simulator import simulate_attack
+
+    return simulate_attack(stack=stack, vertical=vertical, attack_type=attack_type)
+
+
+def _render_simulation(result: dict) -> None:
+    """Render simulation results in human-readable format."""
+    attack_name = result.get("attack_name", result.get("attack_type", "?"))
+    vertical_display = result.get("vertical_display", result.get("vertical", "?"))
+
+    click.echo()
+    click.echo(f"  Attack Chain Simulation: {vertical_display} {attack_name}")
+    click.echo("  " + "=" * 55)
+    click.echo()
+
+    chain = result.get("chain", [])
+    for step in chain:
+        step_num = step["step"]
+        tid = step["technique_id"]
+        name = step["technique_name"]
+        coverage = step.get("your_coverage")
+        res = step["result"]
+        det_time = step.get("detection_time")
+
+        # Format the result
+        if res == "BLOCKED":
+            status = f"{coverage}: BLOCKED"
+            symbol = "+"
+        elif res == "DETECTED":
+            time_str = f" (avg {det_time})" if det_time else ""
+            status = f"{coverage}: DETECTED{time_str}"
+            symbol = "+"
+        else:
+            status = "No coverage: PASS THROUGH"
+            symbol = "x"
+
+        click.echo(f"  Step {step_num}: {tid} {name:<28} -> {status} {symbol}")
+
+    click.echo()
+
+    breaks_at = result.get("chain_breaks_at")
+    break_prob = result.get("break_probability", 0)
+    if_bypassed = result.get("if_bypassed", "?")
+    weakest = result.get("weakest_link", "?")
+    coverage_pct = result.get("coverage_pct", 0)
+
+    if breaks_at:
+        click.echo(f"  Chain breaks at: Step {breaks_at} ({break_prob}% of attempts blocked)")
+    else:
+        click.echo("  Chain breaks at: NEVER -- attack completes undetected")
+
+    click.echo(f"  If bypassed:     {if_bypassed}")
+    click.echo(f"  Weakest links:   {weakest}")
+    click.echo(f"  Coverage:        {coverage_pct}%")
+    click.echo()
+
+    recommendations = result.get("recommendations", [])
+    if recommendations:
+        click.echo("  Recommendations:")
+        for rec in recommendations[:6]:
+            priority = rec.get("priority", "?")
+            action = rec.get("action", "?")
+            detail = rec.get("detail", "")
+            cost = rec.get("cost", "")
+            click.echo(f"    [{priority:<8}] {action}")
+            if detail:
+                click.echo(f"              {detail}")
+            if cost:
+                click.echo(f"              Cost: {cost}")
+        click.echo()
+
+    min_imp = result.get("minimum_improvement")
+    if min_imp:
+        click.echo(f"  Minimum viable improvement: {min_imp}")
+        click.echo()
+
+    cost_to_close = result.get("cost_to_close")
+    if cost_to_close:
+        click.echo(f"  Cost to close all gaps: {cost_to_close}")
+        click.echo()
+
+
+@main.command("privacy-levels")
+@click.option("--json", "as_json", is_flag=True, help="Output raw JSON")
+def privacy_levels_cmd(as_json):
+    """Show available privacy-utility tradeoff levels.
+
+    \b
+    Examples:
+      nur privacy-levels
+      nur privacy-levels --json
+    """
+    from .privacy import list_privacy_levels, PRIVACY_LEVELS
+
+    levels = list_privacy_levels()
+
+    if as_json:
+        click.echo(json.dumps(PRIVACY_LEVELS, indent=2))
+        return
+
+    click.echo()
+    click.echo("  Privacy-Utility Tradeoff Levels")
+    click.echo("  " + "=" * 45)
+    click.echo()
+
+    for level in levels:
+        name = level["name"]
+        desc = level["description"]
+        config = PRIVACY_LEVELS[name]
+        click.echo(f"  {name.upper()}")
+        click.echo(f"    {desc}")
+        click.echo(f"    IOC hashing:    {config['ioc_hashing']}")
+        click.echo(f"    Text scrubbing: {config['text_scrubbing']}")
+        click.echo(f"    DP noise:       {config['dp_noise']} (epsilon={config['dp_epsilon']})")
+        click.echo(f"    Min-k:          {config['min_k']}")
+        click.echo(f"    Strip timing:   {config['strip_timing']}")
+        click.echo()
