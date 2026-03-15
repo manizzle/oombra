@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════
-#  oombra — the hospital incident
+#  oombra — peace mode + war mode, one platform
 #
 #  Record: asciinema rec demo/oombra-demo.cast -c "./demo/asciinema_demo.sh"
 #  Upload: asciinema upload demo/oombra-demo.cast
@@ -38,129 +38,102 @@ clear
 echo ""
 echo "  ┌───────────────────────────────────────────────────────┐"
 echo "  │                                                       │"
-echo "  │   2:17 AM — Ohio Children's Hospital                  │"
+echo "  │   oombra — threat intel sharing platform              │"
 echo "  │                                                       │"
-echo "  │   EHR system encrypted. LockBit ransom note on        │"
-echo "  │   every screen. NICU monitors offline.                │"
+echo "  │   PEACE MODE: strengthen your defenses                │"
+echo "  │   WAR MODE:   you're getting hacked, act now          │"
 echo "  │                                                       │"
-echo "  │   The IR team has IOCs and MITRE observations.        │"
-echo "  │   They need to know: is anyone else seeing this?      │"
-echo "  │   What are they missing? What should they do next?    │"
-echo "  │                                                       │"
-echo "  │   To get answers, they have to contribute.            │"
+echo "  │   One platform. One database. Give data, get intel.   │"
 echo "  │                                                       │"
 echo "  └───────────────────────────────────────────────────────┘"
 echo ""
-sleep 5
+sleep 4
 
-# ═══════════════════════════════════════════════════════════════
-# Background: seed server with real data + other hospitals
-# ═══════════════════════════════════════════════════════════════
-
-narrate "The oombra platform already has contributions from 3 other hospitals"
-narrate "and real IOCs scraped from ThreatFox, Feodo Tracker, and CISA KEV."
-echo ""
-
+# ── Seed silently ─────────────────────────────────────────────
 python demo/scrape_real_intel.py demo/seed/ > /dev/null 2>&1
 rm -f demo_asciinema.db
 oombra serve --port 8765 --db sqlite+aiosqlite:///demo_asciinema.db > /dev/null 2>&1 &
 SERVER_PID=$!
 sleep 2
-for f in demo/seed/ioc_bundle_*.json demo/seed/attack_map_*.json demo/eval_crowdstrike.json demo/eval_sentinelone.json demo/eval_splunk.json demo/ioc_bundle_1.json demo/attack_map_apt28.json demo/attack_map_lockbit.json; do
+for f in demo/seed/ioc_bundle_*.json demo/seed/attack_map_*.json demo/eval_crowdstrike.json demo/eval_sentinelone.json demo/eval_splunk.json demo/eval_wiz.json demo/eval_palo_alto_prisma_cloud.json demo/ioc_bundle_1.json demo/ioc_bundle_2.json demo/attack_map_apt28.json demo/attack_map_lockbit.json; do
     [ -f "$f" ] && oombra upload "$f" --api-url http://localhost:8765 --yes > /dev/null 2>&1
 done
 
-type_cmd "curl -s http://localhost:8765/stats | python3 -m json.tool"
-
-narrate ""
-narrate "Pennsylvania, West Virginia, and Michigan already contributed."
-narrate "Ohio doesn't know any of this yet. They just got breached."
-sleep 2
-
-# ═══════════════════════════════════════════════════════════════
-# SCENE 1: What the IR team found
-# ═══════════════════════════════════════════════════════════════
-
-divider "THE INCIDENT: What Ohio's IR team pulled from their network"
-
-narrate "4 IOCs from the compromised EHR servers:"
-narrate "  - lockbit-decryptor.onion.ws (C2 domain)"
-narrate "  - a1b2c3...123456 (LockBit payload hash)"
-narrate "  - 45.33.32.156 (attacker IP)"
-narrate "  - lockbit-support@protonmail.com (ransom contact)"
-narrate ""
-narrate "They can't share this raw — HIPAA, internal network context."
-narrate "But they NEED to know if this is part of something bigger."
-sleep 2
-
-# ═══════════════════════════════════════════════════════════════
-# SCENE 2: Give IOCs → Get campaign match
-# ═══════════════════════════════════════════════════════════════
-
-divider "\"Are we the only ones getting hit?\""
-
-narrate "One command. IOCs anonymized locally, then analyzed against"
-narrate "what Pennsylvania, West Virginia, and Michigan contributed."
+narrate "Platform loaded: real IOCs from ThreatFox, Feodo, CISA KEV"
+narrate "+ contributions from 4 hospitals and practitioner tool evals."
 echo ""
+
+type_cmd "curl -s http://localhost:8765/stats | python3 -m json.tool"
+sleep 2
+
+# ═══════════════════════════════════════════════════════════════
+# PEACE MODE
+# ═══════════════════════════════════════════════════════════════
+
+divider "PEACE MODE — Strengthen your defenses"
+
+narrate "No incident. You're planning. Building your stack."
+narrate "What tools should I buy? Where are my gaps?"
+sleep 1
+
+echo ""
+bold "1. Market map — who leads in EDR?"
+
+type_cmd "oombra market edr --api-url http://localhost:8765"
+
+narrate "Leaders, contenders, emerging — based on weighted practitioner scores."
+sleep 2
+
+bold "2. Vendor deep dive"
+
+type_cmd "oombra search vendor crowdstrike --api-url http://localhost:8765"
+
+narrate "Real scores from real incidents. Not Gartner. Not vendor marketing."
+sleep 2
+
+bold "3. Side-by-side comparison"
+
+type_cmd "oombra search compare crowdstrike sentinelone --api-url http://localhost:8765"
+
+narrate "Objective comparison. Data from the pool."
+sleep 2
+
+bold "4. Threat coverage analysis"
+
+type_cmd "oombra threat-map 'ransomware lateral movement' --tools crowdstrike,splunk --api-url http://localhost:8765"
+
+narrate "Before the attack — know your gaps. Close them."
+sleep 3
+
+# ═══════════════════════════════════════════════════════════════
+# WAR MODE
+# ═══════════════════════════════════════════════════════════════
+
+divider "WAR MODE — 2:17 AM, Ohio Children's Hospital, LockBit"
+
+narrate "EHR encrypted. NICU monitors offline. Ransom note on every screen."
+narrate "The IR team pulls IOCs. They need answers NOW."
+sleep 2
+
+bold "5. Give IOCs → Get campaign match"
 
 type_cmd "oombra report demo/ioc_bundle_2.json --api-url http://localhost:8765"
 
-narrate ""
-bold "Campaign Match: Yes. 8 shared IOCs. LockBit healthcare campaign."
-narrate "3 other hospitals saw the same C2 domain and attacker IP."
-narrate "Ohio learned this in seconds — would take days through an ISAC."
+narrate "Campaign confirmed. 3 other hospitals hit. Actions prioritized."
 sleep 3
 
-# ═══════════════════════════════════════════════════════════════
-# SCENE 3: Give attack map → Get detection gaps
-# ═══════════════════════════════════════════════════════════════
-
-divider "\"What is our CrowdStrike missing?\""
-
-narrate "Ohio mapped the attack to MITRE ATT&CK. CrowdStrike caught T1486"
-narrate "(encryption) but what else did it miss? Other hospitals know."
-echo ""
+bold "6. Give attack map → Get detection gaps"
 
 type_cmd "oombra report demo/attack_map_lockbit.json --api-url http://localhost:8765"
 
-narrate ""
-bold "46% coverage. 7 detection gaps found."
-narrate "T1490 (VSS deletion) — CRITICAL. CrowdStrike misses it."
-narrate "T1021 (RDP lateral movement) — missed across all tools."
-narrate "Ohio knows exactly what detection rules to deploy NOW."
+narrate "7 gaps found. T1490 is critical. Deploy detection rules NOW."
 sleep 3
 
-# ═══════════════════════════════════════════════════════════════
-# SCENE 4: Give eval → Get benchmarks
-# ═══════════════════════════════════════════════════════════════
-
-divider "\"Should we switch EDR vendors?\""
-
-narrate "After the incident, Ohio's CISO needs data for the board."
-echo ""
+bold "7. Give tool eval → Get real benchmarks"
 
 type_cmd "oombra report demo/eval_crowdstrike.json --api-url http://localhost:8765"
 
-narrate ""
-narrate "CrowdStrike 9.2 — at or above average. Don't switch."
-narrate "But it has 5 known technique gaps from cross-org attack data."
-narrate "Supplement with Sigma rules. Present this to the board."
-sleep 3
-
-# ═══════════════════════════════════════════════════════════════
-# SCENE 5: The flywheel — next hospital gets a better report
-# ═══════════════════════════════════════════════════════════════
-
-divider "4:30 AM — West Virginia runs the same command. Better report."
-
-narrate "Ohio's contribution just made West Virginia's report richer."
-narrate "More IOCs to match. More technique data. Better actions."
-narrate "Every hospital that contributes makes the next one safer."
-echo ""
-
-type_cmd "curl -s http://localhost:8765/query/techniques | python3 -m json.tool"
-
-narrate "13 techniques tracked. Detection gaps visible across all tools."
+narrate "CrowdStrike 9.2 — above avg. But 5 known gaps. Supplement, don't switch."
 sleep 2
 
 # ── Cleanup ───────────────────────────────────────────────────
@@ -171,16 +144,24 @@ rm -f demo_asciinema.db
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "  2:17 AM  Ohio gets hit. Fights alone."
-echo "  2:18 AM  Runs: oombra report incident_iocs.json"
-echo "           Gets: campaign match, 8 shared IOCs, LockBit confirmed"
-echo "  2:19 AM  Runs: oombra report attack_map.json"
-echo "           Gets: 7 detection gaps, T1490 is critical"
-echo "  2:20 AM  Deploys detection rules. Closes the gaps."
-echo "  4:30 AM  West Virginia gets hit. Runs oombra report."
-echo "           Gets a BETTER report — because Ohio contributed."
+echo "  PEACE MODE                    WAR MODE"
+echo "  oombra market edr             oombra report iocs.json"
+echo "  oombra search vendor X        oombra report attack.json"
+echo "  oombra search compare X Y     oombra report eval.json"
+echo "  oombra threat-map '...'       "
 echo ""
-echo "  No contribution = no report. That's the deal."
+echo "  Same database. Same give-to-get."
+echo "  Your peacetime eval helps someone in wartime."
+echo "  Their wartime IOCs help your peacetime planning."
+echo ""
+echo "  Deploy for any vertical:"
+echo "    oombra up --vertical healthcare"
+echo "    oombra up --vertical financial"
+echo "    oombra up --vertical energy"
+echo ""
+echo "  Data: LGPL-3.0 (open data)"
+echo "  Code: Apache 2.0"
+echo "  Feeds: abuse.ch (CC0), CISA KEV (public domain), MITRE (Apache 2.0)"
 echo ""
 echo "  pip install oombra"
 echo "  github.com/manizzle/oombra"
