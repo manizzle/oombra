@@ -522,8 +522,38 @@ def up(port, host, db, skip_feeds):
             except Exception as e:
                 click.echo(f" error: {e}")
 
+        # Also seed demo/seed hospital bundles if they exist
+        seed_dir = Path(__file__).parent.parent / "demo" / "seed"
+        demo_dir = Path(__file__).parent.parent / "demo"
+        seed_files = []
+        if seed_dir.exists():
+            seed_files = sorted(seed_dir.glob("*.json"))
+        # Also check for demo data
+        for pattern in ["ioc_bundle_*.json", "attack_map_*.json", "eval_*.json"]:
+            seed_files.extend(sorted(demo_dir.glob(pattern)))
+
+        if seed_files:
+            seed_count = 0
+            for f in seed_files:
+                if f.name == "cisa_kev_reference.json":
+                    continue
+                try:
+                    contribs = load_file(str(f))
+                    for c in contribs:
+                        clean = anonymize(c)
+                        from .client import _serialize, _route_for
+                        payload = _serialize(clean)
+                        route = _route_for(clean)
+                        import httpx as _hx
+                        _hx.post(f"{api_url}{route}", json=payload, timeout=5)
+                        seed_count += 1
+                except Exception:
+                    continue
+            if seed_count:
+                click.echo(f"  Loaded {seed_count} demo contributions")
+
         click.echo()
-        click.echo(f"  Loaded {total_iocs} real IOCs from public feeds")
+        click.echo(f"  Total: {total_iocs} IOCs from live feeds + {seed_count if seed_files else 0} demo contributions")
         click.echo()
         click.echo("  ──────────────────────────────────────────")
         click.echo(f"  Ready. In another terminal, run:")
