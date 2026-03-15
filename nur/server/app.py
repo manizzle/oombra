@@ -106,18 +106,39 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     app.state.db_url = db_url
 
     # ── API key + signature auth middleware ──────────────────────────────
-    api_key = os.environ.get("NUR_API_KEY")
+    master_key = os.environ.get("NUR_API_KEY")
 
     @app.middleware("http")
     async def api_key_auth(request: Request, call_next):
         write_paths = request.url.path.startswith("/contribute/") or request.url.path == "/analyze"
-        if api_key and write_paths and request.method == "POST":
+        if master_key and write_paths and request.method == "POST":
             provided = request.headers.get("X-API-Key")
-            if provided != api_key:
+            if not provided:
                 return JSONResponse(
                     status_code=401,
                     content={"error": "Invalid or missing API key"},
                 )
+            # Accept master key OR any registered user key
+            if provided != master_key:
+                from sqlalchemy import select
+                from .models import APIKeyRecord
+                try:
+                    db = get_db()
+                    async with db.session() as s:
+                        result = await s.execute(
+                            select(APIKeyRecord).where(APIKeyRecord.api_key == provided)
+                        )
+                        record = result.scalar_one_or_none()
+                    if not record:
+                        return JSONResponse(
+                            status_code=401,
+                            content={"error": "Invalid or missing API key"},
+                        )
+                except Exception:
+                    return JSONResponse(
+                        status_code=401,
+                        content={"error": "Invalid or missing API key"},
+                    )
 
             # Verify request signature if provided
             sig_header = request.headers.get("X-Signature")
