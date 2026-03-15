@@ -187,7 +187,7 @@ nur admin sources           # see all 45 with tier/status
 
 Raw data snapshots available in `data/feeds/` (658,000+ records, CDLA-Permissive-2.0).
 
-> **Want to help?** 4 feeds just need free API keys — [grab one and help us](https://github.com/manizzle/nur/issues/1). Run a threat intel feed? [Get listed on this page](https://github.com/manizzle/nur/issues/2).
+> **Want to help?** 4 feeds just need free API keys — [grab one and help us](https://github.com/manizzle/nur/issues/3). Run a threat intel feed? [Get listed on this page](https://github.com/manizzle/nur/issues/4).
 
 ---
 
