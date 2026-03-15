@@ -39,34 +39,29 @@ oombra takes your raw incident data — IOCs, MITRE ATT&CK observations, tool ev
 
 ## 💻 How to Install
 
+Don't want to read? Got it:
+
 ```bash
 git clone https://github.com/manizzle/oombra.git
 cd oombra
 pip install -e ".[all,dev]"
 ```
 
-Verify it works:
-```bash
-oombra --help
-```
+> ✅ Everything is anonymized on your machine. Nothing leaves without your approval.
 
 ## 🚀 How to Run
 
-**Full loop — two commands:**
+Two commands. That's the full loop.
 
-**Terminal 1** — Start the platform (server + live threat feeds):
 ```bash
+# Terminal 1 — start the platform
 oombra up
-```
 
-This starts the server, scrapes 750+ real IOCs from public feeds, seeds demo data, saves your config, and tells you when it's ready.
-
-**Terminal 2** — Give data, get intelligence:
-```bash
+# Terminal 2 — give data, get intelligence
 oombra report your_incident_iocs.json
 ```
 
-That's it. No `--api-url`. No `--api-key`. No config files. `oombra up` handles everything.
+`oombra up` starts the server, scrapes 750+ real IOCs from public threat feeds, seeds the database, and saves your config. No `--api-url`. No flags. No config files.
 
 **What you get back:**
 ```
