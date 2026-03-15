@@ -193,6 +193,24 @@ TIER_1_FEEDS = {
         "refresh": "daily",
         "status": "implemented",
     },
+    "hybrid-analysis": {
+        "url": "https://www.hybrid-analysis.com/api/v2/feed/latest",
+        "type": "ioc_feed",
+        "data": "daily malware samples with verdicts (SHA-256 hashes)",
+        "format": "json_api",
+        "license": "Free (API key required)",
+        "refresh": "daily",
+        "status": "implemented",
+    },
+    "jpcert": {
+        "url": "https://www.jpcert.or.jp/english/rss/jpcert-en.rdf",
+        "type": "ioc_feed",
+        "data": "Japanese CERT security advisories",
+        "format": "rss",
+        "license": "Free",
+        "refresh": "daily",
+        "status": "implemented",
+    },
 }
 
 

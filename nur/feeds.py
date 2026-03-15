@@ -22,6 +22,8 @@ Supported feeds:
   - OTX AlienVault          — community threat pulses (API key required)
   - Pulsedive               — community threat intel (API key required)
   - GreyNoise               — internet scanner classification (API key required)
+  - Hybrid Analysis         — daily malware samples with verdicts (API key required)
+  - JPCERT                  — Japanese CERT security advisories (RSS feed)
 """
 from __future__ import annotations
 
@@ -700,6 +702,90 @@ def scrape_greynoise(url: str) -> list[dict]:
     return []  # Cap at 100 (when implemented)
 
 
+def scrape_hybrid_analysis(url: str) -> list[dict]:
+    """Hybrid Analysis — malware sample feed with verdicts. Requires HYBRID_ANALYSIS_API_KEY."""
+    api_key = os.environ.get("HYBRID_ANALYSIS_API_KEY", "")
+    if not api_key:
+        print("[nur] HYBRID_ANALYSIS_API_KEY not set — skipping Hybrid Analysis")
+        return []
+
+    req = urllib.request.Request(url, headers={
+        "api-key": api_key,
+        "user-agent": "Falcon Sandbox",
+        "accept": "application/json",
+    })
+    opener = urllib.request.build_opener(urllib.request.HTTPRedirectHandler)
+    try:
+        with opener.open(req, timeout=30) as resp:
+            raw = resp.read().decode("utf-8", errors="replace")
+    except Exception:
+        return []
+
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return []
+
+    iocs: list[dict] = []
+    for entry in data.get("data", []):
+        # API uses threat_level_human for classification (verdict field is often "none")
+        threat_level = entry.get("threat_level_human", "")
+        if threat_level != "malicious":
+            continue
+        sha256 = entry.get("sha256", "")
+        if not sha256:
+            continue
+        iocs.append({
+            "ioc_type": "hash-sha256",
+            "value_raw": sha256,
+            "threat_actor": threat_level,
+            "campaign": "hybrid-analysis-daily",
+            "detected_by": [],
+            "missed_by": [],
+        })
+
+    return iocs[:200]
+
+
+def scrape_jpcert(url: str) -> list[dict]:
+    """JPCERT — Japanese CERT advisories via RSS/RDF feed."""
+    import re
+
+    raw = _fetch(url)
+    if not raw:
+        return []
+
+    iocs: list[dict] = []
+    # Parse items from RSS/RDF — extract <item>...</item> blocks
+    items = re.findall(r"<item[^>]*>(.*?)</item>", raw, re.DOTALL)
+    for item in items:
+        title_m = re.search(r"<title>(.*?)</title>", item, re.DOTALL)
+        link_m = re.search(r"<link>(.*?)</link>", item, re.DOTALL)
+        desc_m = re.search(r"<description>(.*?)</description>", item, re.DOTALL)
+
+        title = title_m.group(1).strip() if title_m else ""
+        link = link_m.group(1).strip() if link_m else ""
+        desc = desc_m.group(1).strip() if desc_m else ""
+
+        if not link:
+            continue
+
+        # Try to extract CVE IDs from title or description
+        cves = re.findall(r"CVE-\d{4}-\d{4,}", f"{title} {desc}")
+        campaign = ", ".join(cves) if cves else "jpcert-advisory"
+
+        iocs.append({
+            "ioc_type": "advisory",
+            "value_raw": link,
+            "threat_actor": "JPCERT",
+            "campaign": campaign,
+            "detected_by": [],
+            "missed_by": [],
+        })
+
+    return iocs[:50]
+
+
 # ── Feed registry ────────────────────────────────────────────────────────────
 
 FEEDS: dict[str, dict[str, Any]] = {
@@ -802,6 +888,16 @@ FEEDS: dict[str, dict[str, Any]] = {
         "url": "https://api.greynoise.io/v2/noise/context",
         "scraper": scrape_greynoise,
         "description": "GreyNoise — internet scanner classification (requires API key)",
+    },
+    "hybrid-analysis": {
+        "url": "https://www.hybrid-analysis.com/api/v2/feed/latest",
+        "scraper": scrape_hybrid_analysis,
+        "description": "Hybrid Analysis — daily malware samples with verdicts (requires API key)",
+    },
+    "jpcert": {
+        "url": "https://www.jpcert.or.jp/english/rss/jpcert-en.rdf",
+        "scraper": scrape_jpcert,
+        "description": "JPCERT — Japanese CERT security advisories (RSS feed)",
     },
 }
 

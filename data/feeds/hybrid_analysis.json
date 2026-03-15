@@ -1,0 +1,1034 @@
+[
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "91218784a16bfc24ca13351e5bb1da23f6b7fa0484a14fec5fca3b18b18eef54",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "f765f3635c50987eae3abff78fa3e2132c5ad332c7ce69e36f94fc7d008be7ed",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "d62552f993280a337c57f64e6fb0e9109258d471373f489bab70df0876786abc",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "878cfbe008b2d747134f7f2ea608735b686dc68c5db5b82ac3bd15e0b8010fcd",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "412fa4ecdb873844ffb53a973e031e3ddc1ca522e81a805362b965b94d407d62",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "6b5958033363692844ba1374e3ed89daad416ffe7495a326ca59a70d99a24973",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "982da6dcf5d6db9f2ab26c9cbf62d30d7a5038753e356539a289d04ec66a38a5",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "1622ac3fa3cf29bf8f3e87b81bb0c17655a513b4d038b12eedc15e1c2eeb357f",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "8651bf3f8f38d547530e0dcdd89da904e14ee7bd87c05f5ff429038ba73013ef",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "368a7aaada192c1cbafbe01ad9bc683cc3acdc777859dfab424878910b2ea64e",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "bc2483491d4794bfb70cd81a8ed58aefee461263f00beeb267da6b3fe5565320",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "2dd42412bfac018f483e116e12c5b40a0930cdede6dcc1c6bb406189f5a24107",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "52c7cb1b79652bb317c68fb4173010bbbf937ed09af679802622c5ccfb5e63eb",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "e154f7dbeeceddba374099c63cfd37e7d8daea7128e42bb2ed5419103350de28",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "166b23c25164c3c2234ea9e60c66093a00a7d40076eb39ddc3aef15cb64ceb40",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "4c3cd771f427cb7bb6319313710af43e464e4227e007296961e3fd6877ed4027",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "b3d9e2ee4bd59d471d3c9140550f01e7111edb0de7296142369e839941592eaf",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "8448651866d568c4a893726dc80220ba3b0615c0d1e80f100427c2086b7b03b9",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "70deb3d0431c17bce89de070b9e300fd07868de15e0ed2a53ffaa78ea55ce7fc",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "b4264da02c4919f46553a23222fdca5fa4fda4e30eee94621d703ae0e635f76a",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "0ec8a24fe6705069453c90fcd1ffabf0d37e23cc77c16e628cfaeee628f9fe20",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "5fe8d61522af8b6cfffda6134723cccad2463b2a66287a4769698571c99c1573",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "d2179f954fb900e8a6840ab87cbe0ec24782114ec6b0c4e559c841863085575f",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "7e06c20221ddbab7161365759f79f61c77845b437b71c833463787a432cbeccc",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "4eaa9a41d3ae377731d5ab4f61db564eeb9b90e250576e2def49e8447d237323",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "04bb4867d35e77e8e391f3829cf07a542a73815fc8be975a7733790d6e04243c",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "8a58d22e4bd3190d223af5f9dbd3616a214675fd911193029e121e332c427126",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "f404e513e518e0248b1d7048952d34ef9b4eeefad2cab248ee279a5c6124cf06",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "20bee8caf2c5162ca22f9addabe5cda58ceedd7cb613a15f59009df84201e8c1",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "1938714313b18ca9cbb38d0ae4e9b0a087ec714f53a0619fb2b41162a2de04cb",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "085b5ab05e4901301f0912d7fa5220e22c7f7421db47def1484022afff34ba85",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "4e90a329502e81b2758b4947f927f3b097465fd93d27acd235ed3269fc49326a",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "ab64bf1e75a34f41f3734c7f415ec4574acc6fdbbdf49446af907e1aae035707",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "b48cdd1f5dd5f81be8d229acad73b5fbca841218909a5b63f8473a50c6e4ec82",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "2196c9792b92f78177c14cc441c471cdb25cb2468e1c7f12c6506a2952a442f8",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "dc00a24fdd9516cb21a773f33cfc4bd0914dad6cfc054ce2ed8f793dd9e5095c",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "f037ce8dc837c0534b10893d15eac5c3410c5b6dc130ef950ef3614e7f592975",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "63dc07a87728b8b313b6b00d3282ad54227f6662a718c1d5888bf7a75375b249",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "1d546c58ff8f2d922175cf534b153cf6364ab25a2030814ea74f2de07a8c653e",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "c843556435a038a69bd838a61b1c757655875bf56cbec8aebb419308f4d826c1",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "67ecaac97447d4b1669072a8772712705295d657c0334e4f3de69ef235cb11d6",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "c62fbf45d72e8de299a2bc78cb4a4bad0f2f238bde0ac048845424bbe2fe14dc",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "110b4d3b9730f499f56eb1658721e00c30f456cf485eb946e8731bcbeaa763c7",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "2788720224405673e6ae0aa840b8260167054f5bff122b43610035a142c88fb2",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "a638a3611863c71173453b2b09f866157991094735dd6b169f9dcd42e74ed76c",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "0d17a8b224e9bc47cc0501307a231b0c5e2aa1cdda10f08d5d85a9b885c19f02",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "8cdbc12193a5eb05595f71a9500c207747a25a6839b30625e838ac105f4290ee",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "6941bf8e05bb6c665491f8aaa74675deac98c4b57cfab69ff4490c1691fa4a5c",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "a8c60632dcd1f6493e599354fb76155823b93b2373b7bf90361743fe6a091b78",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "f420bcb6ce52b86f6ac4608a3637940537a6e5adab740db8de3683c1bf7649b0",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "b8c9e3b18efaa05fe23183cfa3a892ab39fb18d12f9f04b08d2b62e08ce2101b",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "d61d49046da4bc3a7a15fa6f5588cf0e0f17efd4556591daa48b80cbc563858f",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "37f0ee946540638d460c302416819cfbb1375fc4de374faadbd4282273ab0e02",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "7153d0f12096ac4f79e1876c59b769051192466effca6898f69b4275904fc3f8",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "6fab7e23b1c14bb36f0b43389d09d063334cf45f72e68428809c1d7457a6132c",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "99e395bef509094510e5f53021a0b0a0b4b2575a0ff4bd67bb3fcff8e4b45ee2",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "9baff2e96d1eb2999d4cba05bdd1874f9930c898ec87be431e04a5120963dc2f",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "fedbe86d99988b0b37925d05d0e3ddaac5cf3400881105fe15357e6dc0094efe",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "a7b7a16ab268c9702bf639f3864c706b99d297e1c344455060e567e3058f791f",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "4fd71d6df20bba6c2ef2641a099dfcce57a37fa12e4495b1bdfda759d46f6dee",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "a9d6abec2c8f0944104251c3219f147f5847fee9572c1ab39dbd183d5c3ea338",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "3c54a1adb76ce7dd25477d1f18a7a442a737144172b9e29da1225fd8e5107514",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "d2f0c101de137aa13b41e68fe8b04526030c119f466a360b944efe2d518ff6ca",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "6fabe1240d29977e3abac71d388790842d994614c9b0449846273ba2c7802b23",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "f027e032f6c628005a69951df10c6c11069c55e792b6b2cff1513ec043a7474f",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "657e0d495c7bf4baddeb8f7dbd1a05c332a0dcf1f0a5192e911988fd87f97100",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "c9c78797dfa219e50cdf37fd6a719aa3ba39691e2919afc6d727a0e4a131256c",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "6eaebe3d44eaacaf549f886b4f81eb5a6378dff55d7bec51c8f9e883b6623676",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "dc8308cff8462c96f8a9b9cedaa4d0711d590a532df4ed1084dfc6c4769926e1",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "0fa9e643b26219015f47b92ca9b2e25ac0d30ead2dec393803616106695f1640",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "70e87ebf3478c56694c2ebbf2f1a65f94dc51fa32cab5eecf59a71e93ea4485a",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "0f3578d7828926f2b58efddd126f1e83dd784a083e6703dbb0cbde3383cba660",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "71db5e156e42918f86272899bf065bfa37ecb5cf0be1abd31a5a2fc0625bfc8d",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "f9c74ee2704b72778edb50b0e710c975b16ab87afb85fe23b5f34d3e6803f636",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "b2c0bcd066ab6b0b818536988d52dbfa9f21967270a729c9e65bf08c7da814b8",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "b756f6d115b2c6c5b10ef9cfebc05731590794024da2b42d7165d37ba381ead0",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "3794090255193c84b13f8e46a518cb61e42a8df17ab4cd25a9e105ce7621493f",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "0a47c1b5be8ad69138576154377bfc14b6c1f144f3b20ae00e9b378e44535c18",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "a04882b8121d315efc7a86028f4e0b6a119af9d4663c7273ba565ca32774123a",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "4828b8aae87a5f0c994b920050caf0093da3e296959f6350ccb3c61fba2bdebe",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "5c261c3670889977e79031453d51047230310eb763d1b23c1530193a0ef8e46e",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "22a7f8b39376972993d386b9915e0029a38f101b42bc5de4cb7088c236ffe659",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "6e8ed3d0e87e48763cf123744658f71ddd2dea7ae2b305d2827d99224d85b13c",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "853150430f5f125d420e0315da2773c76a106d9b05b8947061f5fb1f80539dc0",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "9f782bda53566a845d489fdc4b9b6652308160d71d29a47c2f26acb8f7f3e648",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "f542970b4c7b4fe96b3061c15154df17b33e9b0d9f403060bcf036c99e8c01ea",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "905fcd2566eb979d9ca4e63c7113346d86707f6ae70e325d0e85194acd721bf4",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "38b41e84c29a98dfe8157769aba096ed8226ecab68e5f0c4a79106efe0fc4086",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "687a5d23f08a5abaf07a7d250daa9cc4f1113b830f48d16ef721b3fcded098bb",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "de1c281562300b227036531cf2ed5b14c62e7ab280ceb25750682c8c8091cfd2",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "c82975e979233083de3f1528f72f9b08162fd2f5f50ee80a524630bd60f60eed",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "5b30a038b91fb6bf9640f70c7774ec18734e6dad174322fae4cedccff47ba2db",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "71db5e156e42918f86272899bf065bfa37ecb5cf0be1abd31a5a2fc0625bfc8d",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "6a82b5f74a274355ed9dcb1b9ec1d5e84c293048a7881af9b3c08502a5f34f41",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "41dd25c179ff68eb2a600dbd3e82716201ea7979868a736318dc225ea865d5c1",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "ffa0f921b6e54d0c994dd7ebebb6691a6fd193e0e9fd3219c8c419e1a8671c54",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "f8752bb519b376d434762b552f91794059d907638cb35061e936679b1f2bd014",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "54cbf3eeaf9923dc45c67971e7394ad9da48d5c090775a15eba6cc14c41953b8",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "9b13f867bba4a8bbde9af06a19e2698ef8daab6198d10f140c450aa69b4bd1a5",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "8ad4bb9191f72cf8cb1c0aa5a96a0f51dcb4c2340a7c34a49da61b2432eb5088",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "3750b92e1652ab12f361f1ed2d43854cf391e1f29f6e2ffedcb8726bfc00f89a",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "a0572f1ace1b85cd1325fea1eb387e07bd2aad11302f89d8adc5cf7408d15efe",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "e9c313e7dd84cd8d13317cd5cad73d10d8edccbd66d2a50db1bbed57345323b0",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "a6ebf0a01863bae8f6cb275ea4af8f1f653b6414a6d2d3c1a1a0b54ff20c1308",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "8695cb9e944c3000aebbf233bd91a23f667c0a5938b3824770a2527f3695b276",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "af441c0683f07249f0a9a6e88aff3dd58e8c7597624a2719aa553464f8aaa960",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "5062986d9abfa9da976ea489883c6f8d2579b1e00929551e777f79f291c7096a",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "5c2dd0934251b73f093e0f2d1d3faf7922a7aa7eb96034e4c01026872d56d127",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "74fcdd48da17fb2790965b01a04e55800a16a53ad12770f648886e285d0d8115",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "74fcdd48da17fb2790965b01a04e55800a16a53ad12770f648886e285d0d8115",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "408d114d9f9c8e7840a30373612904317b5fe77122aabddad6bae92b09265563",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "e867b4fc5827da63069eeef85adb86cba429984787ebcbb0a9d523afbdeb21cd",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "eaef59e21e4e6a5f100b887d56b85e3bc34c2925266b57618da55f374f811b69",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "d64bc14232b9cb8d6cc0e58bc9b7ed4ec0524446255e2ee4030b3050c944643b",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "3773d1f3d9c205c83348697a8e9079cd983f58370a0a073947c7682bfeaad292",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "27d7d337bcbe92bc2bd14ce1e11525936689729df72ff28b25d495ee17d07452",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "8a82ecc70406a3aae8eb68870b78ed38f95972a364f5fa50a629e5fadd100380",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "ec87e63ac0f2139739bd471a54256ea77671349a95ac15d2d2359ed44a1bf317",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "1e952c4d370858d103755c73d98988728e0af7361d872d4113fa3f1e1612f8f7",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "3cb5ea1fcca22471fb96252edb09c1a9dde59628f3f8b9be55c184dd48a41da9",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "e0427c20c025dfaf8871e056d45738ae30402351b1c996fb93b78666f70f7e58",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "eea1eb021f5a065626bdfdd2148e6a17f3ac8ac5589e0c7c52e8730261f2f4d0",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "4b802623bf625441d71e6f357bbbee2481d9250e89576358f5f02dddf04b6bf1",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "4b002eacffcf9c0cef910df44b74aac1912626950a9ff8a9c7a487fdabe19e0c",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "6e95007ed53ee2150e15385c6247212daf4959238ec437e869290d0892be3091",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "76459c2a9a07bb8de4607b9bb7819affce520763db5a0730ca6e0b9e9d3d05ed",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "8d06fb0be3b29f20161223e4dab6cca0c3aca448007086c72f311d104ebb3607",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "fce7a061b80ede7285cd86bf9f658abfc4e0e4184a6a9a595194686e3defb194",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "hash-sha256",
+    "value_raw": "657533b41bcca21d62d13254f357911d730e0bd95a581ec08b7d1d6f00ea3e94",
+    "threat_actor": "malicious",
+    "campaign": "hybrid-analysis-daily",
+    "detected_by": [],
+    "missed_by": []
+  }
+]

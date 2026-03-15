@@ -1,0 +1,50 @@
+[
+  {
+    "ioc_type": "advisory",
+    "value_raw": "https://www.jpcert.or.jp/english/at/2026/at260006.html",
+    "threat_actor": "JPCERT",
+    "campaign": "jpcert-advisory",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "advisory",
+    "value_raw": "https://www.jpcert.or.jp/english/at/2026/at260005.html",
+    "threat_actor": "JPCERT",
+    "campaign": "jpcert-advisory",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "advisory",
+    "value_raw": "https://www.jpcert.or.jp/english/at/2026/at260003.html",
+    "threat_actor": "JPCERT",
+    "campaign": "jpcert-advisory",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "advisory",
+    "value_raw": "https://www.jpcert.or.jp/english/at/2026/at260001.html",
+    "threat_actor": "JPCERT",
+    "campaign": "jpcert-advisory",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "advisory",
+    "value_raw": "https://www.jpcert.or.jp/english/at/2025/at250026.html",
+    "threat_actor": "JPCERT",
+    "campaign": "jpcert-advisory",
+    "detected_by": [],
+    "missed_by": []
+  },
+  {
+    "ioc_type": "advisory",
+    "value_raw": "https://www.jpcert.or.jp/english/at/2025/at250025.html",
+    "threat_actor": "JPCERT",
+    "campaign": "jpcert-advisory",
+    "detected_by": [],
+    "missed_by": []
+  }
+]

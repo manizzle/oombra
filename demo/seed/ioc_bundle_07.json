@@ -1,6 +1,14 @@
 {
   "iocs": [
     {
+      "ioc_type": "ip",
+      "value_raw": "196.202.102.11",
+      "threat_actor": "Unknown malware",
+      "campaign": "unknown",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
       "ioc_type": "domain",
       "value_raw": "nanaonsol.lol",
       "threat_actor": "Unknown malware",
@@ -187,14 +195,6 @@
     {
       "ioc_type": "url",
       "value_raw": "https://aborigenivsehebyt.lol/api/is-banned",
-      "threat_actor": "Unknown malware",
-      "campaign": "unknown",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "url",
-      "value_raw": "https://aborigenivsehebyt.lol/api/config",
       "threat_actor": "Unknown malware",
       "campaign": "unknown",
       "detected_by": [],

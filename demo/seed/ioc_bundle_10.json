@@ -2,6 +2,46 @@
   "iocs": [
     {
       "ioc_type": "domain",
+      "value_raw": "123.12.36.229",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "ip",
+      "value_raw": "123.12.36.229",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "182.123.208.65",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "ip",
+      "value_raw": "182.123.208.65",
+      "threat_actor": "32-bit",
+      "campaign": "32-bit",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
+      "value_raw": "mer-forgeon.idealgo.in.net",
+      "threat_actor": "ACRStealer",
+      "campaign": "ACRStealer",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
       "value_raw": "117.209.90.123",
       "threat_actor": "32-bit",
       "campaign": "32-bit",
@@ -106,22 +146,6 @@
     },
     {
       "ioc_type": "domain",
-      "value_raw": "123.12.36.229",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "ip",
-      "value_raw": "123.12.36.229",
-      "threat_actor": "32-bit",
-      "campaign": "32-bit",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
       "value_raw": "158.94.208.7",
       "threat_actor": "dropped-by-amadey",
       "campaign": "dropped-by-amadey",
@@ -213,30 +237,6 @@
       "value_raw": "cloflart.com",
       "threat_actor": "ClickFix",
       "campaign": "ClickFix",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "download.google-chrome.cyou",
-      "threat_actor": "SilverFox",
-      "campaign": "SilverFox",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "longsauce.com",
-      "threat_actor": "None",
-      "campaign": "None",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "wellnessmedcare.org",
-      "threat_actor": "None",
-      "campaign": "None",
       "detected_by": [],
       "missed_by": []
     }

@@ -2,6 +2,14 @@
   "iocs": [
     {
       "ioc_type": "domain",
+      "value_raw": "mer-forgeon.idealgo.in.net",
+      "threat_actor": "ClearFake",
+      "campaign": "js.clearfake",
+      "detected_by": [],
+      "missed_by": []
+    },
+    {
+      "ioc_type": "domain",
       "value_raw": "foresrebat.foldername.in.net",
       "threat_actor": "ClearFake",
       "campaign": "js.clearfake",
@@ -187,14 +195,6 @@
     {
       "ioc_type": "domain",
       "value_raw": "web-proxy-alt.fortezzarossa.in.net",
-      "threat_actor": "ClearFake",
-      "campaign": "js.clearfake",
-      "detected_by": [],
-      "missed_by": []
-    },
-    {
-      "ioc_type": "domain",
-      "value_raw": "remote-access-2.stillewasser.in.net",
       "threat_actor": "ClearFake",
       "campaign": "js.clearfake",
       "detected_by": [],

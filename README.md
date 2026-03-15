@@ -46,7 +46,7 @@ Three assumptions the security industry is built on — and why they're wrong:
 
 ```bash
 git clone https://github.com/manizzle/nur.git
-cd oombra
+cd nur
 pip install -e ".[all,dev]"
 nur up --vertical healthcare
 ```
