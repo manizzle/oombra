@@ -386,6 +386,7 @@ def scrape(feed, list_feeds, dry_run, api_url, api_key):
     """Scrape public threat intelligence feeds and vendor evaluations."""
     from .feeds import FEEDS, scrape_feed, bundle_iocs, ingest_to_server
     from .scrapers import SCRAPERS, run_scraper, ingest_evals_to_server
+    from datetime import datetime, timezone
 
     if list_feeds:
         click.echo("\n  IOC Feeds:")
@@ -414,6 +415,15 @@ def scrape(feed, list_feeds, dry_run, api_url, api_key):
             click.echo(f"  Unknown source: {name}. Use --list to see available sources.")
             raise SystemExit(1)
 
+    # Load existing feed status for timestamp tracking
+    feed_status_path = Path.home() / ".oombra" / "feed_status.json"
+    feed_status: dict = {}
+    if feed_status_path.exists():
+        try:
+            feed_status = json.loads(feed_status_path.read_text())
+        except (json.JSONDecodeError, OSError):
+            pass
+
     total_iocs = 0
     total_evals = 0
     total_uploaded = 0
@@ -433,6 +443,11 @@ def scrape(feed, list_feeds, dry_run, api_url, api_key):
             total_iocs += len(iocs)
             if iocs:
                 sources_ok += 1
+            # Record feed timestamp
+            feed_status[name] = {
+                "last_scraped": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
+                "ioc_count": len(iocs),
+            }
             if not dry_run and iocs and api_url:
                 bundles = bundle_iocs(iocs, name)
                 uploaded = ingest_to_server(api_url, bundles, api_key=api_key)
@@ -449,9 +464,21 @@ def scrape(feed, list_feeds, dry_run, api_url, api_key):
             total_evals += len(evals)
             if evals:
                 sources_ok += 1
+            # Record scraper timestamp
+            feed_status[name] = {
+                "last_scraped": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
+                "ioc_count": len(evals),
+            }
             if not dry_run and evals and api_url:
                 uploaded = ingest_evals_to_server(api_url, evals, api_key=api_key)
                 total_uploaded += uploaded
+
+    # Save feed status timestamps
+    try:
+        feed_status_path.parent.mkdir(parents=True, exist_ok=True)
+        feed_status_path.write_text(json.dumps(feed_status, indent=2))
+    except OSError:
+        pass
 
     click.echo()
     parts = []
@@ -1301,4 +1328,243 @@ def threat_map(threat_description, tools, api_url, api_key, json_output):
         click.echo(f"\n  Recommendations:")
         for r in recs:
             click.echo(f"    - {r}")
+    click.echo()
+
+
+# ── Admin ────────────────────────────────────────────────────────────────────
+
+@main.group()
+def admin():
+    """Admin tools — server status, sources, database, exports, key management."""
+    pass
+
+
+@admin.command()
+@click.option("--api-url", default=None, help="Server URL (default: from oombra init)")
+@click.option("--api-key", default=None, help="API key (default: from oombra init)")
+def status(api_url, api_key):
+    """Server health, contribution counts, and feed freshness."""
+    api_url = _get_api_url(api_url)
+    api_key = _get_api_key(api_key)
+
+    click.echo("\n  oombra admin status")
+    click.echo("  " + "=" * 50)
+
+    # Server health
+    if api_url:
+        import urllib.request as _ur
+        try:
+            req = _ur.Request(f"{api_url.rstrip('/')}/health")
+            if api_key:
+                req.add_header("X-API-Key", api_key)
+            with _ur.urlopen(req, timeout=5) as resp:
+                health = json.loads(resp.read().decode())
+            click.echo(f"  Server:  {api_url}")
+            click.echo(f"  Health:  {health.get('status', 'unknown')}")
+        except Exception as e:
+            click.echo(f"  Server:  {api_url} (unreachable: {e})")
+
+        # Stats
+        try:
+            req = _ur.Request(f"{api_url.rstrip('/')}/stats")
+            if api_key:
+                req.add_header("X-API-Key", api_key)
+            with _ur.urlopen(req, timeout=5) as resp:
+                stats = json.loads(resp.read().decode())
+            click.echo(f"\n  Contributions:")
+            for k, v in stats.items():
+                click.echo(f"    {k:30s} {v}")
+        except Exception:
+            click.echo("  Stats:   unavailable")
+    else:
+        click.echo("  Server:  not configured (run: oombra init)")
+
+    # Feed freshness
+    feed_status_path = Path.home() / ".oombra" / "feed_status.json"
+    if feed_status_path.exists():
+        try:
+            feed_status = json.loads(feed_status_path.read_text())
+            click.echo(f"\n  Feed Freshness:")
+            for name, info in sorted(feed_status.items()):
+                ts = info.get("last_scraped", "?")
+                count = info.get("ioc_count", 0)
+                click.echo(f"    {name:20s} last={ts}  count={count}")
+        except (json.JSONDecodeError, OSError):
+            click.echo("  Feed status: unavailable")
+    else:
+        click.echo("\n  Feed status: no scrape history (run: oombra scrape --dry-run)")
+    click.echo()
+
+
+@admin.command()
+def sources():
+    """List ALL known data sources with implementation status."""
+    from .scrapers.sources import (
+        TIER_1_FEEDS, TIER_2_LABS, TIER_3_COMMUNITY,
+        TIER_4_MARKET, TIER_5_PLATFORMS, ALL_SOURCES,
+    )
+
+    tiers = [
+        ("TIER 1: Direct Feeds", TIER_1_FEEDS),
+        ("TIER 2: Independent Labs", TIER_2_LABS),
+        ("TIER 3: Community Sources", TIER_3_COMMUNITY),
+        ("TIER 4: Market Intelligence", TIER_4_MARKET),
+        ("TIER 5: Threat Platforms", TIER_5_PLATFORMS),
+    ]
+
+    implemented = sum(1 for s in ALL_SOURCES.values() if s.get("status") == "implemented")
+    planned = sum(1 for s in ALL_SOURCES.values() if s.get("status") == "planned")
+
+    click.echo(f"\n  oombra data sources ({len(ALL_SOURCES)} total: {implemented} implemented, {planned} planned)")
+    click.echo("  " + "=" * 70)
+
+    for tier_name, tier_dict in tiers:
+        click.echo(f"\n  {tier_name} ({len(tier_dict)})")
+        click.echo(f"  {'-' * 68}")
+        for name, info in tier_dict.items():
+            status_str = info.get("status", "?")
+            tag = "[OK]" if status_str == "implemented" else "[--]"
+            data_desc = info.get("data", "")[:50]
+            click.echo(f"    {tag} {name:25s} {data_desc}")
+    click.echo()
+
+
+@admin.command("db-stats")
+@click.option("--api-url", default=None, help="Server URL (default: from oombra init)")
+@click.option("--api-key", default=None, help="API key (default: from oombra init)")
+def db_stats(api_url, api_key):
+    """Detailed database statistics — contributions by type, vendors, techniques, IOCs."""
+    api_url = _get_api_url(api_url)
+    api_key = _get_api_key(api_key)
+    if not api_url:
+        click.echo("  No server URL configured. Run: oombra init")
+        raise SystemExit(1)
+
+    import urllib.request as _ur
+
+    click.echo("\n  oombra database statistics")
+    click.echo("  " + "=" * 50)
+
+    try:
+        req = _ur.Request(f"{api_url.rstrip('/')}/stats")
+        if api_key:
+            req.add_header("X-API-Key", api_key)
+        with _ur.urlopen(req, timeout=10) as resp:
+            stats = json.loads(resp.read().decode())
+    except Exception as e:
+        click.echo(f"  Error fetching stats: {e}")
+        raise SystemExit(1)
+
+    click.echo(f"\n  Overview:")
+    total = stats.get("total_contributions", stats.get("total", 0))
+    click.echo(f"    Total contributions:  {total}")
+
+    for k, v in stats.items():
+        if k in ("total_contributions", "total"):
+            continue
+        click.echo(f"    {k:30s} {v}")
+    click.echo()
+
+
+@admin.command()
+@click.option("--format", "fmt", type=click.Choice(["json"]), default="json", help="Export format")
+@click.option("--output", "-o", default=None, help="Output file (default: oombra_export.json)")
+@click.option("--api-url", default=None, help="Server URL (default: from oombra init)")
+@click.option("--api-key", default=None, help="API key (default: from oombra init)")
+def export(fmt, output, api_url, api_key):
+    """Export all aggregated data to a file."""
+    api_url = _get_api_url(api_url)
+    api_key = _get_api_key(api_key)
+    if not api_url:
+        click.echo("  No server URL configured. Run: oombra init")
+        raise SystemExit(1)
+
+    import urllib.request as _ur
+    from datetime import datetime, timezone
+
+    output = output or f"oombra_export.{fmt}"
+
+    click.echo(f"\n  Exporting data from {api_url}...")
+
+    headers = {}
+    if api_key:
+        headers["X-API-Key"] = api_key
+
+    export_data: dict = {
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "server": api_url,
+    }
+
+    # Fetch stats
+    try:
+        req = _ur.Request(f"{api_url.rstrip('/')}/stats")
+        for k, v in headers.items():
+            req.add_header(k, v)
+        with _ur.urlopen(req, timeout=10) as resp:
+            export_data["stats"] = json.loads(resp.read().decode())
+        click.echo("  Fetched stats")
+    except Exception:
+        export_data["stats"] = {}
+
+    # Fetch health
+    try:
+        req = _ur.Request(f"{api_url.rstrip('/')}/health")
+        for k, v in headers.items():
+            req.add_header(k, v)
+        with _ur.urlopen(req, timeout=5) as resp:
+            export_data["health"] = json.loads(resp.read().decode())
+        click.echo("  Fetched health")
+    except Exception:
+        export_data["health"] = {}
+
+    # Try known query endpoints
+    for endpoint in ("/search/categories", "/intelligence/market/edr"):
+        try:
+            req = _ur.Request(f"{api_url.rstrip('/')}{endpoint}")
+            for k, v in headers.items():
+                req.add_header(k, v)
+            with _ur.urlopen(req, timeout=10) as resp:
+                key = endpoint.strip("/").replace("/", "_")
+                export_data[key] = json.loads(resp.read().decode())
+            click.echo(f"  Fetched {endpoint}")
+        except Exception:
+            pass
+
+    with open(output, "w") as fp:
+        json.dump(export_data, fp, indent=2)
+
+    click.echo(f"\n  Exported to {output}")
+    click.echo()
+
+
+@admin.command("rotate-key")
+def rotate_key():
+    """Generate a new random API key and save it to config."""
+    import secrets
+
+    new_key = secrets.token_urlsafe(32)
+    config = _load_config()
+    config["api_key"] = new_key
+    _CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    _CONFIG_PATH.write_text(json.dumps(config, indent=2))
+
+    click.echo(f"\n  New API key generated:")
+    click.echo(f"  {new_key}")
+    click.echo(f"\n  Saved to {_CONFIG_PATH}")
+    click.echo(f"  Set this on your server to authenticate requests.")
+    click.echo()
+
+
+@admin.command()
+@click.option("--older-than", default="30d", help="Remove data older than this (e.g. 30d, 7d)")
+def purge(older_than):
+    """Remove old contributions (requires direct DB access)."""
+    click.echo(f"\n  Purge requested: older than {older_than}")
+    click.echo()
+    click.echo("  WARNING: Purge requires direct database access.")
+    click.echo("  Use SQL to delete old contributions:")
+    click.echo()
+    click.echo(f"    DELETE FROM contributions WHERE created_at < NOW() - INTERVAL '{older_than}';")
+    click.echo()
+    click.echo("  Or connect to the oombra DB and run a migration.")
     click.echo()

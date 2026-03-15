@@ -6,12 +6,21 @@ Supported feeds:
   - Feodo Tracker (abuse.ch) — C2 server IPs
   - MalwareBazaar (abuse.ch) — malware SHA-256 hashes
   - CISA KEV                 — exploited vulnerabilities (ransomware-tagged)
+  - URLhaus (abuse.ch)       — malicious URLs and domains
+  - SSL Blacklist (abuse.ch) — malicious SSL certificate SHA1 fingerprints
+  - FireHOL Level 1          — aggregated malicious IPs from 30+ feeds
+  - IPsum                    — IPs scored by multi-blacklist overlap
+  - OpenPhish                — phishing URLs
+  - Emerging Threats         — compromised IPs
+  - Dataplane SSH            — SSH brute force attacker IPs
+  - Spamhaus DROP            — hijacked IP ranges
 """
 from __future__ import annotations
 
 import json
 import urllib.request
 from typing import Any
+from urllib.parse import urlparse
 
 
 # ── HTTP helper ───────────────────────────────────────────────────────────────
@@ -141,6 +150,249 @@ def scrape_cisa_kev(url: str) -> list[dict]:
     return iocs
 
 
+def scrape_urlhaus(url: str) -> list[dict]:
+    """URLhaus — malicious URLs and domains. Capped at 300."""
+    raw = _fetch(url)
+    if not raw:
+        return []
+
+    iocs: list[dict] = []
+    for line in raw.strip().split("\n"):
+        if line.startswith("#") or line.startswith('"#'):
+            continue
+        parts = line.strip().strip('"').split('","')
+        if len(parts) < 7:
+            continue
+        try:
+            mal_url = parts[2].strip('"')
+            threat = parts[5].strip('"') if len(parts) > 5 else "malware"
+            tags = parts[6].strip('"') if len(parts) > 6 else "unknown"
+
+            iocs.append({
+                "ioc_type": "url",
+                "value_raw": mal_url,
+                "threat_actor": tags if tags else "unknown",
+                "campaign": threat if threat else "malware-distribution",
+                "detected_by": [],
+                "missed_by": [],
+            })
+
+            # Also extract domain
+            try:
+                domain = urlparse(mal_url).hostname
+                if domain:
+                    iocs.append({
+                        "ioc_type": "domain",
+                        "value_raw": domain,
+                        "threat_actor": tags if tags else "unknown",
+                        "campaign": threat if threat else "malware-distribution",
+                        "detected_by": [],
+                        "missed_by": [],
+                    })
+            except Exception:
+                pass
+        except (IndexError, ValueError):
+            continue
+
+    return iocs[:300]
+
+
+def scrape_ssl_blacklist(url: str) -> list[dict]:
+    """SSL Blacklist — malicious SSL certificate SHA1 fingerprints. Capped at 200."""
+    raw = _fetch(url)
+    if not raw:
+        return []
+
+    iocs: list[dict] = []
+    for line in raw.strip().split("\n"):
+        if line.startswith("#"):
+            continue
+        parts = line.strip().split(",")
+        if len(parts) < 3:
+            continue
+        try:
+            sha1 = parts[1].strip()
+            reason = parts[2].strip()
+            if not sha1 or len(sha1) != 40:
+                continue
+            iocs.append({
+                "ioc_type": "hash-sha1",
+                "value_raw": sha1,
+                "threat_actor": reason if reason else "unknown",
+                "campaign": "ssl-blacklist",
+                "detected_by": [],
+                "missed_by": [],
+            })
+        except (IndexError, ValueError):
+            continue
+
+    return iocs[:200]
+
+
+def scrape_firehol(url: str) -> list[dict]:
+    """FireHOL Level 1 — high-confidence malicious IPs. Capped at 500."""
+    raw = _fetch(url)
+    if not raw:
+        return []
+
+    iocs: list[dict] = []
+    for line in raw.strip().split("\n"):
+        line = line.strip()
+        if line.startswith("#") or not line or "/" in line:
+            continue
+        iocs.append({
+            "ioc_type": "ip",
+            "value_raw": line,
+            "threat_actor": "firehol-level1",
+            "campaign": "blocklist-aggregated",
+            "detected_by": [],
+            "missed_by": [],
+        })
+
+    return iocs[:500]
+
+
+def scrape_ipsum(url: str) -> list[dict]:
+    """IPsum — IPs scored by multi-blacklist overlap (count >= 3). Capped at 300."""
+    raw = _fetch(url)
+    if not raw:
+        return []
+
+    iocs: list[dict] = []
+    for line in raw.strip().split("\n"):
+        line = line.strip()
+        if line.startswith("#") or not line:
+            continue
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+        try:
+            ip = parts[0].strip()
+            count = int(parts[1].strip())
+            if count < 3:
+                continue
+            iocs.append({
+                "ioc_type": "ip",
+                "value_raw": ip,
+                "threat_actor": "multi-blacklist",
+                "campaign": f"ipsum-score-{count}",
+                "detected_by": [],
+                "missed_by": [],
+            })
+        except (IndexError, ValueError):
+            continue
+
+    return iocs[:300]
+
+
+def scrape_openphish(url: str) -> list[dict]:
+    """OpenPhish — phishing URLs. Capped at 200."""
+    raw = _fetch(url)
+    if not raw:
+        return []
+
+    iocs: list[dict] = []
+    for line in raw.strip().split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        iocs.append({
+            "ioc_type": "url",
+            "value_raw": line,
+            "threat_actor": "phishing",
+            "campaign": "openphish-live",
+            "detected_by": [],
+            "missed_by": [],
+        })
+
+    return iocs[:200]
+
+
+def scrape_emergingthreats(url: str) -> list[dict]:
+    """Emerging Threats — compromised IPs. Capped at 300."""
+    raw = _fetch(url)
+    if not raw:
+        return []
+
+    iocs: list[dict] = []
+    for line in raw.strip().split("\n"):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        iocs.append({
+            "ioc_type": "ip",
+            "value_raw": line,
+            "threat_actor": "compromised",
+            "campaign": "emergingthreats-compromised",
+            "detected_by": [],
+            "missed_by": [],
+        })
+
+    return iocs[:300]
+
+
+def scrape_dataplane_ssh(url: str) -> list[dict]:
+    """Dataplane SSH — SSH brute force attacker IPs. Capped at 200."""
+    raw = _fetch(url)
+    if not raw:
+        return []
+
+    iocs: list[dict] = []
+    for line in raw.strip().split("\n"):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = [p.strip() for p in line.split("|")]
+        if len(parts) < 3:
+            continue
+        try:
+            ip = parts[2]
+            if not ip:
+                continue
+            iocs.append({
+                "ioc_type": "ip",
+                "value_raw": ip,
+                "threat_actor": "ssh-bruteforce",
+                "campaign": "dataplane-sshpwauth",
+                "detected_by": [],
+                "missed_by": [],
+            })
+        except (IndexError, ValueError):
+            continue
+
+    return iocs[:200]
+
+
+def scrape_spamhaus_drop(url: str) -> list[dict]:
+    """Spamhaus DROP — hijacked IP ranges (network part only). Capped at 100."""
+    raw = _fetch(url)
+    if not raw:
+        return []
+
+    iocs: list[dict] = []
+    for line in raw.strip().split("\n"):
+        line = line.strip()
+        if not line or line.startswith(";"):
+            continue
+        try:
+            cidr_part = line.split(";")[0].strip()
+            ip = cidr_part.split("/")[0].strip()
+            if not ip:
+                continue
+            iocs.append({
+                "ioc_type": "ip",
+                "value_raw": ip,
+                "threat_actor": "spamhaus",
+                "campaign": "drop-hijacked",
+                "detected_by": [],
+                "missed_by": [],
+            })
+        except (IndexError, ValueError):
+            continue
+
+    return iocs[:100]
+
+
 # ── Feed registry ────────────────────────────────────────────────────────────
 
 FEEDS: dict[str, dict[str, Any]] = {
@@ -163,6 +415,46 @@ FEEDS: dict[str, dict[str, Any]] = {
         "url": "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
         "scraper": scrape_cisa_kev,
         "description": "CISA KEV — known exploited vulnerabilities (ransomware)",
+    },
+    "urlhaus": {
+        "url": "https://urlhaus.abuse.ch/downloads/csv_recent/",
+        "scraper": scrape_urlhaus,
+        "description": "URLhaus — malicious URLs and domains (malware distribution)",
+    },
+    "ssl-blacklist": {
+        "url": "https://sslbl.abuse.ch/blacklist/sslblacklist.csv",
+        "scraper": scrape_ssl_blacklist,
+        "description": "SSL Blacklist — malicious SSL certificate SHA1 fingerprints",
+    },
+    "firehol": {
+        "url": "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/firehol_level1.netset",
+        "scraper": scrape_firehol,
+        "description": "FireHOL Level 1 — high-confidence malicious IPs (30+ feeds)",
+    },
+    "ipsum": {
+        "url": "https://raw.githubusercontent.com/stamparm/ipsum/master/ipsum.txt",
+        "scraper": scrape_ipsum,
+        "description": "IPsum — IPs scored by multi-blacklist overlap (count >= 3)",
+    },
+    "openphish": {
+        "url": "https://openphish.com/feed.txt",
+        "scraper": scrape_openphish,
+        "description": "OpenPhish — phishing URLs",
+    },
+    "emergingthreats": {
+        "url": "https://rules.emergingthreats.net/blockrules/compromised-ips.txt",
+        "scraper": scrape_emergingthreats,
+        "description": "Emerging Threats — compromised IPs",
+    },
+    "dataplane-ssh": {
+        "url": "https://dataplane.org/sshpwauth.txt",
+        "scraper": scrape_dataplane_ssh,
+        "description": "Dataplane SSH — SSH brute force attacker IPs",
+    },
+    "spamhaus-drop": {
+        "url": "https://www.spamhaus.org/drop/drop.txt",
+        "scraper": scrape_spamhaus_drop,
+        "description": "Spamhaus DROP — hijacked IP ranges",
     },
 }
 
