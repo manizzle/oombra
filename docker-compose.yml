@@ -1,18 +1,16 @@
-# nur — deployable threat intel sharing stack
+# nur — collective security intelligence
 #
-# Quick start:
+# Quick start (dev):
 #   docker compose up
 #
-# Production (PostgreSQL):
-#   docker compose --profile production up
+# Production (PostgreSQL + auto-ingest + API key):
+#   docker compose --profile production up -d
 #
-# With live feed ingestion:
-#   NUR_AUTO_INGEST=1 docker compose up
-#
-# With API key auth:
-#   NUR_API_KEY=your-secret docker compose up
+# Full stack with Caddy reverse proxy (HTTPS):
+#   docker compose --profile production --profile web up -d
 
 services:
+  # ── Dev mode: SQLite, no auth ────────────────────────────────
   nur:
     build: .
     ports:
@@ -22,11 +20,17 @@ services:
       - NUR_API_KEY=${NUR_API_KEY:-}
       - NUR_MIN_K=${NUR_MIN_K:-3}
       - NUR_AUTO_INGEST=${NUR_AUTO_INGEST:-0}
+      - ABUSEIPDB_API_KEY=${ABUSEIPDB_API_KEY:-}
+      - PULSEDIVE_API_KEY=${PULSEDIVE_API_KEY:-}
+      - OTX_API_KEY=${OTX_API_KEY:-}
+      - GREYNOISE_API_KEY=${GREYNOISE_API_KEY:-}
+      - HYBRID_ANALYSIS_API_KEY=${HYBRID_ANALYSIS_API_KEY:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
     volumes:
       - nur-data:/app/data
     restart: unless-stopped
 
-  # ── Production: PostgreSQL backend ────────────────────────────
+  # ── Production: PostgreSQL + auto-ingest ─────────────────────
   nur-prod:
     build: .
     ports:
@@ -35,7 +39,13 @@ services:
       - NUR_DB_URL=postgresql+asyncpg://nur:${POSTGRES_PASSWORD:-nur}@postgres:5432/nur
       - NUR_API_KEY=${NUR_API_KEY:-}
       - NUR_MIN_K=${NUR_MIN_K:-3}
-      - NUR_AUTO_INGEST=${NUR_AUTO_INGEST:-1}
+      - NUR_AUTO_INGEST=1
+      - ABUSEIPDB_API_KEY=${ABUSEIPDB_API_KEY:-}
+      - PULSEDIVE_API_KEY=${PULSEDIVE_API_KEY:-}
+      - OTX_API_KEY=${OTX_API_KEY:-}
+      - GREYNOISE_API_KEY=${GREYNOISE_API_KEY:-}
+      - HYBRID_ANALYSIS_API_KEY=${HYBRID_ANALYSIS_API_KEY:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,6 +70,26 @@ services:
     profiles:
       - production
 
+  # ── Caddy reverse proxy (HTTPS + domain) ─────────────────────
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - NUR_DOMAIN=${NUR_DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - nur-prod
+    restart: unless-stopped
+    profiles:
+      - web
+
 volumes:
   nur-data:
   pg-data:
+  caddy-data:
+  caddy-config:

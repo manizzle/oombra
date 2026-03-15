@@ -1,0 +1,3 @@
+{$NUR_DOMAIN:localhost} {
+    reverse_proxy nur-prod:8000
+}
