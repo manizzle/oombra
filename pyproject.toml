@@ -27,7 +27,7 @@ fl        = ["flwr>=1.5", "torch>=2.0"]
 fl-lite   = ["flwr>=1.5", "scikit-learn>=1.3"]
 graph     = ["networkx>=3.0", "torch-geometric>=2.4"]
 zkp       = ["py_ecc>=6.0"]
-dev       = ["pytest>=8.0", "hypothesis>=6.0", "ruff>=0.4"]
+dev       = ["pytest>=8.0", "pytest-asyncio>=1.0", "hypothesis>=6.0", "ruff>=0.4"]
 all       = [
     "nur[server,crypto,pdf,stix,misp]",
 ]
