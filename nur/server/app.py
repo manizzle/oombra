@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import asyncio
 import os
+import time
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -111,6 +113,28 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
                     status_code=401,
                     content={"error": "Invalid or missing API key"},
                 )
+        return await call_next(request)
+
+    # ── Rate limiting middleware ──────────────────────────────────────────
+    _rate_limits: dict[str, list[float]] = defaultdict(list)
+    _COMMUNITY_LIMIT = 60   # requests per window
+    _ENTERPRISE_LIMIT = 600  # future: per-key tier lookup
+    _WINDOW = 60  # seconds
+
+    @app.middleware("http")
+    async def rate_limit_middleware(request: Request, call_next):
+        if request.method == "POST":
+            key = request.headers.get("X-API-Key", request.client.host if request.client else "unknown")
+            now = time.time()
+            # Prune timestamps outside the current window
+            _rate_limits[key] = [t for t in _rate_limits[key] if now - t < _WINDOW]
+            if len(_rate_limits[key]) >= _COMMUNITY_LIMIT:
+                retry_after = int(_WINDOW - (now - _rate_limits[key][0])) + 1
+                return JSONResponse(
+                    status_code=429,
+                    content={"error": "Rate limit exceeded", "retry_after": retry_after},
+                )
+            _rate_limits[key].append(now)
         return await call_next(request)
 
     app.include_router(query_router)

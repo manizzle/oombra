@@ -31,15 +31,26 @@ def get_or_create_key() -> bytes:
     return key
 
 
-def hmac_ioc(value: str, secret: bytes | None = None) -> str:
+def derive_session_key(base_key: bytes, session_id: str) -> bytes:
+    """Derive a session-specific HMAC key to prevent cross-submission IOC correlation."""
+    return hashlib.sha256(base_key + session_id.encode()).digest()
+
+
+def hmac_ioc(value: str, secret: bytes | None = None, session_id: str | None = None) -> str:
     """
     HMAC-SHA256 of the normalized IOC value using org-local secret.
 
     Unlike bare SHA-256, this prevents rainbow-table attacks on the
     small IOC space (known IPs, domains, hashes).
+
+    If *session_id* is provided, derives a session-specific key first so
+    the same IOC hashes differently in each submission, preventing
+    cross-submission correlation.
     """
     if secret is None:
         secret = get_or_create_key()
+    if session_id is not None:
+        secret = derive_session_key(secret, session_id)
     normalized = value.strip().lower().encode()
     return hmac.new(secret, normalized, hashlib.sha256).hexdigest()
 

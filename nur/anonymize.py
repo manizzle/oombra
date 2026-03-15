@@ -245,21 +245,24 @@ def hash_ioc(value: str) -> str:
     return hashlib.sha256(value.strip().lower().encode()).hexdigest()
 
 
-def hmac_hash_ioc(value: str, secret: bytes | None = None) -> str:
+def hmac_hash_ioc(value: str, secret: bytes | None = None, session_id: str | None = None) -> str:
     """HMAC-SHA256 of IOC value with org-local secret. Rainbow-table resistant."""
     from .keystore import hmac_ioc
-    return hmac_ioc(value, secret=secret)
+    return hmac_ioc(value, secret=secret, session_id=session_id)
 
 
 def _hash_ioc_entries(
     bundle: IOCBundle,
     hmac_secret: bytes | None = None,
 ) -> IOCBundle:
+    import uuid
+    session_id = str(uuid.uuid4())
+
     hashed = []
     for ioc in bundle.iocs:
         if ioc.value_raw and not ioc.value_hash:
             if hmac_secret is not None:
-                h = hmac_hash_ioc(ioc.value_raw, secret=hmac_secret)
+                h = hmac_hash_ioc(ioc.value_raw, secret=hmac_secret, session_id=session_id)
             else:
                 h = hash_ioc(ioc.value_raw)
             ioc = ioc.model_copy(update={"value_hash": h})
