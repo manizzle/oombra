@@ -15,6 +15,10 @@ Endpoints:
 """
 from __future__ import annotations
 
+# Load secrets from AWS Secrets Manager before anything else reads env vars
+from ..secrets import load_secrets
+load_secrets()
+
 import asyncio
 import os
 import time
@@ -435,18 +439,29 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
             # Create pending verification with magic link token
             from .models import PendingVerification
             token = _secrets.token_urlsafe(32)
-            s.add(PendingVerification(email=email, org_name=org or None, token=token))
+            public_key = (body.get("public_key") or "")[:64] or None
+            s.add(PendingVerification(email=email, org_name=org or None, token=token, public_key=public_key))
 
         # Build the magic link
         host = os.environ.get("NUR_DOMAIN", "nur.saramena.us")
         scheme = "https" if host != "localhost" else "http"
         verify_url = f"{scheme}://{host}/verify/{token}"
 
-        return {
-            "status": "pending",
-            "verify_url": verify_url,
-            "message": f"Verification link generated. In production, this would be emailed to {email}. For now, visit the link directly.",
-        }
+        # Try to send verification email
+        from .email import send_verification_email
+        email_sent = send_verification_email(email, verify_url)
+
+        if email_sent:
+            return {
+                "status": "pending",
+                "message": f"Verification email sent to {email}. Click the link to get your API key.",
+            }
+        else:
+            return {
+                "status": "pending",
+                "verify_url": verify_url,
+                "message": "Could not send email. Visit the link directly.",
+            }
 
     @app.get("/verify/{token}", response_class=HTMLResponse)
     async def verify_email(token: str):
@@ -478,6 +493,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
                 s.add(APIKeyRecord(
                     email=pending.email, api_key=api_key,
                     org_name=pending.org_name, tier="community",
+                    public_key=pending.public_key,
                 ))
 
         return f"""<!DOCTYPE html>
@@ -540,6 +556,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     <input type="email" id="email" placeholder="you@yourhospital.org" required>
     <label>organization (optional)</label>
     <input type="text" id="org" placeholder="Acme Health System">
+    <input type="hidden" id="public_key" value="">
     <button type="submit">get key</button>
   </form>
 
@@ -573,7 +590,7 @@ async function doRegister(e) {
   const res = await fetch('/register', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({email: document.getElementById('email').value, org: document.getElementById('org').value})
+    body: JSON.stringify({email: document.getElementById('email').value, org: document.getElementById('org').value, public_key: document.getElementById('public_key').value || undefined})
   });
   const data = await res.json();
   if (res.ok) {
@@ -581,7 +598,10 @@ async function doRegister(e) {
       document.getElementById('key').textContent = data.api_key;
       document.getElementById('result').style.display = 'block';
     } else if (data.verify_url) {
-      document.getElementById('result').innerHTML = '<div style="color:#888">Check your email for a verification link.</div><br><div style="color:#555;font-size:0.85em">Or click directly: <a href="' + data.verify_url + '" style="color:#2a5">' + data.verify_url + '</a></div>';
+      document.getElementById('result').innerHTML = '<div style="color:#888">' + data.message + '</div><br><div style="color:#555;font-size:0.85em">Click directly: <a href="' + data.verify_url + '" style="color:#2a5">' + data.verify_url + '</a></div>';
+      document.getElementById('result').style.display = 'block';
+    } else {
+      document.getElementById('result').innerHTML = '<div style="color:#2a5">' + data.message + '</div>';
       document.getElementById('result').style.display = 'block';
     }
     document.getElementById('result').style.borderColor = '#2a5';
