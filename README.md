@@ -21,11 +21,10 @@
 
 Every hospital buys security tools based on vendor marketing. Every bank figures out their detection gaps by getting hacked. Every energy company fights the same APT without knowing three other utilities already beat it.
 
-nur fixes this. Three modes, one platform:
+nur fixes this. Two modes, one platform:
 
-- **Wartime** — you're under attack. Upload IOCs, get campaign matches and actions.
-- **Peacetime** — build defenses. Market maps, vendor comparisons, coverage analysis.
-- **Threat modeling** — generate MITRE-mapped threat models for your stack in threatcl HCL format.
+- **Wartime** — you're under attack. Upload IOCs, get campaign matches, remediation actions, detection gaps.
+- **Peacetime** — build defenses. Market maps, vendor comparisons, threat modeling, stack coverage analysis.
 
 > ✅ Everything anonymized on your machine. Keypair auth. Work email registration. Math, not promises.
 
@@ -80,32 +79,21 @@ nur market edr                                       # vendor rankings
 nur search vendor crowdstrike                        # real scores, not Gartner
 nur search compare crowdstrike sentinelone           # side-by-side
 nur threat-map "ransomware" --tools crowdstrike      # coverage gaps
+nur threat-model --stack crowdstrike,splunk,okta --vertical healthcare  # full threat model
 ```
 
----
+**Threat modeling** — generate MITRE-mapped threat models for your stack, compatible with [threatcl](https://github.com/threatcl/threatcl):
 
-## 🏗️ Threat modeling — threatcl compatible
-
-```bash
-nur threat-model --stack crowdstrike,splunk,okta --vertical healthcare
 ```
-```
-  Threat Model: Organization
-  Vertical: Healthcare & Life Sciences
-  ════════════════════════════════════
-
   Coverage: 75% (6/8 priority techniques)
-
-  Gaps:
-    [T1566.001] Spearphishing Attachment → add email security
-    [T1048] Exfiltration → add NDR or DLP
-
-  Compliance: HIPAA ✓ · NIST CSF ✓ · HITECH ✗ · FDA 21 CFR ✗
+  Gaps: T1566 Spearphishing → add email security
+        T1048 Exfiltration → add NDR or DLP
+  Compliance: HIPAA ✓ · NIST CSF ✓ · HITECH ✗
 ```
 
 ```bash
 nur threat-model --stack crowdstrike,splunk --hcl --output model.hcl
-threatcl validate model.hcl     # works with github.com/threatcl/threatcl
+threatcl validate model.hcl     # works with threatcl tool
 ```
 
 ---
