@@ -1497,25 +1497,49 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     color: #888;
     font-size: 0.9em;
   }
+  html { scroll-behavior: smooth; }
   .guide-nav {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #1a1a1e;
     border-bottom: 1px solid #333338;
+    padding: 12px 24px;
     display: flex;
-    gap: 20px;
+    gap: 16px;
     flex-wrap: wrap;
     justify-content: center;
+    backdrop-filter: blur(8px);
   }
   .guide-nav a {
     color: #888;
     text-decoration: none;
     font-size: 0.8em;
-    border-bottom: 1px solid #333;
-    padding-bottom: 2px;
-    transition: color 0.2s, border-color 0.2s;
+    padding: 4px 8px;
+    border-radius: 3px;
+    transition: color 0.2s, background 0.2s;
   }
-  .guide-nav a:hover { color: #3b7; border-color: #3b7; }
+  .guide-nav a:hover { color: #3b7; background: #222228; }
+  .guide-nav a.active { color: #3b7; background: #222228; }
+  .back-to-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #222228;
+    border: 1px solid #333;
+    color: #888;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 1.2em;
+    transition: color 0.2s, border-color 0.2s;
+    z-index: 100;
+  }
+  .back-to-top:hover { color: #3b7; border-color: #3b7; }
   .guide-content {
     max-width: 900px;
     margin: 0 auto;
@@ -1882,9 +1906,35 @@ NUR_SMTP_PASS=your_smtp_password</pre>
 
 <div class="guide-footer">
   <a href="/">nur</a> &bull; collective security intelligence &bull;
-  <a href="https://github.com/manizzle/nur">open source</a> &bull;
-  <a href="/guide">docs</a>
+  <a href="https://github.com/manizzle/nur">open source</a>
 </div>
+
+<a href="#" class="back-to-top" id="backToTop">&uarr;</a>
+
+<script>
+// Back to top button
+var btn = document.getElementById('backToTop');
+window.addEventListener('scroll', function() {
+  btn.style.display = window.scrollY > 300 ? 'flex' : 'none';
+});
+
+// Scroll spy — highlight active nav link
+var sections = document.querySelectorAll('.guide-section');
+var navLinks = document.querySelectorAll('.guide-nav a[href^="#"]');
+window.addEventListener('scroll', function() {
+  var current = '';
+  sections.forEach(function(section) {
+    var top = section.offsetTop - 80;
+    if (window.scrollY >= top) { current = section.id; }
+  });
+  navLinks.forEach(function(link) {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === '#' + current) {
+      link.classList.add('active');
+    }
+  });
+});
+</script>
 
 </body>
 </html>"""
