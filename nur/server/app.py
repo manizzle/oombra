@@ -105,6 +105,8 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
         description="Privacy-preserving federated threat intelligence server",
         version="0.1.0",
         lifespan=lifespan,
+        docs_url=None,       # disable Swagger UI
+        redoc_url=None,      # disable ReDoc
     )
     app.state.db_url = db_url
 
@@ -416,7 +418,6 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
   <div class="links">
     <a href="/dashboard">dashboard</a>
     <a href="/guide">docs</a>
-    <a href="/docs">api reference</a>
     <a href="https://github.com/manizzle/nur">github</a>
     <a href="https://github.com/manizzle/nur/issues/4">add your feed</a>
   </div>
@@ -938,7 +939,6 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     <div class="cta-links">
       <a href="/">home</a>
       <a href="/guide">docs</a>
-      <a href="/docs">api reference</a>
       <a href="https://github.com/manizzle/nur">github</a>
     </div>
   </div>
@@ -1634,7 +1634,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
   <a href="#privacy">privacy</a>
   <a href="#self-hosting">self-hosting</a>
   <a href="/">home</a>
-  <a href="/docs">swagger</a>
+  <a href="/guide">docs</a>
 </div>
 
 <div class="guide-content">
@@ -1756,7 +1756,7 @@ clean = [anonymize(d) for d in data]
   <!-- API Reference -->
   <div class="guide-section" id="api">
     <h2>API Reference</h2>
-    <p>All endpoints. Interactive docs at <a href="/docs" style="color:#3b7;">/docs</a> (Swagger UI).</p>
+    <p>All endpoints. Full API documentation with examples.</p>
 
     <table class="api-table">
       <tr><th>Method</th><th>Path</th><th>Description</th></tr>
@@ -1883,7 +1883,7 @@ NUR_SMTP_PASS=your_smtp_password</pre>
 <div class="guide-footer">
   <a href="/">nur</a> &bull; collective security intelligence &bull;
   <a href="https://github.com/manizzle/nur">open source</a> &bull;
-  <a href="/docs">api reference</a>
+  <a href="/guide">docs</a>
 </div>
 
 </body>
@@ -1892,6 +1892,11 @@ NUR_SMTP_PASS=your_smtp_password</pre>
     @app.get("/guide", response_class=HTMLResponse)
     async def guide():
         return _GUIDE_HTML
+
+    @app.get("/docs", response_class=HTMLResponse)
+    async def docs_redirect():
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/guide")
 
     return app
 

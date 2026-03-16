@@ -28,7 +28,7 @@ nur fixes this. Two modes, one platform:
 
 > ✅ Everything anonymized on your machine. Keypair auth. Work email registration. Math, not promises.
 
-> 🟢 **Try it live:** [nur.saramena.us](https://nur.saramena.us) — [dashboard](https://nur.saramena.us/dashboard) · [docs](https://nur.saramena.us/guide) · [api reference](https://nur.saramena.us/docs) · [register](https://nur.saramena.us/register)
+> 🟢 **Try it live:** [nur.saramena.us](https://nur.saramena.us) — [dashboard](https://nur.saramena.us/dashboard) · [docs](https://nur.saramena.us/guide) · [register](https://nur.saramena.us/register)
 
 ---
 
