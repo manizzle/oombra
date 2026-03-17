@@ -11,7 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/sources-37_live-ff6b6b" />
   <img src="https://img.shields.io/badge/vendors-36_tracked-ffa502" />
-  <img src="https://img.shields.io/badge/tests-441_passing-2ed573" />
+  <img src="https://img.shields.io/badge/tests-519_passing-2ed573" />
   <img src="https://img.shields.io/badge/python-3.11%2B-1e90ff" />
   <img src="https://img.shields.io/badge/code-Apache_2.0-1e90ff" />
   <img src="https://img.shields.io/badge/data-CDLA_Permissive_2.0-f9ca24" />
@@ -26,7 +26,7 @@ nur fixes this. Two modes, one platform:
 - **Wartime** — you're under attack. Upload IOCs, get campaign matches, remediation actions, detection gaps.
 - **Peacetime** — build defenses. Market maps, vendor comparisons, threat modeling, stack coverage analysis.
 
-> ✅ Everything anonymized on your machine. Keypair auth. Work email registration. Math, not promises.
+> ✅ **Trustless architecture.** The server commits to every value, proves every aggregate, and discards individual data. Cryptographic receipts, Merkle proofs, and accountability chains. Your data can't be mined — math, not promises.
 
 > 🟢 **Try it live:** [nur.saramena.us](https://nur.saramena.us) — [dashboard](https://nur.saramena.us/dashboard) · [docs](https://nur.saramena.us/guide) · [register](https://nur.saramena.us/register)
 
@@ -140,6 +140,39 @@ nur admin sources       # all 45 with tier/status
 
 ---
 
+## 💰 Pricing
+
+| | Community | Pro | Enterprise |
+|---|---|---|---|
+| **Price** | Free | $99/mo | $499/mo |
+| Contribute data | ✓ | ✓ | ✓ |
+| Your percentile position | ✓ | ✓ | ✓ |
+| Cryptographic receipts | ✓ | ✓ | ✓ |
+| Market maps + vendor rankings | | ✓ | ✓ |
+| Threat maps + coverage analysis | | ✓ | ✓ |
+| Attack simulation | | ✓ | ✓ |
+| Vendor side-by-side comparison | | ✓ | ✓ |
+| API access | | | ✓ |
+| Vendor intelligence dashboard | | | ✓ |
+| Compliance reports | | | ✓ |
+| RFP generation | | | ✓ |
+| Priority support | | | ✓ |
+
+```bash
+# Free tier — contribute and see your position
+nur eval --vendor crowdstrike
+# → "Your score: 9.2 — 73rd percentile across 42 evaluations"
+
+# Pro tier — full intelligence
+nur market edr                    # vendor rankings
+nur threat-map "ransomware"       # MITRE coverage gaps
+nur simulate --stack crowdstrike  # attack simulation
+```
+
+> **For vendors:** Enterprise tier includes the Vendor Intelligence Dashboard — see how practitioners rate your product, technique-level detection gaps, and category ranking with cryptographic proof of methodology. Contact us for details.
+
+---
+
 ## 🏗️ Deploy for your industry
 
 ```bash
@@ -202,35 +235,74 @@ nur threat-model --stack crowdstrike --hcl > model.hcl
 
 **API:**
 
-| Endpoint | What |
-|----------|------|
-| `POST /analyze` | Give data → get intelligence report |
-| `POST /threat-model` | Generate threat model for stack |
-| `POST /register` | Register with work email + public key |
-| `POST /ingest/webhook` | Universal webhook (Splunk, Sentinel, CrowdStrike, CEF) |
-| `GET /intelligence/market/{cat}` | Vendor market map |
-| `POST /intelligence/threat-map` | MITRE coverage gaps |
-| `GET /intelligence/danger-radar` | Hidden vendor risks |
-| `GET /intelligence/patterns/{vertical}` | Attack methodology patterns for an industry |
-| `POST /intelligence/simulate` | Simulate attack chain against your stack |
-| `GET /search/vendor/{name}` | Vendor scores |
-| `GET /search/compare?a=X&b=Y` | Side-by-side |
-| `GET /dashboard` | Visual dashboard |
-| `GET /guide` | Human-readable documentation |
+| Endpoint | What | Tier |
+|----------|------|------|
+| `POST /analyze` | Give data → get intelligence + receipt | Free |
+| `POST /threat-model` | Generate threat model for stack | Pro |
+| `POST /register` | Register with work email + public key | Free |
+| `GET /pricing` | Tier definitions and features | Free |
+| `GET /my-tier` | Check your current tier | Free |
+| `GET /my-position/{vendor}` | Your percentile vs the market | Free |
+| `GET /intelligence/market/{cat}` | Vendor market map | Pro |
+| `POST /intelligence/threat-map` | MITRE coverage gaps | Pro |
+| `GET /intelligence/danger-radar` | Hidden vendor risks | Pro |
+| `GET /intelligence/patterns/{vertical}` | Attack methodology patterns | Pro |
+| `POST /intelligence/simulate` | Simulate attack chain | Pro |
+| `GET /search/vendor/{name}` | Vendor scores | Pro |
+| `GET /search/compare?a=X&b=Y` | Side-by-side comparison | Pro |
+| `GET /vendor-dashboard/{vendor}` | Vendor intelligence dashboard | Enterprise |
+| `GET /dashboard` | Visual dashboard | Free |
+| `GET /guide` | Documentation | Free |
 
 ---
 
-## 🔐 Security
+## 🔐 Trustless Architecture
+
+In the age of AI data mining, nur is designed so your data **cannot be mined, sold, or misused** — not because we promise, but because the math makes it impossible.
+
+**The server is on a cryptographic leash:**
+
+```
+CONTRIBUTOR (your machine)              SERVER (accountable compute)
+──────────────────────────              ────────────────────────────
+1. Anonymize + scrub locally
+2. All fields are numeric/categorical
+   (no free text — structured data)
+3. Send anonymized contribution         4. Validate + commit (Pedersen hash)
+                                        5. Add commitment to Merkle tree
+                                        6. Update running aggregate sums
+                                        7. DISCARD individual values
+                                        8. Store ONLY: commitments + aggregates
+
+RECEIPT returned to you:                On query:
+  - Commitment hash (sealed value)       - Return aggregate + proof chain
+  - Merkle inclusion proof               - Merkle root, N contributors,
+  - Server signature                       commitment-verified computation
+```
+
+**What the server retains:** commitment hashes (opaque SHA-256), running sums per vendor, Merkle tree. **Zero individual scores, zero technique lists, zero per-org attribution.**
+
+**Crypto primitives:**
+
+| Primitive | What it does | What breaks without it |
+|-----------|-------------|----------------------|
+| **Pedersen Commitments** | Seals each value — server can't change it after receipt | Server could alter scores to favor vendors |
+| **Merkle Tree** | Binds all commitments — server can't add/remove contributions | Server could inflate N ("500 orgs trust us") or exclude low scores |
+| **ZKP Range Proofs** | Proves score is in [0, 10] without revealing it | Poisoner submits score=99999, corrupts aggregate |
+| **Contribution Receipts** | Proves your data was included correctly | Server could silently drop your contribution |
+| **Aggregate Proofs** | Proves computation is correct against commitment chain | Server could fabricate rankings |
+| **Secure Histograms** | Technique frequency from binary vector sums | Server would need plaintext technique lists |
+| **BDP Credibility** | Behavior-based lie detection for data poisoning | Competitor creates 100 fake accounts, rates rivals 0/10 |
+| **Platform Attestation** | Proves "N real contributions from M orgs" with Merkle proof | Platform claims 500 orgs but has 3 contributions |
+
+**Security hardening:**
 
 - **Work email required** — gmail/yahoo/disposable blocked
 - **Keypair auth** — private key never leaves your machine
 - **Signed requests** — replay prevention (5-min window)
-- **Timing-safe comparison** — `secrets.compare_digest`
-- **Rate limiting** — 60 req/min per key
+- **Rate limiting** — 60 req/min (community), 600 (pro), 6000 (enterprise)
 - **Min-k enforcement** — no aggregates with < 3 contributors
 - **Payload limits** — 10K IOCs, 500 techniques max
-- **SMTP injection blocked** — email regex validation
-- **Token expiration** — magic links valid 24 hours
 - **AWS Secrets Manager** — zero secrets in code
 
 Full analysis: [THREAT_MODEL.md](THREAT_MODEL.md)
@@ -252,7 +324,7 @@ nur admin rotate-key     # new API key
 ## 🧪 Tests
 
 ```bash
-pytest       # 441 tests
+pytest       # 519 tests
 ```
 
 ---

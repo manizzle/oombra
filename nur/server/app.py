@@ -1824,50 +1824,72 @@ clean = [anonymize(d) for d in data]
   -d '{"stack": ["crowdstrike", "splunk", "okta"], "vertical": "healthcare"}'</pre>
   </div>
 
-  <!-- Privacy -->
+  <!-- Trustless Architecture -->
   <div class="guide-section" id="privacy">
-    <h2>Privacy</h2>
-    <p>Everything is anonymized on your machine before submission. Three privacy levels:</p>
+    <h2>Trustless Architecture</h2>
+    <p>In the age of AI data mining, nur is designed so your data <strong>cannot be mined, sold, or misused</strong> &mdash; not because we promise, but because the math makes it impossible.</p>
 
+    <h3>How it works</h3>
     <div class="privacy-level">
-      <strong>Level 1: Full anonymization (default)</strong>
+      <strong>1. Your machine anonymizes everything</strong>
       <p style="color:#999;font-size:0.85em;margin-top:4px;">
-        All IOC values SHA-256 hashed. IPs truncated to /24. Domains hashed.
-        No org name, no analyst name, no raw indicators leave your machine.
+        PII scrubbed, IOCs hashed, org identity bucketed. All fields are numeric or categorical &mdash; no free text.
+        Optional Laplace noise on numeric values for differential privacy.
       </p>
     </div>
 
     <div class="privacy-level">
-      <strong>Level 2: Structural only</strong>
+      <strong>2. Server commits, aggregates, and discards</strong>
       <p style="color:#999;font-size:0.85em;margin-top:4px;">
-        Only MITRE technique IDs, detection/miss booleans, and category scores submitted.
-        Zero IOCs, zero raw data. Just structure.
+        Every value is committed (Pedersen-style hash). Commitments go into a Merkle tree.
+        Running aggregate sums are updated. <strong>Individual values are then discarded.</strong>
+        The server retains only: commitment hashes + aggregate sums.
       </p>
     </div>
 
     <div class="privacy-level">
-      <strong>Level 3: Differential privacy</strong>
+      <strong>3. Every query comes with a proof</strong>
       <p style="color:#999;font-size:0.85em;margin-top:4px;">
-        Laplace noise added to all numeric values. Secure aggregation ensures
-        the server only sees aggregate totals, never individual contributions.
-        Minimum-k enforcement: no aggregates with fewer than 3 contributors.
+        When anyone queries an aggregate ("CrowdStrike avg score"), the server returns
+        the answer <strong>plus a cryptographic proof chain</strong>: Merkle root, contributor count,
+        commitment hashes. Anyone can verify the aggregate is real.
       </p>
     </div>
 
-    <h3>What leaves your machine</h3>
+    <div class="privacy-level">
+      <strong>4. You get a receipt</strong>
+      <p style="color:#999;font-size:0.85em;margin-top:4px;">
+        Every contribution returns a cryptographic receipt: commitment hash,
+        Merkle inclusion proof, server signature. You can prove your data was
+        included correctly. The server can't deny receiving it.
+      </p>
+    </div>
+
+    <h3>Crypto primitives</h3>
     <ul>
-      <li>SHA-256 hashes of IOC values (not the values themselves)</li>
-      <li>MITRE technique IDs (e.g., T1566, T1490)</li>
-      <li>Numeric scores and boolean flags</li>
-      <li>Category labels (e.g., "edr", "siem")</li>
+      <li><strong>Pedersen Commitments</strong> &mdash; server can't alter values after receipt</li>
+      <li><strong>Merkle Tree</strong> &mdash; server can't add/remove contributions undetected</li>
+      <li><strong>ZKP Range Proofs</strong> &mdash; proves scores are valid without revealing them</li>
+      <li><strong>Secure Histograms</strong> &mdash; technique frequency from binary vector sums</li>
+      <li><strong>BDP Credibility</strong> &mdash; behavior-based lie detection for data poisoning</li>
+      <li><strong>Platform Attestation</strong> &mdash; proves "N real contributions" with Merkle proof</li>
     </ul>
 
-    <h3>What never leaves your machine</h3>
+    <h3>What the server stores</h3>
     <ul>
-      <li>Raw IP addresses, domains, URLs, hashes</li>
-      <li>Organization name or analyst identity</li>
-      <li>Internal hostnames, file paths, or network topology</li>
-      <li>Your private key (generated locally, stays local)</li>
+      <li>Commitment hashes (opaque SHA-256 strings)</li>
+      <li>Running aggregate sums per vendor (a single number, not a list of scores)</li>
+      <li>Technique frequency counters (T1566 &rarr; 47, not who reported it)</li>
+      <li>Merkle tree of all commitments</li>
+    </ul>
+
+    <h3>What the server does NOT store</h3>
+    <ul>
+      <li>Individual scores, detection rates, or boolean flags</li>
+      <li>Which org contributed which data</li>
+      <li>Raw IOCs, IPs, domains, or indicators</li>
+      <li>Free-text notes or remediation descriptions</li>
+      <li>Your private key or org identity</li>
     </ul>
   </div>
 
