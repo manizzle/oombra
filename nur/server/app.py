@@ -38,6 +38,7 @@ from .routes.query import router as query_router
 from .routes.secagg import router as secagg_router
 from .routes.intelligence import router as intel_router
 from .routes.search import router as search_router
+from .routes.tiers import router as tiers_router
 
 
 # ── App setup ────────────────────────────────────────────────────────────────
@@ -192,6 +193,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     app.include_router(secagg_router)
     app.include_router(intel_router)
     app.include_router(search_router)
+    app.include_router(tiers_router)
 
     # Conditionally include FL router
     try:
