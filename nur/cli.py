@@ -263,6 +263,12 @@ def report(file, api_url, api_key, json_output):
             cid = result.get("contribution_id", "?")
             click.echo(f"  Contribution ID: {cid[:16]}...")
 
+            # Show receipt if present
+            receipt = result.get("receipt")
+            if receipt:
+                click.echo(f"  Receipt: {receipt.get('commitment_hash', '?')[:32]}...")
+                click.echo(f"  Merkle proof: {len(receipt.get('merkle_proof', []))} nodes")
+
             intel = result.get("intelligence", {})
 
             # IOC bundle specific
