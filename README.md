@@ -34,25 +34,9 @@ nur fixes this. Two modes, one platform:
 
 The server is an **accountable compute node** — it commits to every value, proves every aggregate, and discards individual data. Not blind, but on a cryptographic leash.
 
-```
-CONTRIBUTOR                         SERVER                            CONSUMER
-───────────                         ──────                            ────────
-┌───────────────────┐     ┌─────────────────────────┐     ┌───────────────────┐
-│ 1. Anonymize       │     │ 4. Validate              │     │ 7. Query aggregate │
-│ 2. Translate       │────▶│ 5. Commit (Pedersen hash)│────▶│ 8. Get answer      │
-│    (drop free text)│     │ 6. Merkle tree           │     │    + PROOF         │
-│ 3. Submit          │◀────│    Update running sums   │     │ 9. Verify proof    │
-│                    │     │    DISCARD individual     │     │    locally         │
-│   RECEIPT ◀────────│     │    Return receipt         │     │                    │
-└───────────────────┘     └─────────────────────────┘     └───────────────────┘
-                                │                   │
-  NEW CATEGORY?                 │  BLIND DISCOVERY  │
-  ─────────────                 │  ───────────────  │
-  H = SHA-256(name:salt)  ────▶ │  count(H) >= 3?   │
-  propose(H)              ────▶ │  yes → reveal vote │
-  reveal(H, plaintext)    ────▶ │  quorum → PUBLIC   │
-                                └───────────────────┘
-```
+<p align="center">
+  <img src="demo/architecture.png" alt="nur trustless architecture — contributor, server, consumer flow with blind category discovery" width="750" />
+</p>
 
 **Detailed three-party flow — what each side does, step by step:**
 
