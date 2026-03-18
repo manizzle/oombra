@@ -5,7 +5,7 @@
 <p align="center">Your industry should be smarter together than any single company is alone.</p>
 
 <p align="center">
-  <img src="demo/nur-demo.gif" alt="nur demo" width="750" />
+  <img src="demo/nur-demo.gif?v=3" alt="nur demo — trustless pipeline" width="750" />
 </p>
 
 <p align="center">
