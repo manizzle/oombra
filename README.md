@@ -35,111 +35,10 @@ nur fixes this. Two modes, one platform:
 The server is an **accountable compute node** — it commits to every value, proves every aggregate, and discards individual data. Not blind, but on a cryptographic leash.
 
 <p align="center">
-  <img src="demo/architecture.png" alt="nur trustless architecture — contributor, server, consumer flow with blind category discovery" width="750" />
+  <img src="demo/architecture.png?v=4" alt="nur trustless architecture — contributor, server, consumer flow with blind category discovery" width="750" />
 </p>
 
-**Detailed three-party flow — what each side does, step by step:**
-
-```
-CLIENT (your machine)                 SERVER (accountable compute)          CONSUMER (querier)
-═════════════════════                 ════════════════════════════          ══════════════════
-
- ┌─ COLLECT ──────────┐
- │ Load incident.json  │
- └────────┬───────────┘
-          ▼
- ┌─ SCRUB ────────────┐
- │ Remove PII locally  │
- │ Hash IOC values     │
- │ (HMAC-SHA256)       │
- └────────┬───────────┘
-          ▼
- ┌─ TRANSLATE ────────┐
- │ translate_eval()    │
- │ translate_attack_   │
- │   map()             │
- │                     │
- │ DROPPED:            │
- │  notes, sigma_rule, │
- │  action strings     │
- │                     │
- │ KEPT:               │
- │  overall_score: 9.2 │
- │  top_strength:      │
- │   "detection_quality"│
- │  would_buy: true    │
- └────────┬───────────┘
-          ▼
- ┌─ SUBMIT ───────────┐         ┌─ VALIDATE ──────────┐
- │ POST /contribute/   │────────▶│ Check API key        │
- │   submit            │         │ Check rate limit     │
- │ POST /contribute/   │         │ Check payload limits │
- │   attack-map        │         └────────┬────────────┘
- │ POST /contribute/   │                  ▼
- │   ioc-bundle        │         ┌─ COMMIT ────────────┐
- │ POST /ingest/       │         │ SHA-256(data + ts)   │
- │   webhook           │         │ → commitment_hash    │
- │ POST /analyze       │         └────────┬────────────┘
- └─────────────────────┘                  ▼
-                                 ┌─ AGGREGATE ─────────┐
-                                 │ running_sum += value │
-                                 │ count += 1           │
-                                 │ tech_freq[T1566] += 1│
-                                 └────────┬────────────┘
-                                          ▼
-                                 ┌─ MERKLE TREE ───────┐
-                                 │ commitment → leaf    │
-                                 │ rebuild tree → root  │
-                                 └────────┬────────────┘
-                                          ▼
-                                 ┌─ DISCARD ───────────┐
-                                 │ individual values    │
-                                 │ = GONE               │
-                                 │ only commitment hash │
-                                 │ retained             │
-                                 └────────┬────────────┘
-                                          ▼
- ┌─ RECEIPT ──────────┐◀─────── ┌─ RETURN RECEIPT ─────┐
- │ commitment_hash     │         │ commitment + proof    │
- │ merkle_proof        │         │ + server signature    │
- │ server_signature    │         └──────────────────────┘
- │ aggregate_id        │
- │                     │
- │ Store locally —     │
- │ proves you          │
- │ contributed         │                                  ┌─ QUERY ────────────┐
- └─────────────────────┘                                  │ GET /verify/       │
-                                                          │   aggregate/CS     │
-                                                          └────────┬──────────┘
-                                                                   ▼
-                                 ┌─ PROVE AGGREGATE ───┐  ┌─ RECEIVE ─────────┐
-                                 │ Merkle root          │──▶│ proof.count       │
-                                 │ commitment_hashes[]  │  │ proof.merkle_root │
-                                 │ aggregate_values     │  │ proof.values      │
-                                 │ server_signature     │  └────────┬──────────┘
-                                 └─────────────────────┘           ▼
-                                                          ┌─ VERIFY LOCALLY ──┐
-                                                          │ commitments==count?│
-                                                          │ Merkle root valid? │
-                                                          │ signature present? │
-                                                          └────────┬──────────┘
-                                                                   ▼
-                                                            TRUST: aggregate
-                                                            is real. Math,
-                                                            not promises.
-```
-
-**What gets stored vs discarded:**
-
-```
-STORED (server retains)              DISCARDED (gone after commit)
-───────────────────────              ─────────────────────────────
-Commitment hashes (SHA-256)          Individual scores
-Running sums per vendor              Per-org attribution
-Technique frequency counters         Free-text notes
-Merkle tree of all commitments       Sigma rules, action strings
-Blind category hashes (opaque)       Raw IOC values
-```
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the detailed three-party flow diagram.
 
 **Every response comes from aggregates only:**
 
@@ -306,7 +205,8 @@ curl -X POST /category/reveal -d '{"category_hash": "H", "plaintext": "DarkAngel
 # → {"status": "revealed", "revealed_name": "darkangel"}
 ```
 
-**Crypto primitives:**
+<details>
+<summary>Crypto primitives (click to expand)</summary>
 
 | Primitive | What it does | What breaks without it |
 |-----------|-------------|----------------------|
@@ -319,7 +219,10 @@ curl -X POST /category/reveal -d '{"category_hash": "H", "plaintext": "DarkAngel
 | **BDP Credibility** | Behavior-based lie detection for data poisoning | Competitor creates 100 fake accounts, rates rivals 0/10 |
 | **Blind Category Discovery** | Threshold reveal — server can't learn category names until quorum | Server could see what threats orgs are investigating |
 
-**Security hardening:**
+</details>
+
+<details>
+<summary>Security hardening (click to expand)</summary>
 
 - **Work email required** — gmail/yahoo/disposable blocked
 - **Keypair auth** — private key never leaves your machine
@@ -328,6 +231,8 @@ curl -X POST /category/reveal -d '{"category_hash": "H", "plaintext": "DarkAngel
 - **Min-k enforcement** — no aggregates with < 3 contributors
 - **Payload limits** — 10K IOCs, 500 techniques max
 - **AWS Secrets Manager** — zero secrets in code
+
+</details>
 
 Full analysis: [THREAT_MODEL.md](THREAT_MODEL.md)
 
@@ -369,28 +274,7 @@ Full analysis: [THREAT_MODEL.md](THREAT_MODEL.md)
 
 ## API
 
-| Endpoint | What | Tier |
-|----------|------|------|
-| `POST /analyze` | Give data → get intelligence + receipt | Free |
-| `POST /contribute/submit` | Submit eval → get cryptographic receipt | Free |
-| `POST /contribute/attack-map` | Submit attack map → get receipt | Free |
-| `POST /contribute/ioc-bundle` | Submit IOC bundle → get receipt | Free |
-| `POST /ingest/webhook` | Universal webhook (CrowdStrike, Sentinel, CEF, generic) → receipts | Free |
-| `POST /verify/receipt` | Verify a contribution receipt's Merkle proof | Free |
-| `GET /verify/aggregate/{vendor}` | Generate + verify aggregate proof | Free |
-| `GET /proof/stats` | Platform-wide proof stats (Merkle root, counts) | Free |
-| `POST /category/propose` | Propose new blind category | Free |
-| `POST /category/reveal` | Vote to reveal a blind category | Free |
-| `GET /category/pending` | List pending + revealed categories | Free |
-| `POST /threat-model` | Generate threat model for stack | Pro |
-| `GET /intelligence/market/{cat}` | Vendor market map | Pro |
-| `POST /intelligence/threat-map` | MITRE coverage gaps | Pro |
-| `POST /intelligence/simulate` | Simulate attack chain | Pro |
-| `GET /search/vendor/{name}` | Vendor scores | Pro |
-| `GET /search/compare?a=X&b=Y` | Side-by-side comparison | Pro |
-| `GET /vendor-dashboard/{vendor}` | Vendor intelligence dashboard | Enterprise |
-| `GET /dashboard` | Visual dashboard | Free |
-| `GET /guide` | Documentation | Free |
+Full API reference: [nur.saramena.us/guide](https://nur.saramena.us/guide)
 
 ---
 
@@ -405,11 +289,6 @@ nur integrate crowdstrike              # forward detections from CrowdStrike
 # Syslog / Webhook
 nur integrate syslog --port 1514       # listen for CEF/syslog events
 # POST to /ingest/webhook              # universal webhook endpoint
-
-# Import / Export
-nur import navigator layer.json        # MITRE ATT&CK Navigator layers
-nur export stix                        # export as STIX 2.1
-nur export misp                        # export as MISP events
 ```
 
 **Python:**
