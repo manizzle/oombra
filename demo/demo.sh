@@ -19,15 +19,15 @@ API_URL="http://127.0.0.1:$PORT"
 
 # ── Helpers ───────────────────────────────────────────────────────────
 
-narrate() { echo ""; echo "  $1"; sleep 0.8; }
-explain() { echo "  $1"; sleep 0.5; }
-pause() { sleep "${1:-3}"; }
+narrate() { echo ""; echo "  $1"; sleep 2; }
+explain() { echo "  $1"; sleep 1.5; }
+pause() { sleep "${1:-5}"; }
 
 type_cmd() {
     echo ""
     echo -n "  $ "
-    echo "$1" | while IFS= read -r -n1 char; do echo -n "$char"; sleep 0.03; done
-    echo ""; sleep 0.3; eval "$1" 2>&1 | sed 's/^/  /'; sleep 1
+    echo "$1" | while IFS= read -r -n1 char; do echo -n "$char"; sleep 0.05; done
+    echo ""; sleep 0.5; eval "$1" 2>&1 | sed 's/^/  /'; sleep 3
 }
 
 scene() {
@@ -36,14 +36,14 @@ scene() {
     echo "  ║  $1"
     echo "  ╚═══════════════════════════════════════════════════════════╝"
     echo ""
-    sleep 2
+    sleep 4
 }
 
 divider() {
     echo ""
     echo "  ─────────────────────────────────────────────────────────────"
     echo ""
-    sleep 1
+    sleep 3
 }
 
 cleanup() { kill $SERVER_PID 2>/dev/null; rm -f "$DB_FILE"; }
@@ -65,7 +65,7 @@ echo "  │   they are.                                                  │"
 echo "  │                                                             │"
 echo "  └─────────────────────────────────────────────────────────────┘"
 echo ""
-pause 4
+pause 6
 
 scene "2:17 AM — Ohio Children's Hospital"
 
@@ -146,7 +146,7 @@ narrate "32 shared IOCs. Ohio isn't alone."
 narrate "This is a coordinated campaign hitting multiple hospitals."
 narrate "The server knows this because the hashes match —"
 narrate "but it has no idea which hospitals are involved."
-pause 5
+pause 8
 
 divider
 
@@ -158,7 +158,7 @@ type_cmd "nur report demo/attack_map_lockbit.json --api-url $API_URL"
 narrate "Detection gaps identified. The collective knows which"
 narrate "techniques are most common and which tools catch them."
 narrate "Ohio now knows exactly where to add detection rules."
-pause 5
+pause 8
 
 divider
 
@@ -170,7 +170,7 @@ type_cmd "nur report demo/eval_crowdstrike.json --api-url $API_URL"
 
 narrate "Ohio's CrowdStrike score vs the collective average."
 narrate "Real practitioner data — not Gartner, not vendor marketing."
-pause 5
+pause 8
 
 # ═══════════════════════════════════════════════════════════════════════
 #  ACT 4: PEACETIME — strategic decisions
@@ -239,7 +239,7 @@ narrate "Three checks, all PASS. The aggregate is mathematically"
 narrate "proven to be computed from real committed contributions."
 narrate "The server can't inflate the count, alter scores, or"
 narrate "exclude contributions. Math, not promises."
-pause 5
+pause 8
 
 # ═══════════════════════════════════════════════════════════════════════
 #  ACT 6: BLIND CATEGORY DISCOVERY
@@ -289,7 +289,7 @@ narrate "'DarkAngel' is now a public category. The collective"
 narrate "can aggregate data about it. The server learned the name"
 narrate "only because 3 hospitals independently confirmed it —"
 narrate "and 2 voted to make it public."
-pause 5
+pause 8
 
 # ═══════════════════════════════════════════════════════════════════════
 #  EPILOGUE
@@ -313,7 +313,7 @@ echo ""
 narrate "With nur: collaborative defense with mathematical"
 narrate "privacy guarantees. 575 tests. Zero individual values."
 echo ""
-pause 3
+pause 6
 
 echo "  ┌─────────────────────────────────────────────────────────────┐"
 echo "  │                                                             │"
@@ -325,4 +325,4 @@ echo "  │   nur.saramena.us · github.com/manizzle/nur                │"
 echo "  │                                                             │"
 echo "  └─────────────────────────────────────────────────────────────┘"
 echo ""
-pause 5
+pause 8
