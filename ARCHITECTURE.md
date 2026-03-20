@@ -5,42 +5,42 @@
 ```mermaid
 sequenceDiagram
     autonumber
-    participant C as Client<br/>(your machine)
-    participant S as Server<br/>(accountable compute)
-    participant Q as Consumer<br/>(querier)
+    participant C as Client (your machine)
+    participant S as Server (accountable compute)
+    participant Q as Consumer (querier)
 
-    rect rgb(40, 60, 40)
+    rect rgb(235, 245, 235)
     Note over C,Q: CONTRIBUTION PHASE
     Note over C: 1. COLLECT — Load incident.json
-    Note over C: 2. SCRUB — Remove PII, hash IOCs (HMAC-SHA256)
-    Note over C: 3. TRANSLATE — Drop free text, keep scores + categories
-    C->>S: POST /contribute/submit (structured data only)
-    S->>S: 4. VALIDATE (API key, rate limit, payload)
-    S->>S: 5. COMMIT — SHA-256(data + timestamp) → commitment_hash
-    S->>S: 6. AGGREGATE — running_sum += value, count += 1
-    S->>S: 7. MERKLE TREE — commitment → leaf → rebuild root
-    S->>S: 8. DISCARD — individual values GONE
-    S-->>C: RECEIPT (commitment_hash + merkle_proof + signature)
-    Note over C: Store receipt locally — proves you contributed
+    Note over C: 2. SCRUB — Remove PII, hash IOCs
+    Note over C: 3. TRANSLATE — Drop free text, keep scores
+    C->>S: POST /contribute/submit
+    S->>S: 4. VALIDATE
+    S->>S: 5. COMMIT (Pedersen hash)
+    S->>S: 6. AGGREGATE (running sums)
+    S->>S: 7. MERKLE TREE
+    S->>S: 8. DISCARD individual values
+    S-->>C: RECEIPT (commitment + proof + signature)
+    Note over C: Store receipt — proves you contributed
     end
 
-    rect rgb(40, 40, 60)
+    rect rgb(235, 235, 245)
     Note over C,Q: QUERY + VERIFICATION PHASE
     Q->>S: GET /verify/aggregate/CrowdStrike
-    S->>S: 9. PROVE — Merkle root + commitment_hashes + signature
-    S-->>Q: Proof response (aggregate values + proof chain)
-    Q->>Q: 10. VERIFY — commitments==count? root valid? signature?
-    Note over Q: TRUST: aggregate is real. Math, not promises.
+    S->>S: 9. PROVE (Merkle root + commitments)
+    S-->>Q: Proof response
+    Q->>Q: 10. VERIFY locally
+    Note over Q: TRUST — aggregate is real
     end
 
-    rect rgb(60, 40, 40)
+    rect rgb(245, 240, 230)
     Note over C,Q: BLIND CATEGORY DISCOVERY
-    C->>S: propose(H) where H = SHA-256("DarkAngel":salt)
+    C->>S: propose(H) — H = SHA-256(name:salt)
     Note over S: Server sees ONLY the hash
     S->>S: count(H) >= 3 orgs?
-    S-->>C: Threshold met — ready for reveal
-    C->>S: reveal(H, "DarkAngel", salt)
-    S->>S: Verify hash → Category enters PUBLIC TAXONOMY
+    S-->>C: Threshold met
+    C->>S: reveal(H, plaintext, salt)
+    S->>S: Verify → PUBLIC TAXONOMY
     end
 ```
 
