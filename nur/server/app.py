@@ -55,6 +55,40 @@ def get_db() -> Database:
 
 _proof_engine: ProofEngine | None = None
 
+import hashlib as _hashlib_mod
+
+from ..behavioral_dp import BehavioralProfile
+
+_profiles: dict[str, BehavioralProfile] = {}
+
+
+def get_or_create_profile(api_key: str | None) -> BehavioralProfile:
+    """Get or create a behavioral profile for a participant.
+
+    Key is SHA-256 of the API key — server never stores raw keys in profiles.
+    """
+    if not api_key:
+        return BehavioralProfile(participant_id="anonymous")
+    pid = _hashlib_mod.sha256(api_key.encode()).hexdigest()[:16]
+    if pid not in _profiles:
+        _profiles[pid] = BehavioralProfile(
+            participant_id=pid,
+            first_seen_ts=time.time(),
+        )
+    _profiles[pid].last_seen_ts = time.time()
+    return _profiles[pid]
+
+
+def track_query(request: Request, query_type: str, vendors: list[str] | None = None):
+    """Track a query for BDP behavioral profiling."""
+    api_key = request.headers.get("X-API-Key")
+    profile = get_or_create_profile(api_key)
+    profile.query_types.add(query_type)
+    if vendors:
+        for v in vendors:
+            profile.queried_vendors.add(v.lower())
+    profile.total_queries += 1
+
 
 def get_proof_engine() -> ProofEngine:
     global _proof_engine
@@ -87,11 +121,12 @@ async def _feed_ingest_loop(app: FastAPI):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _db, _proof_engine
+    global _db, _proof_engine, _profiles
     db_url = app.state.db_url if hasattr(app.state, "db_url") else "sqlite+aiosqlite:///nur.db"
     _db = Database(db_url)
     await _db.init()
     _proof_engine = ProofEngine()
+    _profiles = {}
 
     # Start auto-ingest background task if enabled
     ingest_task = None
@@ -108,6 +143,7 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
 
+    _profiles = {}
     _proof_engine = None
     await _db.close()
     _db = None
@@ -1191,7 +1227,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     # ── Contribute routes ─────────────────────────────────────────────
 
     @app.post("/contribute/submit")
-    async def contribute_eval(body: dict[str, Any]):
+    async def contribute_eval(body: dict[str, Any], request: Request):
         # Basic field validation for eval records
         d = body.get("data", body)
         vendor = d.get("vendor", "")
@@ -1205,6 +1241,14 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
             raise HTTPException(status_code=400, detail="Notes too long (max 10,000 chars)")
         db = get_db()
         cid = await db.store_eval_record(body)
+        # BDP profile tracking
+        _bdp_key = request.headers.get("X-API-Key")
+        _bdp_profile = get_or_create_profile(_bdp_key)
+        _bdp_profile.contribution_types.add("eval")
+        _bdp_vendor = d.get("vendor", "")
+        if _bdp_vendor:
+            _bdp_profile.contributed_vendors.add(_bdp_vendor.lower())
+        _bdp_profile.total_contributions += 1
         # Proof layer: translate → commit → receipt
         from .proofs import translate_eval
         engine = get_proof_engine()
@@ -1213,12 +1257,16 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
         return {"status": "accepted", "contribution_id": cid, "receipt": receipt.to_dict()}
 
     @app.post("/contribute/attack-map")
-    async def contribute_attack_map(body: dict[str, Any]):
+    async def contribute_attack_map(body: dict[str, Any], request: Request):
         techniques = body.get("techniques", [])
         if len(techniques) > 500:
             raise HTTPException(status_code=400, detail="Too many techniques (max 500)")
         db = get_db()
         cid = await db.store_attack_map(body)
+        # BDP profile tracking
+        _bdp_profile = get_or_create_profile(request.headers.get("X-API-Key"))
+        _bdp_profile.contribution_types.add("attack_map")
+        _bdp_profile.total_contributions += 1
         # Proof layer
         from .proofs import translate_attack_map
         engine = get_proof_engine()
@@ -1227,12 +1275,16 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
         return {"status": "accepted", "contribution_id": cid, "receipt": receipt.to_dict()}
 
     @app.post("/contribute/ioc-bundle")
-    async def contribute_ioc_bundle(body: dict[str, Any]):
+    async def contribute_ioc_bundle(body: dict[str, Any], request: Request):
         iocs = body.get("iocs", [])
         if len(iocs) > 10000:
             raise HTTPException(status_code=400, detail="Too many IOCs (max 10,000)")
         db = get_db()
         cid = await db.store_ioc_bundle(body)
+        # BDP profile tracking
+        _bdp_profile = get_or_create_profile(request.headers.get("X-API-Key"))
+        _bdp_profile.contribution_types.add("ioc_bundle")
+        _bdp_profile.total_contributions += 1
         # Proof layer
         from .proofs import translate_ioc_bundle
         engine = get_proof_engine()
@@ -1243,9 +1295,20 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     # ── Webhook ingest (wartime integrations) ────────────────────────
 
     @app.post("/ingest/webhook")
-    async def ingest_webhook(body: dict[str, Any]):
+    async def ingest_webhook(body: dict[str, Any], request: Request):
         """Universal webhook — accepts data from Splunk, Sentinel, CrowdStrike,
         syslog/CEF, or generic IOC lists. Auto-detects format and stores."""
+        # BDP profile tracking
+        _bdp_profile = get_or_create_profile(request.headers.get("X-API-Key"))
+        _bdp_profile.contribution_types.add("webhook")
+        if "detection" in body:
+            _bdp_profile.integration_sources.add("crowdstrike")
+        elif "properties" in body:
+            _bdp_profile.integration_sources.add("sentinel")
+        elif "cef" in body:
+            _bdp_profile.integration_sources.add("cef")
+        _bdp_profile.total_contributions += 1
+
         import hashlib
 
         db = get_db()
@@ -1481,15 +1544,19 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
     # ── Analyze route ──────────────────────────────────────────────
 
     @app.post("/analyze")
-    async def analyze(body: dict[str, Any]):
+    async def analyze(body: dict[str, Any], request: Request):
         db = get_db()
         engine = get_proof_engine()
+        # BDP profile tracking
+        _bdp_profile = get_or_create_profile(request.headers.get("X-API-Key"))
+        _bdp_profile.total_contributions += 1
         from .analyze import (
             analyze_ioc_bundle, analyze_attack_map, analyze_eval_record,
             detect_contribution_type,
         )
         try:
             contrib_type = detect_contribution_type(body)
+            _bdp_profile.contribution_types.add(contrib_type)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 

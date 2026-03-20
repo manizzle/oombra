@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from ..vendors import (
@@ -78,9 +78,11 @@ async def _vendor_score_from_db(vendor_id: str) -> dict | None:
 # ── Endpoints ────────────────────────────────────────────────────────
 
 @router.get("/market/{category}")
-async def market_map(category: str):
+async def market_map(category: str, request: Request):
     """Market map view — vendors tiered by score + confidence."""
-    from ..app import get_db
+    from ..app import get_db, track_query
+    track_query(request, "market")
+
     db = get_db()
     category_lower = category.lower()
 
@@ -153,9 +155,11 @@ class ThreatMapRequest(BaseModel):
 
 
 @router.post("/threat-map")
-async def threat_map(body: ThreatMapRequest):
+async def threat_map(body: ThreatMapRequest, request: Request):
     """Map a threat description to MITRE techniques and show coverage gaps."""
-    from ..app import get_db
+    from ..app import get_db, track_query
+    track_query(request, "threat_map")
+
     db = get_db()
 
     current_tools_lower = [t.lower().replace(" ", "-") for t in body.current_tools]
@@ -380,11 +384,13 @@ class SimulateRequest(BaseModel):
 
 
 @router.post("/simulate")
-async def simulate(body: SimulateRequest):
+async def simulate(body: SimulateRequest, request: Request):
     """Simulate an attack chain against a security stack.
 
     Shows exactly where your defenses break, step by step.
     """
+    from ..app import track_query
+    track_query(request, "simulate", body.stack)
     from ...simulator import simulate_attack
     from ...verticals import VERTICALS
 

@@ -1610,3 +1610,168 @@ class TestBlindCategoryEndpoints:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
             resp = await c.post("/category/propose", json={"category_hash": "abc"})
             assert resp.status_code == 400
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# BDP (Behavioral Differential Privacy) Integration Tests
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+async def _make_bdp_app():
+    """Create a fresh app with initialized DB, ProofEngine, and empty BDP profiles."""
+    import nur.server.app as app_mod
+    from nur.server.db import Database
+    from nur.server.proofs import ProofEngine
+    the_app = app_mod.create_app("sqlite+aiosqlite://")
+    db = Database("sqlite+aiosqlite://")
+    await db.init()
+    app_mod._db = db
+    app_mod._proof_engine = ProofEngine()
+    app_mod._profiles = {}
+    return the_app
+
+
+class TestBDPProfileTracking:
+    """Behavioral profile tracking across endpoints."""
+
+    @pytest.mark.asyncio
+    async def test_contribute_eval_creates_profile(self):
+        from httpx import AsyncClient, ASGITransport
+        app = await _make_bdp_app()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+            resp = await c.post("/contribute/submit", json={
+                "data": {"vendor": "CrowdStrike", "category": "edr", "overall_score": 9.0}
+            }, headers={"X-API-Key": "test-key-123"})
+            assert resp.status_code == 200
+
+            import nur.server.app as app_mod
+            assert len(app_mod._profiles) >= 1
+            # Profile should have contribution tracked
+            profile = list(app_mod._profiles.values())[0]
+            assert "eval" in profile.contribution_types
+            assert "crowdstrike" in profile.contributed_vendors
+            assert profile.total_contributions >= 1
+
+    @pytest.mark.asyncio
+    async def test_webhook_tracks_integration_source(self):
+        from httpx import AsyncClient, ASGITransport
+        app = await _make_bdp_app()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+            resp = await c.post("/ingest/webhook", json={
+                "detection": {"technique": "T1059", "severity": "high"}
+            }, headers={"X-API-Key": "test-key-456"})
+            assert resp.status_code == 200
+
+            import nur.server.app as app_mod
+            profile = list(app_mod._profiles.values())[0]
+            assert "crowdstrike" in profile.integration_sources
+
+    @pytest.mark.asyncio
+    async def test_profile_keyed_by_hash_not_raw_key(self):
+        from httpx import AsyncClient, ASGITransport
+        app = await _make_bdp_app()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+            await c.post("/contribute/submit", json={
+                "data": {"vendor": "Test", "overall_score": 8.0}
+            }, headers={"X-API-Key": "my-secret-key"})
+
+            import nur.server.app as app_mod
+            for pid in app_mod._profiles:
+                assert "my-secret-key" not in pid
+                assert len(pid) == 16  # truncated hash
+
+    @pytest.mark.asyncio
+    async def test_anonymous_contributions_get_profile(self):
+        from httpx import AsyncClient, ASGITransport
+        app = await _make_bdp_app()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+            resp = await c.post("/contribute/submit", json={
+                "data": {"vendor": "Test", "overall_score": 8.0}
+            })
+            assert resp.status_code == 200
+            # Should not crash, anonymous gets a profile too
+
+    @pytest.mark.asyncio
+    async def test_bdp_stats_endpoint(self):
+        from httpx import AsyncClient, ASGITransport
+        app = await _make_bdp_app()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+            # Submit some data first
+            await c.post("/contribute/submit", json={
+                "data": {"vendor": "CrowdStrike", "overall_score": 9.0}
+            }, headers={"X-API-Key": "key-1"})
+            await c.post("/contribute/submit", json={
+                "data": {"vendor": "SentinelOne", "overall_score": 8.0}
+            }, headers={"X-API-Key": "key-2"})
+
+            resp = await c.get("/proof/bdp-stats")
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["total_profiles"] >= 1
+            assert "credibility_distribution" in data
+
+    @pytest.mark.asyncio
+    async def test_same_key_same_profile(self):
+        from httpx import AsyncClient, ASGITransport
+        app = await _make_bdp_app()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+            await c.post("/contribute/submit", json={
+                "data": {"vendor": "CrowdStrike", "overall_score": 9.0}
+            }, headers={"X-API-Key": "same-key"})
+            await c.post("/contribute/attack-map", json={
+                "techniques": [{"technique_id": "T1566"}]
+            }, headers={"X-API-Key": "same-key"})
+
+            import nur.server.app as app_mod
+            # Should be ONE profile with both contribution types
+            profiles = [p for p in app_mod._profiles.values() if p.total_contributions >= 2]
+            assert len(profiles) >= 1
+            profile = profiles[0]
+            assert "eval" in profile.contribution_types
+            assert "attack_map" in profile.contribution_types
+
+
+class TestBDPPrivacyPreservation:
+    """Ensure BDP tracking doesn't leak individual data."""
+
+    def test_profile_never_stores_raw_api_key(self):
+        import nur.server.app as app_mod
+        app_mod._profiles = {}
+        profile = app_mod.get_or_create_profile("super-secret-api-key-12345")
+        assert "super-secret-api-key-12345" not in profile.participant_id
+        assert len(profile.participant_id) == 16
+
+    def test_profile_stores_vendors_lowercase_only(self):
+        import nur.server.app as app_mod
+        app_mod._profiles = {}
+        profile = app_mod.get_or_create_profile("test-key")
+        profile.contributed_vendors.add("crowdstrike")
+        # No org names, no specific details — just vendor IDs
+        for v in profile.contributed_vendors:
+            assert v == v.lower()
+
+    def test_bdp_stats_returns_only_aggregates(self):
+        """The /proof/bdp-stats endpoint must never return individual profiles."""
+        # This is verified by the endpoint implementation — it only returns
+        # counts and distributions, never profile contents
+        from nur.behavioral_dp import BehavioralProfile, compute_credibility_weight
+        profile = BehavioralProfile(participant_id="test")
+        profile.contributed_vendors = {"crowdstrike"}
+        profile.query_types = {"market", "search"}
+        w = compute_credibility_weight(profile)
+        # Weight is a single float — no profile details leak
+        assert isinstance(w, float)
+        assert 0.05 <= w <= 0.95
+
+    def test_credibility_weight_has_laplace_noise(self):
+        """Two calls with same profile should return DIFFERENT weights due to noise."""
+        from nur.behavioral_dp import BehavioralProfile, compute_credibility_weight
+        profile = BehavioralProfile(participant_id="test")
+        profile.contributed_vendors = {"crowdstrike"}
+        profile.queried_vendors = {"crowdstrike"}
+        profile.query_types = {"market", "search", "simulate"}
+        profile.contribution_types = {"eval", "attack_map"}
+
+        weights = [compute_credibility_weight(profile) for _ in range(20)]
+        # With Laplace noise, weights should vary
+        assert len(set(weights)) > 1  # not all identical

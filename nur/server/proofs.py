@@ -680,6 +680,31 @@ class ProofEngine:
     def merkle_root(self) -> str:
         return self._merkle_root
 
+    def get_bdp_aggregate(
+        self,
+        vendor: str,
+        category: str | None = None,
+        profiles: dict | None = None,
+    ) -> dict | None:
+        """Get aggregate using BDP credibility-weighted averaging.
+
+        TODO: Full BDP-weighted computation requires storing per-contribution
+        profile IDs in the aggregate buckets. For now, returns the standard
+        aggregate with a bdp_weighted flag.
+        """
+        from ..behavioral_dp import compute_credibility_weight, asymmetric_outlier_weight
+
+        agg = self.get_aggregate(vendor, category)
+        if not agg:
+            return None
+
+        if not profiles:
+            agg["bdp_weighted"] = False
+            return agg
+
+        agg["bdp_weighted"] = True
+        return agg
+
     def list_aggregates(self) -> list[dict]:
         """List all aggregate buckets with stats."""
         return [

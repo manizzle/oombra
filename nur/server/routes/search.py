@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 
 from ..vendors import (
     VENDOR_REGISTRY, get_vendor, list_vendors,
@@ -101,8 +101,10 @@ async def _get_vendor_detail(vendor_id: str) -> dict:
 # ── Endpoints ────────────────────────────────────────────────────────
 
 @router.get("/vendor/{name}")
-async def search_vendor(name: str):
+async def search_vendor(name: str, request: Request):
     """Enhanced vendor lookup — weighted score, confidence, source breakdown, metadata."""
+    from ..app import track_query
+    track_query(request, "search", [name])
     return await _get_vendor_detail(name)
 
 
@@ -172,10 +174,13 @@ async def search_category(name: str):
 
 @router.get("/compare")
 async def compare_vendors(
+    request: Request,
     a: str = Query(..., description="First vendor ID"),
     b: str = Query(..., description="Second vendor ID"),
 ):
     """Side-by-side vendor comparison."""
+    from ..app import track_query
+    track_query(request, "compare", [a, b])
     vendor_a = await _get_vendor_detail(a)
     vendor_b = await _get_vendor_detail(b)
     return {

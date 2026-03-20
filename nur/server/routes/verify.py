@@ -1,7 +1,7 @@
 """Verification endpoints — anyone can verify proofs."""
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 router = APIRouter(tags=["verify"])
 
@@ -30,8 +30,10 @@ async def verify_receipt_endpoint(body: dict):
 
 
 @router.get("/verify/aggregate/{vendor}")
-async def verify_aggregate(vendor: str, category: str | None = None):
+async def verify_aggregate(vendor: str, request: Request, category: str | None = None):
     """Generate and verify an aggregate proof for a vendor."""
+    from ..app import track_query
+    track_query(request, "verify", [vendor])
     from ..proofs import verify_aggregate_proof
     engine = _get_engine()
     proof = engine.prove_aggregate(vendor, category)
@@ -97,4 +99,43 @@ async def list_pending_categories():
     return {
         "pending": engine.blind_categories.get_pending_categories(),
         "revealed": engine.blind_categories.get_revealed_categories(),
+    }
+
+
+@router.get("/proof/bdp-stats")
+async def bdp_stats():
+    """BDP behavioral profile statistics (aggregate only, no individual profiles)."""
+    from ..app import _profiles
+    from ...behavioral_dp import compute_credibility_weight
+
+    if not _profiles:
+        return {
+            "total_profiles": 0,
+            "avg_credibility": None,
+            "trusted_count": 0,
+            "untrusted_count": 0,
+            "credibility_distribution": {
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+            },
+        }
+
+    weights = []
+    for profile in _profiles.values():
+        w = compute_credibility_weight(profile)
+        weights.append(w)
+
+    trusted = sum(1 for w in weights if w >= 0.4)
+
+    return {
+        "total_profiles": len(_profiles),
+        "avg_credibility": round(sum(weights) / len(weights), 3) if weights else None,
+        "trusted_count": trusted,
+        "untrusted_count": len(weights) - trusted,
+        "credibility_distribution": {
+            "high": sum(1 for w in weights if w >= 0.7),
+            "medium": sum(1 for w in weights if 0.4 <= w < 0.7),
+            "low": sum(1 for w in weights if w < 0.4),
+        },
     }
