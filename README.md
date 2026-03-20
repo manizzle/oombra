@@ -315,11 +315,11 @@ nur up --vertical government     # APT29, FISMA
 ## Tests
 
 ```bash
-pytest                                    # 575 tests (89 trustless + 486 core)
-python demo/trustless_demo.py             # full E2E trustless pipeline demo
+pytest                    # 575 tests (89 trustless + 486 core)
+bash demo/demo.sh         # narrated walkthrough — the hospital story
 ```
 
-**Trustless demo** shows all 11 steps: eval → attack map → IOC bundle → CrowdStrike webhook → Sentinel webhook → aggregate query → receipt verification → aggregate proof → trust summary → zero-individual-values proof → blind category discovery.
+**The demo** tells a story: three hospitals under LockBit ransomware discover they're not alone — through anonymous IOC matching, detection gap analysis, vendor benchmarking, cryptographic proof verification, and blind category discovery. Real server, real CLI commands, narrated between each step.
 
 ---
 
