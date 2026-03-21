@@ -429,6 +429,24 @@ def _interactive_eval(vendor: str) -> dict:
     industry = click.prompt("  Your industry", type=click.Choice(industries), default="tech")
     org_size = click.prompt("  Org size", type=click.Choice(sizes), default="1000-5000")
 
+    # Price (optional)
+    click.echo("\n  Pricing (optional — skip with Enter):")
+    annual_cost = click.prompt("  Annual cost ($)", default="", show_default=False)
+    per_seat_cost = click.prompt("  Per-seat/endpoint cost ($)", default="", show_default=False)
+    contract_length = click.prompt("  Contract length (months)", default="", show_default=False)
+    discount_pct = click.prompt("  Discount off list price (%)", default="", show_default=False)
+
+    # Support (optional)
+    click.echo("\n  Support experience (optional):")
+    support_quality = click.prompt("  Support quality (1-10)", default="", show_default=False)
+    escalation_ease = click.prompt("  Escalation ease (1-10)", default="", show_default=False)
+    support_sla = click.prompt("  SLA response time (hours)", default="", show_default=False)
+
+    # Decision
+    click.echo("\n  Decision:")
+    chose = click.prompt("  Did you choose this vendor? (y/n)", default="", show_default=False)
+    decision_factor = click.prompt("  Main decision factor (price/detection/support/integration/compliance)", default="", show_default=False)
+
     data = {
         "vendor": vendor,
         "category": category,
@@ -446,6 +464,24 @@ def _interactive_eval(vendor: str) -> dict:
         data["top_strength"] = strength
     if friction:
         data["top_friction"] = friction
+    if annual_cost:
+        data["annual_cost"] = float(annual_cost)
+    if per_seat_cost:
+        data["per_seat_cost"] = float(per_seat_cost)
+    if contract_length:
+        data["contract_length_months"] = int(contract_length)
+    if discount_pct:
+        data["discount_pct"] = float(discount_pct)
+    if support_quality:
+        data["support_quality"] = float(support_quality)
+    if escalation_ease:
+        data["escalation_ease"] = float(escalation_ease)
+    if support_sla:
+        data["support_sla_hours"] = float(support_sla)
+    if chose:
+        data["chose_this_vendor"] = chose.lower().startswith("y")
+    if decision_factor:
+        data["decision_factor"] = decision_factor
 
     click.echo(f"\n  Preview:")
     click.echo(f"    Vendor:    {vendor}")

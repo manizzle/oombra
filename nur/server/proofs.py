@@ -173,11 +173,24 @@ class _AggBucket:
 NUMERIC_FIELDS = [
     "overall_score", "detection_rate", "fp_rate",
     "deploy_days", "cpu_overhead", "ttfv_hours", "eval_duration_days",
+    # Price
+    "annual_cost", "per_seat_cost", "contract_length_months", "discount_pct",
+    # Support
+    "support_sla_hours", "support_quality", "escalation_ease",
+    # Performance
+    "agent_memory_mb", "scan_latency_ms",
 ]
-BOOL_FIELDS = ["would_buy", "data_exfiltrated", "ransom_paid"]
+BOOL_FIELDS = ["would_buy", "data_exfiltrated", "ransom_paid", "chose_this_vendor"]
+
+DECISION_FACTORS = [
+    "price", "detection", "support", "integration",
+    "compliance", "executive_mandate", "peer_recommendation", "analyst_report",
+]
+
 CATEGORICAL_FIELDS = [
     "top_strength", "top_friction", "severity",
     "time_to_detect", "time_to_contain", "time_to_recover",
+    "decision_factor",
 ]
 
 
@@ -822,6 +835,10 @@ def translate_eval(body: dict) -> tuple[str, str, dict]:
     if top_friction:
         values["top_friction"] = _match_category(top_friction, FRICTION_CATEGORIES)
 
+    decision_factor = d.get("decision_factor", "")
+    if decision_factor:
+        values["decision_factor"] = _match_category(decision_factor, DECISION_FACTORS)
+
     # NOTE: 'notes' field is intentionally dropped — no free text in proof layer
     return (vendor, category, values)
 
@@ -944,4 +961,5 @@ __all__ = [
     "translate_ioc_bundle",
     "translate_webhook_crowdstrike",
     "translate_webhook_sentinel",
+    "DECISION_FACTORS",
 ]

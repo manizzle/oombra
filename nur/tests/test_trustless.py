@@ -1775,3 +1775,115 @@ class TestBDPPrivacyPreservation:
         weights = [compute_credibility_weight(profile) for _ in range(20)]
         # With Laplace noise, weights should vary
         assert len(set(weights)) > 1  # not all identical
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Expanded eval metrics: price, support, performance, decision intelligence
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestExpandedEvalMetrics:
+    """Price, support, performance, and decision intel fields."""
+
+    def test_price_fields_aggregate(self):
+        from nur.server.proofs import ProofEngine
+        engine = ProofEngine()
+        engine.commit_contribution("CrowdStrike", "edr", {
+            "overall_score": 9.0,
+            "annual_cost": 50000,
+            "per_seat_cost": 12.50,
+            "contract_length_months": 36,
+            "discount_pct": 15.0,
+        })
+        engine.commit_contribution("CrowdStrike", "edr", {
+            "overall_score": 8.5,
+            "annual_cost": 45000,
+            "per_seat_cost": 11.00,
+            "contract_length_months": 24,
+            "discount_pct": 20.0,
+        })
+        agg = engine.get_aggregate("CrowdStrike")
+        assert abs(agg["avg_annual_cost"] - 47500) < 1
+        assert abs(agg["avg_per_seat_cost"] - 11.75) < 0.01
+        assert abs(agg["avg_discount_pct"] - 17.5) < 0.01
+
+    def test_support_fields_aggregate(self):
+        from nur.server.proofs import ProofEngine
+        engine = ProofEngine()
+        engine.commit_contribution("CrowdStrike", "edr", {
+            "support_quality": 8.0,
+            "escalation_ease": 7.0,
+            "support_sla_hours": 4.0,
+        })
+        engine.commit_contribution("CrowdStrike", "edr", {
+            "support_quality": 9.0,
+            "escalation_ease": 6.0,
+            "support_sla_hours": 2.0,
+        })
+        agg = engine.get_aggregate("CrowdStrike")
+        assert abs(agg["avg_support_quality"] - 8.5) < 0.01
+        assert abs(agg["avg_support_sla_hours"] - 3.0) < 0.01
+
+    def test_decision_factor_categorical(self):
+        from nur.server.proofs import ProofEngine
+        engine = ProofEngine()
+        engine.commit_contribution("CrowdStrike", "edr", {
+            "overall_score": 9.0,
+            "chose_this_vendor": True,
+            "decision_factor": "detection",
+        })
+        engine.commit_contribution("CrowdStrike", "edr", {
+            "overall_score": 8.0,
+            "chose_this_vendor": False,
+            "decision_factor": "price",
+        })
+        agg = engine.get_aggregate("CrowdStrike")
+        assert abs(agg["chose_this_vendor_pct"] - 50.0) < 0.01
+        bucket = engine._aggregates["crowdstrike:edr"]
+        assert bucket.bool_counts.get("decision_factor:detection", 0) == 1
+        assert bucket.bool_counts.get("decision_factor:price", 0) == 1
+
+    def test_translate_eval_handles_new_fields(self):
+        from nur.server.proofs import translate_eval
+        vendor, cat, values = translate_eval({
+            "data": {
+                "vendor": "CrowdStrike",
+                "category": "edr",
+                "overall_score": 9.0,
+                "annual_cost": 50000,
+                "support_quality": 8.0,
+                "chose_this_vendor": True,
+                "decision_factor": "detection quality is great",
+            }
+        })
+        assert values["annual_cost"] == 50000
+        assert values["support_quality"] == 8.0
+        assert values["chose_this_vendor"] is True
+        assert values["decision_factor"] == "detection"  # matched to category
+
+    def test_performance_fields(self):
+        from nur.server.proofs import ProofEngine
+        engine = ProofEngine()
+        engine.commit_contribution("CrowdStrike", "edr", {
+            "agent_memory_mb": 150,
+            "scan_latency_ms": 45,
+        })
+        engine.commit_contribution("CrowdStrike", "edr", {
+            "agent_memory_mb": 200,
+            "scan_latency_ms": 55,
+        })
+        agg = engine.get_aggregate("CrowdStrike")
+        assert abs(agg["avg_agent_memory_mb"] - 175) < 1
+        assert abs(agg["avg_scan_latency_ms"] - 50) < 1
+
+    def test_price_data_not_in_receipts(self):
+        """Price data should be aggregated but never appear in receipts."""
+        from nur.server.proofs import ProofEngine
+        engine = ProofEngine()
+        receipt = engine.commit_contribution("CrowdStrike", "edr", {
+            "annual_cost": 50000,
+            "per_seat_cost": 12.50,
+        })
+        d = receipt.to_dict()
+        # Receipt contains hashes, not values
+        assert "50000" not in str(d["commitment_hash"])
+        assert "12.50" not in str(d["commitment_hash"])
