@@ -1773,19 +1773,18 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
 
 <div class="guide-header">
   <h1>nur <span>guide</span></h1>
-  <p>everything you need to know to use nur</p>
+  <p>quick reference &mdash; see <a href="https://github.com/manizzle/nur" style="color:#3b7;">README</a> for full docs</p>
 </div>
 
 <div class="guide-nav">
   <a href="#quick-start">quick start</a>
   <a href="#wartime">wartime</a>
   <a href="#peacetime">peacetime</a>
-  <a href="#integrations">integrations</a>
+  <a href="#eval">eval dimensions</a>
   <a href="#api">api reference</a>
-  <a href="#privacy">privacy</a>
+  <a href="#privacy">trustless</a>
   <a href="#self-hosting">self-hosting</a>
   <a href="/">home</a>
-  <a href="/guide">docs</a>
 </div>
 
 <div class="guide-content">
@@ -1793,121 +1792,51 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
   <!-- Quick Start -->
   <div class="guide-section" id="quick-start">
     <h2>Quick Start</h2>
-    <p>Install the CLI, register with your work email, start contributing.</p>
-    <pre><span class="comment"># install</span>
-<span class="cmd">pip install nur</span>
-
-<span class="comment"># initialize (saves server URL, generates keypair)</span>
+    <pre><span class="cmd">pip install nur</span>
 <span class="cmd">nur init</span>
-
-<span class="comment"># register with your work email (gmail/yahoo blocked)</span>
-<span class="cmd">nur register you@yourorg.com</span>
-
-<span class="comment"># check your email, click the magic link, get your API key</span>
-<span class="comment"># then start reporting</span>
-<span class="cmd">nur report incident.json</span></pre>
-    <p>That's it. Your data is anonymized locally before it leaves your machine. You get back collective intelligence from everyone who contributed.</p>
+<span class="cmd">nur register you@yourorg.com</span>    <span class="comment"># work email required</span>
+<span class="cmd">nur report incident.json</span>        <span class="comment"># give data, get intelligence</span></pre>
+    <p>Data is anonymized locally before it leaves your machine. You get back collective intelligence from everyone who contributed.</p>
   </div>
 
   <!-- Wartime -->
   <div class="guide-section" id="wartime">
-    <h2>Wartime Commands</h2>
+    <h2>Wartime</h2>
     <p>You're under attack. Upload IOCs, get campaign matches, detection gaps, remediation actions.</p>
-
-    <h3>Report IOCs</h3>
-    <pre><span class="cmd">nur report incident_iocs.json</span>
-
-<span class="comment"># Response:</span>
-  Campaign Match: Yes &mdash; 4 other healthcare orgs
-  Shared IOCs: 32 &middot; Threat Actor: LockBit
-
-  Actions:
-    [CRITICAL] Block C2 domains at firewall
-    [CRITICAL] Deploy T1490 detection &mdash; your tools miss it
-    [HIGH]     Hunt for RDP lateral movement
-
-  What worked at other orgs:
-    - Isolated RDP across all subnets (stopped_attack)
-    - Deployed Sigma rule for vssadmin delete (stopped_attack)</pre>
-
-    <h3>Report attack maps</h3>
-    <pre><span class="cmd">nur report attack_map.json</span>     <span class="comment"># detection gap analysis</span></pre>
-
-    <h3>Report tool evaluations</h3>
-    <pre><span class="cmd">nur report eval.json</span>            <span class="comment"># benchmark your tools</span></pre>
-
-    <h3>JSON output</h3>
-    <pre><span class="cmd">nur report incident.json --json | jq '.intelligence.actions'</span></pre>
+    <pre><span class="cmd">nur report incident_iocs.json</span>   <span class="comment"># campaign match + shared IOCs</span>
+<span class="cmd">nur report attack_map.json</span>      <span class="comment"># detection gap analysis</span>
+<span class="cmd">nur report eval.json</span>            <span class="comment"># benchmark your tools</span>
+<span class="cmd">nur report incident.json --json</span> <span class="comment"># machine-readable output</span></pre>
   </div>
 
   <!-- Peacetime -->
   <div class="guide-section" id="peacetime">
-    <h2>Peacetime Commands</h2>
+    <h2>Peacetime</h2>
     <p>Build defenses. Market maps, vendor comparisons, threat modeling, attack simulations.</p>
-
-    <h3>Market intelligence</h3>
-    <pre><span class="cmd">nur market edr</span>                                       <span class="comment"># vendor rankings by category</span>
-<span class="cmd">nur search vendor crowdstrike</span>                        <span class="comment"># real scores, not Gartner</span>
-<span class="cmd">nur search compare crowdstrike sentinelone</span>           <span class="comment"># side-by-side comparison</span></pre>
-
-    <h3>Threat modeling</h3>
-    <pre><span class="cmd">nur threat-model --stack crowdstrike,splunk,okta --vertical healthcare</span>
-
-<span class="comment"># Response:</span>
-  Coverage: 75% (6/8 priority techniques)
-  Gaps: T1566 Spearphishing &rarr; add email security
-        T1048 Exfiltration &rarr; add NDR or DLP
-  Compliance: HIPAA &check; &middot; NIST CSF &check; &middot; HITECH &cross;
-
-<span class="comment"># Export as HCL (threatcl-compatible)</span>
-<span class="cmd">nur threat-model --stack crowdstrike,splunk --hcl --output model.hcl</span></pre>
-
-    <h3>Attack patterns</h3>
-    <pre><span class="cmd">nur patterns healthcare</span>          <span class="comment"># attack methodology patterns for a vertical</span>
-<span class="cmd">nur patterns financial</span>           <span class="comment"># what APT groups target finance</span></pre>
-
-    <h3>Attack simulation</h3>
-    <pre><span class="cmd">nur simulate --stack crowdstrike,splunk,okta --vertical healthcare</span>
-
-<span class="comment"># Simulates the most common attack chain against your stack</span>
-<span class="comment"># Shows exactly where your defenses break, step by step</span></pre>
+    <pre><span class="cmd">nur eval</span>                                             <span class="comment"># interactive vendor evaluation</span>
+<span class="cmd">nur eval --vendor crowdstrike</span>                        <span class="comment"># price, support, detection, decision intel</span>
+<span class="cmd">nur market edr</span>                                       <span class="comment"># vendor rankings by category</span>
+<span class="cmd">nur search compare crowdstrike sentinelone</span>           <span class="comment"># side-by-side comparison</span>
+<span class="cmd">nur threat-model --stack crowdstrike,splunk --vertical healthcare</span>
+<span class="cmd">nur simulate --stack crowdstrike,splunk,okta --vertical healthcare</span></pre>
   </div>
 
-  <!-- Integrations -->
-  <div class="guide-section" id="integrations">
-    <h2>Integrations</h2>
-    <p>Plug nur into your existing security stack. 10 integration points.</p>
+  <!-- Eval Dimensions -->
+  <div class="guide-section" id="eval">
+    <h2>Eval Dimensions</h2>
+    <p>The <code>nur eval</code> schema covers six dimensions. All fields are aggregated. All individual values are discarded after commit.</p>
+    <pre>Detection:   overall score, detection rate, false positives
+Price:       annual cost, per-seat cost, contract length, discount
+Support:     quality, escalation ease, SLA response time
+Performance: CPU overhead, memory, scan latency
+Decision:    chose this vendor?, main decision factor
 
-    <h3>SIEM / EDR</h3>
-    <pre><span class="cmd">nur integrate splunk</span>             <span class="comment"># forward alerts from Splunk</span>
-<span class="cmd">nur integrate sentinel</span>           <span class="comment"># forward incidents from Microsoft Sentinel</span>
-<span class="cmd">nur integrate crowdstrike</span>        <span class="comment"># forward detections from CrowdStrike</span></pre>
-
-    <h3>Syslog / Webhook</h3>
-    <pre><span class="cmd">nur integrate syslog --port 1514</span> <span class="comment"># listen for CEF/syslog events</span>
-<span class="comment"># or POST to /ingest/webhook with any supported format</span></pre>
-
-    <h3>Import</h3>
-    <pre><span class="cmd">nur import navigator layer.json</span>  <span class="comment"># import MITRE ATT&amp;CK Navigator layers</span>
-<span class="cmd">nur import stack inventory.csv</span>   <span class="comment"># import your tool inventory</span>
-<span class="cmd">nur import compliance soc2.json</span>  <span class="comment"># import compliance framework mappings</span>
-<span class="cmd">nur import rfp responses.json</span>    <span class="comment"># import vendor RFP responses</span></pre>
-
-    <h3>Export</h3>
-    <pre><span class="cmd">nur export stix</span>                  <span class="comment"># export intelligence as STIX 2.1</span>
-<span class="cmd">nur export misp</span>                  <span class="comment"># export as MISP events</span></pre>
-
-    <h3>Python SDK</h3>
-    <pre>from nur import load_file, anonymize, submit
-data  = load_file("incident.json")
-clean = [anonymize(d) for d in data]
-[submit(c, api_url="https://nur.saramena.us") for c in clean]</pre>
+<span class="comment"># All fields aggregated. All individual values discarded.</span></pre>
   </div>
 
   <!-- API Reference -->
   <div class="guide-section" id="api">
     <h2>API Reference</h2>
-    <p>All endpoints. Full API documentation with examples.</p>
 
     <table class="api-table">
       <tr><th>Method</th><th>Path</th><th>Description</th></tr>
@@ -1915,153 +1844,49 @@ clean = [anonymize(d) for d in data]
       <tr><td>POST</td><td>/contribute/submit</td><td>Submit tool evaluation</td></tr>
       <tr><td>POST</td><td>/contribute/attack-map</td><td>Submit attack map with techniques</td></tr>
       <tr><td>POST</td><td>/contribute/ioc-bundle</td><td>Submit IOC bundle</td></tr>
-      <tr><td>POST</td><td>/ingest/webhook</td><td>Universal webhook (Splunk, Sentinel, CrowdStrike, CEF, generic)</td></tr>
+      <tr><td>POST</td><td>/ingest/webhook</td><td>Universal webhook (Splunk, Sentinel, CrowdStrike, CEF)</td></tr>
       <tr><td>POST</td><td>/register</td><td>Register with work email + public key</td></tr>
-      <tr><td>POST</td><td>/threat-model</td><td>Generate MITRE-mapped threat model for your stack</td></tr>
-      <tr><td>GET</td><td>/intelligence/market/{category}</td><td>Vendor market map by category</td></tr>
-      <tr><td>POST</td><td>/intelligence/threat-map</td><td>Map threat to MITRE techniques, show coverage gaps</td></tr>
+      <tr><td>POST</td><td>/threat-model</td><td>Generate MITRE-mapped threat model</td></tr>
+      <tr><td>GET</td><td>/intelligence/market/{category}</td><td>Vendor market map</td></tr>
+      <tr><td>POST</td><td>/intelligence/threat-map</td><td>Threat &rarr; MITRE techniques + coverage gaps</td></tr>
       <tr><td>GET</td><td>/intelligence/danger-radar</td><td>Vendors with hidden risk signals</td></tr>
-      <tr><td>GET</td><td>/intelligence/patterns/{vertical}</td><td>Attack methodology patterns for an industry</td></tr>
+      <tr><td>GET</td><td>/intelligence/patterns/{vertical}</td><td>Attack patterns for an industry</td></tr>
       <tr><td>POST</td><td>/intelligence/simulate</td><td>Simulate attack chain against your stack</td></tr>
       <tr><td>GET</td><td>/search/vendor/{name}</td><td>Vendor scores and details</td></tr>
       <tr><td>GET</td><td>/search/compare?a=X&amp;b=Y</td><td>Side-by-side vendor comparison</td></tr>
-      <tr><td>POST</td><td>/verify/receipt</td><td>Verify a contribution receipt (Merkle inclusion proof)</td></tr>
-      <tr><td>GET</td><td>/verify/aggregate/{vendor}</td><td>Generate + verify aggregate proof for a vendor</td></tr>
-      <tr><td>GET</td><td>/proof/stats</td><td>Platform proof stats (Merkle root, contribution counts, unique vendors)</td></tr>
-      <tr><td>POST</td><td>/category/propose</td><td>Propose a new blind category (threshold reveal protocol)</td></tr>
-      <tr><td>POST</td><td>/category/reveal</td><td>Vote to reveal a blind category&rsquo;s name</td></tr>
-      <tr><td>GET</td><td>/category/pending</td><td>List pending + revealed blind categories</td></tr>
-      <tr><td>GET</td><td>/dashboard</td><td>Visual dashboard with charts</td></tr>
-      <tr><td>GET</td><td>/guide</td><td>This documentation page</td></tr>
+      <tr><td>POST</td><td>/verify/receipt</td><td>Verify contribution receipt (Merkle proof)</td></tr>
+      <tr><td>GET</td><td>/verify/aggregate/{vendor}</td><td>Verify aggregate proof for a vendor</td></tr>
+      <tr><td>GET</td><td>/proof/stats</td><td>Platform proof stats (Merkle root, counts)</td></tr>
+      <tr><td>POST</td><td>/category/propose</td><td>Propose blind category (threshold reveal)</td></tr>
+      <tr><td>POST</td><td>/category/reveal</td><td>Vote to reveal a blind category</td></tr>
+      <tr><td>GET</td><td>/category/pending</td><td>List pending + revealed categories</td></tr>
+      <tr><td>GET</td><td>/dashboard</td><td>Visual dashboard</td></tr>
       <tr><td>GET</td><td>/health</td><td>Liveness check</td></tr>
       <tr><td>GET</td><td>/stats</td><td>Contribution counts (anonymized)</td></tr>
     </table>
-
-    <h3>Example: analyze IOCs</h3>
-    <pre>curl -X POST https://nur.saramena.us/analyze \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: nur_yourkey" \
-  -d '{"iocs": [{"ioc_type": "ip", "value": "203.0.113.42"}]}'</pre>
-
-    <h3>Example: threat model</h3>
-    <pre>curl -X POST https://nur.saramena.us/threat-model \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: nur_yourkey" \
-  -d '{"stack": ["crowdstrike", "splunk"], "vertical": "healthcare"}'</pre>
-
-    <h3>Example: simulate attack</h3>
-    <pre>curl -X POST https://nur.saramena.us/intelligence/simulate \
-  -H "Content-Type: application/json" \
-  -d '{"stack": ["crowdstrike", "splunk", "okta"], "vertical": "healthcare"}'</pre>
+    <p>See the <a href="https://github.com/manizzle/nur" style="color:#3b7;">README</a> for curl examples.</p>
   </div>
 
   <!-- Trustless Architecture -->
   <div class="guide-section" id="privacy">
     <h2>Trustless Architecture</h2>
-    <p>In the age of AI data mining, nur is designed so your data <strong>cannot be mined, sold, or misused</strong> &mdash; not because we promise, but because the math makes it impossible.</p>
+    <p>Your data <strong>cannot be mined, sold, or misused</strong> &mdash; not because we promise, but because the math makes it impossible.</p>
 
     <h3>How it works</h3>
-    <div class="privacy-level">
-      <strong>1. Your machine anonymizes everything</strong>
-      <p style="color:#999;font-size:0.85em;margin-top:4px;">
-        PII scrubbed, IOCs hashed, org identity bucketed. All fields are numeric or categorical &mdash; no free text.
-        Optional Laplace noise on numeric values for differential privacy.
-      </p>
-    </div>
-
-    <div class="privacy-level">
-      <strong>2. Server commits, aggregates, and discards</strong>
-      <p style="color:#999;font-size:0.85em;margin-top:4px;">
-        Every value is committed (Pedersen-style hash). Commitments go into a Merkle tree.
-        Running aggregate sums are updated. <strong>Individual values are then discarded.</strong>
-        The server retains only: commitment hashes + aggregate sums.
-      </p>
-    </div>
-
-    <div class="privacy-level">
-      <strong>3. Every query comes with a proof</strong>
-      <p style="color:#999;font-size:0.85em;margin-top:4px;">
-        When anyone queries an aggregate ("CrowdStrike avg score"), the server returns
-        the answer <strong>plus a cryptographic proof chain</strong>: Merkle root, contributor count,
-        commitment hashes. Anyone can verify the aggregate is real.
-      </p>
-    </div>
-
-    <div class="privacy-level">
-      <strong>4. You get a receipt</strong>
-      <p style="color:#999;font-size:0.85em;margin-top:4px;">
-        Every contribution returns a cryptographic receipt: commitment hash,
-        Merkle inclusion proof, server signature. You can prove your data was
-        included correctly. The server can't deny receiving it.
-      </p>
-    </div>
-
-    <h3>Crypto primitives</h3>
     <ul>
-      <li><strong>Pedersen Commitments</strong> &mdash; server can't alter values after receipt</li>
-      <li><strong>Merkle Tree</strong> &mdash; server can't add/remove contributions undetected</li>
-      <li><strong>ZKP Range Proofs</strong> &mdash; proves scores are valid without revealing them</li>
-      <li><strong>Secure Histograms</strong> &mdash; technique frequency from binary vector sums</li>
-      <li><strong>BDP Credibility</strong> &mdash; behavior-based lie detection for data poisoning</li>
-      <li><strong>Platform Attestation</strong> &mdash; proves "N real contributions" with Merkle proof</li>
+      <li><strong>Your machine anonymizes everything</strong> &mdash; PII scrubbed, IOCs hashed, no free text leaves your machine</li>
+      <li><strong>Server commits, aggregates, discards</strong> &mdash; Pedersen commitments + Merkle tree, then individual values are deleted</li>
+      <li><strong>Every query comes with a proof</strong> &mdash; Merkle root, contributor count, commitment chain. Anyone can verify.</li>
+      <li><strong>You get a receipt</strong> &mdash; commitment hash + Merkle inclusion proof + server signature. Non-repudiable.</li>
     </ul>
-
-    <h3>What the server stores</h3>
-    <ul>
-      <li>Commitment hashes (opaque SHA-256 strings)</li>
-      <li>Running aggregate sums per vendor (a single number, not a list of scores)</li>
-      <li>Technique frequency counters (T1566 &rarr; 47, not who reported it)</li>
-      <li>Merkle tree of all commitments</li>
-    </ul>
-
-    <h3>What the server does NOT store</h3>
-    <ul>
-      <li>Individual scores, detection rates, or boolean flags</li>
-      <li>Which org contributed which data</li>
-      <li>Raw IOCs, IPs, domains, or indicators</li>
-      <li>Free-text notes or remediation descriptions</li>
-      <li>Your private key or org identity</li>
-    </ul>
-
-    <h3>Fully trustless responses</h3>
-    <p style="color:#999;font-size:0.85em;margin-top:4px;">
-      Every <code>/analyze</code> response comes from <strong>aggregate histograms only</strong> &mdash;
-      never individual contributions. The DB stores contributions for aggregate recomputation,
-      but query responses come from ProofEngine running sums and template logic.<br><br>
-      <strong>What you get:</strong> "containment stops attacks 87% of the time", "T1490 observed 47x,
-      your tools miss it, 5 other tools detect it"<br>
-      <strong>What you never get:</strong> "Org X used this sigma rule", "Hospital Y in healthcare did this"<br><br>
-      No individual org's actions, sigma rules, tool choices, or incident details are ever returned.
-      Remediation hints tell you <em>what category</em> of response works and at what success rate
-      across the collective, not what any specific org did.
-    </p>
-
-    <h3>Verify anything</h3>
-    <pre><span class="comment"># Every submission returns a receipt</span>
-<span class="cmd">POST /contribute/submit</span> &rarr; {"receipt": {"commitment_hash": "a3c7...", "merkle_proof": [...]}}
-
-<span class="comment"># Verify any receipt (Merkle inclusion proof)</span>
-<span class="cmd">POST /verify/receipt</span> &rarr; {"valid": true, "receipt_id": "..."}
-
-<span class="comment"># Verify any vendor aggregate</span>
-<span class="cmd">GET /verify/aggregate/CrowdStrike</span> &rarr; {"proof": {...}, "verification": {"valid": true}}
-
-<span class="comment"># Platform-wide proof stats</span>
-<span class="cmd">GET /proof/stats</span> &rarr; {"total_contributions": 547, "merkle_root": "38978f...", ...}</pre>
 
     <h3>Blind category discovery</h3>
-    <p>Contributors can propose new threat actors, malware families, or tool categories that aren&rsquo;t in the public taxonomy yet. The server counts how many independent orgs submit the same <strong>hashed</strong> category name &mdash; it never sees the plaintext until a quorum agrees to reveal it.</p>
-    <pre><span class="comment"># Contributor hashes category locally (server never sees plaintext)</span>
-H = SHA-256("DarkAngel:shared-salt")
+    <p>Orgs propose hashed category names. Server counts independent submissions. At threshold (3+), contributors vote to reveal. Server never sees plaintext until quorum.</p>
 
-<span class="comment"># Submit blind proposal</span>
-<span class="cmd">POST /category/propose</span> &rarr; {"status": "pending", "supporter_count": 1, "threshold": 3}
+    <h3>Verification endpoints</h3>
+    <p>Use <code>/verify/receipt</code>, <code>/verify/aggregate/{vendor}</code>, and <code>/proof/stats</code> to verify any claim. See the <a href="https://github.com/manizzle/nur/blob/main/ARCHITECTURE.md" style="color:#3b7;">ARCHITECTURE.md</a> for the detailed three-party flow diagram.</p>
 
-<span class="comment"># When 3+ orgs independently submit the same hash &rarr; threshold met</span>
-<span class="comment"># Contributors vote to reveal plaintext</span>
-<span class="cmd">POST /category/reveal</span> &rarr; {"status": "revealed", "revealed_name": "darkangel"}
-
-<span class="comment"># Category enters public taxonomy &rarr; aggregation begins</span></pre>
+    <p>See <a href="https://github.com/manizzle/nur/blob/main/COMPLIANCE.md" style="color:#3b7;">COMPLIANCE.md</a> for the full legal analysis covering CIRCIA, NERC CIP, SEC 8-K, and CISA safe harbor.</p>
   </div>
 
   <!-- Self-Hosting -->

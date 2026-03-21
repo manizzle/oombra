@@ -55,6 +55,7 @@ sequenceDiagram
 | Merkle tree of all commitments | Sigma rules, action strings |
 | Blind category hashes (opaque) | Raw IOC values |
 | Revealed category names | Who proposed what (until reveal) |
+| Eval dimension aggregates (price, support, detection) | Raw dollar amounts, individual SLA times |
 
 ## Regulatory Compliance
 

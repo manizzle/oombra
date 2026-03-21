@@ -11,7 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/sources-37_live-ff6b6b" />
   <img src="https://img.shields.io/badge/vendors-36_tracked-ffa502" />
-  <img src="https://img.shields.io/badge/tests-575_passing-2ed573" />
+  <img src="https://img.shields.io/badge/tests-591_passing-2ed573" />
   <img src="https://img.shields.io/badge/python-3.11%2B-1e90ff" />
   <img src="https://img.shields.io/badge/code-AGPL--3.0-1e90ff" />
   <img src="https://img.shields.io/badge/data-CDLA_Permissive_2.0-f9ca24" />
@@ -110,6 +110,7 @@ nur report attack_map.json
 
 ```bash
 nur eval                                             # interactive walkthrough
+nur eval --vendor crowdstrike                        # price, support, detection, decision intel
 nur market edr                                       # vendor rankings
 nur search compare crowdstrike sentinelone           # side-by-side
 nur threat-map "ransomware" --tools crowdstrike      # coverage gaps
@@ -315,7 +316,7 @@ nur up --vertical government     # APT29, FISMA
 ## Tests
 
 ```bash
-pytest                    # 575 tests (89 trustless + 486 core)
+pytest                    # 591 tests
 bash demo/demo.sh         # narrated walkthrough — the hospital story
 ```
 
