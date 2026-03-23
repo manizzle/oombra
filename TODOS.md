@@ -43,6 +43,30 @@
 
 ---
 
+## P1 — Product: Messaging & PMF
+
+### Sharpen the IOC→Remediation Pitch
+**What:** The IOC upload isn't about "sharing IOCs" (altruism). It's about getting remediation intelligence back (self-interest). Every piece of marketing, demo, and README needs to lead with what you GET, not what you GIVE.
+**The pitch:** "Upload your IOCs → instantly learn: is this a known campaign? What category of remediation works (containment 87% success)? How fast are peers detecting this? You get intelligence that takes weeks through your ISAC — in seconds."
+**Action items:**
+- [ ] Update demo/demo.sh narration to emphasize remediation output, not IOC upload
+- [ ] Update landing page hero text
+- [ ] Update YC application "what does your company do" to lead with remediation value
+- [ ] Prepare the "Blind/Bloomberg Terminal for security" one-liner for all contexts
+**Priority:** P1 — this IS the PMF message
+
+### YC Application
+**What:** Complete and submit YC application
+**Status:** Draft at docs/yc-application.md
+**Action items:**
+- [ ] Record 1-minute video demo (required by YC)
+- [ ] Refine answers based on design partner conversation feedback
+- [ ] Submit application
+**Depends on:** First customer conversation (strengthens the application enormously)
+**Priority:** P1
+
+---
+
 ## P2 — Product Features
 
 ### Invite-Only / Referral System
@@ -111,6 +135,28 @@
 **Depends on:** Nothing for reproducible builds
 **Priority:** P2
 
+### IOC Hashing Weakness (HMAC Salt Rotation)
+**What:** Current IOC hashing uses HMAC-SHA256 with an org-local salt. IPv4 addresses have only 2^32 possible values — a motivated attacker could rainbow-table them. Short-term: rotate salts periodically. Long-term: ECDH PSI (see P3).
+**Why:** Nate Lawson and Travis both flagged this. If someone gets the HMAC key, they can reverse all IP IOCs.
+**Mitigation (now):** Document that IOC hash matching is "good enough for campaign correlation" not "cryptographically unbreakable." For IP addresses specifically, consider bucketing into /24 subnets before hashing (reduces precision but increases security).
+**Effort:** S (documentation + salt rotation: CC ~15 min). M (subnet bucketing: CC ~30 min).
+**Priority:** P2
+
+### BDP→ProofEngine Full Integration
+**What:** Currently BDP computes credibility weights but ProofEngine uses simple averages. Wire BDP weights into the actual aggregation so poisoned contributions are downweighted in real-time.
+**Why:** Right now BDP tracks behavior and /proof/bdp-stats shows credibility distribution, but the aggregate scores at /verify/aggregate still use unweighted averages. The defense exists but isn't applied.
+**How:** Store contributor profile ID with each commitment in the aggregate bucket. When computing averages, use bdp_weighted_aggregate() instead of sum/count.
+**Effort:** M (human: ~1 week / CC: ~30 min)
+**Depends on:** Nothing
+**Priority:** P2
+
+### Hybrid BDP+PIR Query Privacy
+**What:** Use PIR for sensitive queries (which vendor you're evaluating) and BDP for contribution behavior tracking. Sweet spot between privacy and anti-poisoning.
+**Why:** Nate suggested PIR. Current BDP tracks ALL queries including sensitive ones (reveals procurement intent). Hybrid approach: PIR hides WHAT you query, BDP tracks HOW you contribute.
+**Effort:** L (human: ~3 weeks / CC: ~4 hours)
+**Depends on:** PIR research (SealPIR, SimplePIR)
+**Priority:** P2 — differentiator for enterprise customers who care about query privacy
+
 ---
 
 ## P3 — Future
@@ -131,15 +177,18 @@
 
 ## Completed
 
-- [x] Trustless pipeline integration (575→591 tests) — v0.19
-- [x] Blind category discovery — v0.19
-- [x] Public taxonomy (NIST/D3FEND/RE&CT) — v0.19
-- [x] BDP behavioral profile tracking — v0.19
-- [x] Expanded eval schema (price, support, performance, decision) — v0.19
-- [x] COMPLIANCE.md — legal-ready regulatory analysis — v0.19
-- [x] AGPL-3.0 + CLA dual licensing — v0.19
-- [x] Site redesign (modern dark theme, Inter font) — v0.19
-- [x] Server stability (health checks, watchdog, memory limits) — v0.19
-- [x] Streamlined README (334→131 lines) — v0.19
-- [x] Mermaid architecture diagram — v0.19
-- [x] Narrated demo (demo/demo.sh) — v0.19
+- [x] Trustless pipeline integration (575→595 tests)
+- [x] Blind category discovery
+- [x] Public taxonomy (NIST/D3FEND/RE&CT)
+- [x] BDP behavioral profile tracking (all endpoints)
+- [x] Expanded eval schema (price, support, performance, decision)
+- [x] COMPLIANCE.md — legal-ready regulatory analysis
+- [x] AGPL-3.0 + CLA dual licensing (in first commit)
+- [x] Site redesign (modern dark theme, Inter font)
+- [x] Server stability (health checks, watchdog, memory limits, log rotation)
+- [x] Streamlined README (131 lines)
+- [x] Mermaid architecture diagram in ARCHITECTURE.md
+- [x] Narrated demo (demo/demo.sh) — block display, real server
+- [x] Vendor profile pages (/vendor/{id} + claim flow)
+- [x] YC application draft (docs/yc-application.md)
+- [x] CI lint fixes (ruff.toml + 129 auto-fixes)
