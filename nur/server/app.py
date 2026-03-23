@@ -2996,7 +2996,7 @@ async function submitVoice() {
         import urllib.parse
         receipt_id = receipt.receipt_id
         return RedirectResponse(
-            url=f"/contribute/thanks?receipt={receipt_id}&vendor={urllib.parse.quote(vendor)}",
+            url=f"/contribute/thanks?receipt={receipt_id}&vendor={urllib.parse.quote(vendor)}&score={payload['data'].get('overall_score', '')}",
             status_code=303,
         )
 
@@ -3041,11 +3041,45 @@ async function submitVoice() {
         return {"status": "accepted", "receipt_id": receipt.receipt_id, "audio_id": audio_id}
 
     @app.get("/contribute/thanks", response_class=HTMLResponse)
-    async def contribute_thanks(receipt: str = "", vendor: str = ""):
+    async def contribute_thanks(receipt: str = "", vendor: str = "", score: str = ""):
         import urllib.parse
         vendor_display = urllib.parse.unquote(vendor) if vendor else "this tool"
         engine = get_proof_engine()
         contributor_count = engine.total_contributions
+
+        # Get aggregate for this vendor to show instant comparison
+        agg = engine.get_aggregate(vendor_display) if vendor_display != "this tool" else None
+        your_score = float(score) if score else None
+        agg_html = ""
+        if agg:
+            avg = agg.get("avg_overall_score")
+            count = agg.get("contributor_count", 0)
+            buy_pct = agg.get("would_buy_pct")
+            avg_cost = agg.get("avg_annual_cost")
+
+            agg_html = '<div style="background:#0a1f0a;border:1px solid #22c55e33;border-radius:12px;padding:20px;margin:20px 0;text-align:center;">'
+            agg_html += f'<p style="color:#22c55e;font-size:1.8em;font-weight:800;margin-bottom:4px;">{vendor_display}</p>'
+            if avg is not None:
+                agg_html += f'<p style="color:#fafafa;font-size:2.4em;font-weight:800;">{avg:.1f}<span style="font-size:0.5em;color:#71717a;">/10</span></p>'
+                agg_html += f'<p style="color:#888;font-size:13px;">avg across {count} practitioner{"s" if count != 1 else ""}</p>'
+                if your_score is not None and avg is not None:
+                    diff = your_score - avg
+                    if diff > 0:
+                        agg_html += f'<p style="color:#22c55e;font-size:14px;margin-top:8px;font-weight:600;">You scored it {your_score:.0f} — above average</p>'
+                    elif diff < 0:
+                        agg_html += f'<p style="color:#f59e0b;font-size:14px;margin-top:8px;font-weight:600;">You scored it {your_score:.0f} — below average</p>'
+                    else:
+                        agg_html += f'<p style="color:#888;font-size:14px;margin-top:8px;font-weight:600;">You scored it {your_score:.0f} — exactly average</p>'
+            if buy_pct is not None:
+                agg_html += f'<p style="color:#a1a1aa;font-size:14px;margin-top:12px;">{buy_pct:.0f}% would buy again</p>'
+            if avg_cost is not None:
+                agg_html += f'<p style="color:#a1a1aa;font-size:14px;">avg cost: ${avg_cost:,.0f}/yr</p>'
+            agg_html += '</div>'
+        elif vendor_display != "this tool" and vendor_display != "voice-eval":
+            agg_html = '<div style="background:#111118;border:1px solid #1e1e2e;border-radius:12px;padding:20px;margin:20px 0;text-align:center;">'
+            agg_html += f'<p style="color:#22c55e;font-weight:700;">{vendor_display}</p>'
+            agg_html += '<p style="color:#888;font-size:14px;margin-top:8px;">You\'re the first to evaluate this tool. Share with a colleague to start building the comparison.</p>'
+            agg_html += '</div>'
         return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3076,6 +3110,8 @@ async function submitVoice() {
 <div class="container">
   <div class="check">&#10003;</div>
   <h1>Committed. Your eval for <span>{vendor_display}</span> is in the aggregate.</h1>
+
+  {agg_html}
 
   <div class="receipt">
     <strong>Your cryptographic receipt</strong><br><br>
