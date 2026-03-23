@@ -5,9 +5,6 @@ with actionable remediation intelligence.
 """
 from __future__ import annotations
 
-import json
-import os
-from typing import Any
 
 
 async def send_slack_notification(
