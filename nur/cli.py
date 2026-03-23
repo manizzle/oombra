@@ -152,6 +152,32 @@ def register(email, org, invite, api_url):
     click.echo()
 
 
+# ── Invites ──────────────────────────────────────────────────────────────────
+
+@main.command()
+@click.option("--api-url", default=None, help="Server URL")
+@click.option("--api-key", default=None, help="API key")
+def invites(api_url, api_key):
+    """Show your invite codes -- share with peers to grow the community."""
+    api_url = _get_api_url(api_url)
+    api_key = _get_api_key(api_key)
+    if not api_url or not api_key:
+        click.echo("  Run: nur init")
+        return
+    import httpx
+    with httpx.Client(timeout=10) as http:
+        resp = http.get(f"{api_url.rstrip('/')}/invites", headers={"X-API-Key": api_key})
+    if resp.status_code != 200:
+        click.echo(f"  Error: {resp.text[:200]}")
+        return
+    data = resp.json()
+    click.echo(f"\n  Your invite codes ({data['remaining']} remaining):")
+    for code in data.get("invite_codes", []):
+        click.echo(f"    {code}")
+    click.echo(f"\n  People you've invited: {data['invite_count']}")
+    click.echo("  Share a code: nur register --invite <code>")
+
+
 # ── Upload ───────────────────────────────────────────────────────────────────
 
 @main.command()

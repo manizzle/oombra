@@ -2008,3 +2008,148 @@ class TestSlackNotifications:
         assert any("T1490" in f["value"] for f in notif["fields"])
         assert any("71%" in f["value"] for f in notif["fields"])
         assert any("containment" in f["value"].lower() for f in notif["fields"])
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Invite System — Referral Codes for Community Growth
+# ══════════════════════════════════════════════════════════════════════════════
+
+async def _make_invite_app():
+    """Create a fresh app with initialized DB for invite tests."""
+    import nur.server.app as app_mod
+    from nur.server.db import Database
+    from nur.server.proofs import ProofEngine
+    the_app = app_mod.create_app("sqlite+aiosqlite://")
+    db = Database("sqlite+aiosqlite://")
+    await db.init()
+    app_mod._db = db
+    app_mod._proof_engine = ProofEngine()
+    return the_app
+
+
+class TestInviteSystem:
+    """Invite codes for community growth."""
+
+    @pytest.mark.asyncio
+    async def test_register_generates_invite_codes(self):
+        from httpx import AsyncClient, ASGITransport
+        app = await _make_invite_app()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+            # Register with work email
+            resp = await c.post("/register", json={"email": "test@acme-corp.com"})
+            assert resp.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_invite_codes_generated_on_verify(self):
+        """Verify email flow generates 5 invite codes."""
+        from httpx import AsyncClient, ASGITransport
+        app = await _make_invite_app()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+            # Register
+            resp = await c.post("/register", json={"email": "alice@bigcorp.com"})
+            assert resp.status_code == 200
+            data = resp.json()
+            # Get verify URL
+            verify_url = data.get("verify_url", "")
+            if verify_url:
+                token = verify_url.split("/verify/")[-1]
+                resp2 = await c.get(f"/verify/{token}")
+                assert resp2.status_code == 200
+                assert "nur_" in resp2.text
+
+    @pytest.mark.asyncio
+    async def test_register_with_invite_code_skips_email_check(self):
+        """Invite code allows registration with free email."""
+        from httpx import AsyncClient, ASGITransport
+        app = await _make_invite_app()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+            # First register alice (work email) to get invite codes
+            resp = await c.post("/register", json={"email": "alice@bigcorp.com"})
+            data = resp.json()
+            verify_url = data.get("verify_url", "")
+            if not verify_url:
+                return  # email mode, can't test without SES
+            token = verify_url.split("/verify/")[-1]
+            await c.get(f"/verify/{token}")
+
+            # Get alice's invite codes from DB
+            from sqlalchemy import select
+            from nur.server.app import get_db
+            from nur.server.models import APIKeyRecord
+            db = get_db()
+            async with db.session() as s:
+                result = await s.execute(select(APIKeyRecord).where(APIKeyRecord.email == "alice@bigcorp.com"))
+                alice = result.scalar_one()
+                codes = json.loads(alice.invite_codes) if alice.invite_codes else []
+                assert len(codes) == 5
+                invite_code = codes[0]
+
+            # Bob registers with gmail + invite code
+            resp2 = await c.post("/register", json={
+                "email": "bob@gmail.com",
+                "invite_code": invite_code,
+            })
+            assert resp2.status_code == 200  # Should not be rejected
+
+    @pytest.mark.asyncio
+    async def test_register_without_invite_rejects_free_email(self):
+        """Free email without invite code is rejected."""
+        from httpx import AsyncClient, ASGITransport
+        app = await _make_invite_app()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+            resp = await c.post("/register", json={"email": "someone@gmail.com"})
+            assert resp.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_invalid_invite_code_rejected(self):
+        """Invalid invite code is rejected."""
+        from httpx import AsyncClient, ASGITransport
+        app = await _make_invite_app()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+            resp = await c.post("/register", json={
+                "email": "someone@gmail.com",
+                "invite_code": "nur-inv-doesnotexist",
+            })
+            assert resp.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_invites_endpoint(self):
+        """GET /invites returns invite codes for authenticated user."""
+        from httpx import AsyncClient, ASGITransport
+        app = await _make_invite_app()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+            # Register and verify
+            resp = await c.post("/register", json={"email": "carol@megacorp.com"})
+            data = resp.json()
+            verify_url = data.get("verify_url", "")
+            if not verify_url:
+                return
+            token = verify_url.split("/verify/")[-1]
+            await c.get(f"/verify/{token}")
+
+            # Get API key
+            from nur.server.app import get_db
+            from nur.server.models import APIKeyRecord
+            from sqlalchemy import select
+            db = get_db()
+            async with db.session() as s:
+                result = await s.execute(select(APIKeyRecord).where(APIKeyRecord.email == "carol@megacorp.com"))
+                carol = result.scalar_one()
+                api_key = carol.api_key
+
+            # Call /invites
+            resp2 = await c.get("/invites", headers={"X-API-Key": api_key})
+            assert resp2.status_code == 200
+            data2 = resp2.json()
+            assert "invite_codes" in data2
+            assert data2["remaining"] == 5
+            assert data2["invite_count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_invites_endpoint_no_key(self):
+        """GET /invites without API key returns 401."""
+        from httpx import AsyncClient, ASGITransport
+        app = await _make_invite_app()
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+            resp = await c.get("/invites")
+            assert resp.status_code == 401

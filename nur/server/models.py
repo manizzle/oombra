@@ -135,6 +135,11 @@ class APIKeyRecord(Base):
     last_used: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True))
     request_count: Mapped[int] = mapped_column(Integer, default=0)
 
+    # Invite system
+    invite_codes: Mapped[str | None] = mapped_column(Text)  # JSON list of invite codes
+    invited_by: Mapped[str | None] = mapped_column(String(100))  # invite code used to register
+    invite_count: Mapped[int] = mapped_column(Integer, default=0)  # people this user invited
+
     __table_args__ = (
         Index("ix_apikey_email", "email"),
         Index("ix_apikey_key", "api_key"),
@@ -154,6 +159,7 @@ class PendingVerification(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    invite_code: Mapped[str | None] = mapped_column(String(100))
 
 
 class AggregatedScore(Base):
