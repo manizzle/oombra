@@ -48,6 +48,8 @@ The nur server operates as an "accountable compute node" with the following cryp
 2. **No per-organization attribution** — the server cannot determine which organization contributed which data point
 3. **Merkle tree binding** — every contribution is cryptographically committed; the server cannot alter, add, or remove contributions
 4. **Aggregate-only responses** — all query responses come from histogram aggregates and template logic, never individual contributions
+5. **Dice chain verification** — the client independently hashes the translated payload before submission; the server's receipt contains its own hash of what it received. If they match, the entire transformation chain is verified end-to-end. No data was altered in transit.
+6. **BDP anti-poisoning defense** — Behavioral Differential Privacy uses credibility scoring (consistency, variance, timing) to weight contributions. Poisoned data from malicious contributors is automatically down-weighted without revealing individual scores.
 
 ---
 

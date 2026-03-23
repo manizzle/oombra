@@ -241,6 +241,13 @@ def report(file, api_url, api_key, json_output):
         from .client import _serialize
         payload = _serialize(clean)
 
+        # Dice chain: compute local hash of what we're about to send
+        import hashlib as _hashlib
+        import json as _json
+        local_hash = _hashlib.sha256(
+            _json.dumps(payload, sort_keys=True, default=str).encode()
+        ).hexdigest()
+
         if priv_key:
             body_bytes = json.dumps(payload, sort_keys=True).encode()
             headers["X-Signature"] = sign_request(body_bytes, priv_key)
@@ -268,6 +275,12 @@ def report(file, api_url, api_key, json_output):
             if receipt:
                 click.echo(f"  Receipt: {receipt.get('commitment_hash', '?')[:32]}...")
                 click.echo(f"  Merkle proof: {len(receipt.get('merkle_proof', []))} nodes")
+                # Dice chain verification
+                server_hash = receipt.get("contribution_hash", "")
+                if server_hash and local_hash == server_hash:
+                    click.echo("  Dice chain: VERIFIED")
+                elif server_hash:
+                    click.echo(f"  Dice chain: MISMATCH (local={local_hash[:16]}... server={server_hash[:16]}...)")
 
             intel = result.get("intelligence", {})
 

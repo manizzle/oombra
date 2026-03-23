@@ -2347,14 +2347,16 @@ nur report incident.json</pre>
   <!-- Eval Dimensions -->
   <div class="guide-section" id="eval">
     <h2>Eval Dimensions</h2>
-    <p>The <code>nur eval</code> schema covers six dimensions. All fields are aggregated. All individual values are discarded after commit.</p>
+    <p>The <code>nur eval</code> schema covers six dimensions. All fields are aggregated. All individual values are discarded after commit. Dice chain verification ensures nothing changed in transit.</p>
     <pre>Detection:   overall score, detection rate, false positives
 Price:       annual cost, per-seat cost, contract length, discount
 Support:     quality, escalation ease, SLA response time
-Performance: CPU overhead, memory, scan latency
+Performance: CPU overhead, agent memory, scan latency, deploy time
 Decision:    chose this vendor?, main decision factor
+Integrity:   dice chain (client hash == server contribution_hash)
 
-<span class="comment"># All fields aggregated. All individual values discarded.</span></pre>
+<span class="comment"># All fields aggregated. All individual values discarded.</span>
+<span class="comment"># BDP credibility weighting defends against data poisoning.</span></pre>
   </div>
 
   <!-- API Reference -->
@@ -2384,6 +2386,9 @@ Decision:    chose this vendor?, main decision factor
       <tr><td>POST</td><td>/category/reveal</td><td>Vote to reveal a blind category</td></tr>
       <tr><td>GET</td><td>/category/pending</td><td>List pending + revealed categories</td></tr>
       <tr><td>GET</td><td>/dashboard</td><td>Visual dashboard</td></tr>
+      <tr><td>GET</td><td>/vendor/{id}</td><td>Vendor profile page (scores, gaps, claim)</td></tr>
+      <tr><td>GET</td><td>/vendor/{id}/claim</td><td>Vendor claims their profile (email verification)</td></tr>
+      <tr><td>GET</td><td>/proof/bdp-stats</td><td>BDP credibility &amp; poisoning defense stats</td></tr>
       <tr><td>GET</td><td>/health</td><td>Liveness check</td></tr>
       <tr><td>GET</td><td>/stats</td><td>Contribution counts (anonymized)</td></tr>
     </table>
@@ -2401,6 +2406,8 @@ Decision:    chose this vendor?, main decision factor
       <li><strong>Server commits, aggregates, discards</strong> &mdash; Pedersen commitments + Merkle tree, then individual values are deleted</li>
       <li><strong>Every query comes with a proof</strong> &mdash; Merkle root, contributor count, commitment chain. Anyone can verify.</li>
       <li><strong>You get a receipt</strong> &mdash; commitment hash + Merkle inclusion proof + server signature. Non-repudiable.</li>
+      <li><strong>Dice chain verification</strong> &mdash; client hashes payload before sending; receipt contains server's independent hash. Match = end-to-end integrity.</li>
+      <li><strong>BDP anti-poisoning</strong> &mdash; Behavioral Differential Privacy tracks credibility signals to defend against data poisoning attacks.</li>
     </ul>
 
     <h3>Blind category discovery</h3>

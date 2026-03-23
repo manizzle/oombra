@@ -293,7 +293,7 @@ block "Without nur: each hospital fights alone, misses the
 campaign connection, buys tools based on vendor marketing.
 
 With nur: collaborative defense with mathematical
-privacy guarantees. 575 tests. Zero individual values." 6
+privacy guarantees. 595 tests. Zero individual values." 6
 
 echo "  ┌─────────────────────────────────────────────────────────────┐"
 echo "  │                                                             │"

@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-591_passing-2ed573" />
+  <img src="https://img.shields.io/badge/tests-595_passing-2ed573" />
   <img src="https://img.shields.io/badge/sources-37_live-ff6b6b" />
   <img src="https://img.shields.io/badge/vendors-36_tracked-ffa502" />
   <img src="https://img.shields.io/badge/license-AGPL--3.0-1e90ff" />
@@ -97,12 +97,18 @@ $ nur threat-model --stack crowdstrike,splunk,okta --vertical healthcare
 Submit ──▶ Translate ──▶ Commit ──▶ Merkle ──▶ Receipt
                │             │          │          │
           drop text     running sum   proof    signature
-               │             │          │
-               └── DISCARD ──┘         ▼
-                              /verify/receipt
+               │             │          │          │
+               └── DISCARD ──┘         ▼     Dice Chain
+                              /verify/receipt    ▼
                               /verify/aggregate/{vendor}
                               /proof/stats
+                              /proof/bdp-stats
 ```
+
+Client independently hashes the translated payload before submission.
+Receipt's `contribution_hash` is compared. Match = end-to-end verified
+transformation chain (dice chain).
+
 
 </details>
 
@@ -122,6 +128,7 @@ New threat actors not in any database? Three orgs hash the same name independent
 | Merkle Tree | Server can't add/remove contributions undetected |
 | ZKP Range Proofs | Proves scores valid without revealing them |
 | BDP Credibility | Behavior-based poisoning defense (QCA) |
+| Dice Chain | Client-side hash matches server commitment end-to-end |
 | Blind Category Discovery | Server can't learn category names until quorum |
 
 </details>

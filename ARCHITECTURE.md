@@ -22,6 +22,8 @@ sequenceDiagram
     S->>S: 8. DISCARD individual values
     S-->>C: RECEIPT (commitment + proof + signature)
     Note over C: Store receipt — proves you contributed
+    C->>C: 8b. DICE CHAIN — compare local hash vs receipt contribution_hash
+    Note over C: Match = end-to-end verified transformation chain
     end
 
     rect rgb(235, 235, 245)
@@ -45,6 +47,10 @@ sequenceDiagram
 ```
 
 
+## ADTC to ProofEngine Dice Chain
+
+The client computes SHA-256 of the canonical JSON payload *before* submission. The server's `ProofEngine.commit_contribution()` independently computes `contribution_hash` from the same canonical form. The receipt returns this hash. If they match, the entire transformation chain (extract, anonymize, DP, translate, commit) is verified end-to-end -- no data was altered in transit. This is the "dice chain" link between the Attested Data Transformation Chain (ADTC) and the ProofEngine.
+
 ## What Gets Stored vs Discarded
 
 | Stored (server retains) | Discarded (gone after commit) |
@@ -55,7 +61,9 @@ sequenceDiagram
 | Merkle tree of all commitments | Sigma rules, action strings |
 | Blind category hashes (opaque) | Raw IOC values |
 | Revealed category names | Who proposed what (until reveal) |
-| Eval dimension aggregates (price, support, detection) | Raw dollar amounts, individual SLA times |
+| Eval dimension aggregates (price, support, performance, decision) | Raw dollar amounts, individual SLA times |
+| BDP credibility scores (behavioral) | Per-org credibility profiles |
+| Dice chain hashes (contribution_hash) | Pre-submission payload content |
 
 ## Regulatory Compliance
 
