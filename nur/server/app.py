@@ -2780,7 +2780,12 @@ window.addEventListener('scroll', function() {
   </form>
 
   <div class="privacy-note">
-    <strong>Your eval is anonymous.</strong> Individual scores are committed, aggregated, and discarded. You'll receive a cryptographic receipt via email.
+    <strong>What happens to your data:</strong><br><br>
+    <strong>1. Your scores go into a running average.</strong> We add your 9/10 to the sum, increment the count, and <em>delete your individual score</em>. The server literally cannot retrieve it after commit.<br><br>
+    <strong>2. Your email is never linked to your scores.</strong> Email is for verification only (to block spam). It's stored separately from eval data with no join path.<br><br>
+    <strong>3. You get a cryptographic receipt.</strong> A Pedersen commitment hash + Merkle inclusion proof. This proves your eval was included in the aggregate — the server can't deny receiving it or alter it after the fact.<br><br>
+    <strong>4. Nobody can reverse-engineer your score.</strong> The aggregate says "42 practitioners scored CrowdStrike 9.1 avg." It does not say "Hospital X gave it a 9." That data doesn't exist anymore.<br><br>
+    <strong>What the collective gets from your 60 seconds:</strong> one more real data point that makes the aggregate more accurate for everyone. Give one eval, get forty back.
   </div>
   <a href="/" class="back-link">nur.saramena.us</a>
 </div>
@@ -2891,12 +2896,30 @@ function setBuy(val, el) {
 <body>
 <div class="container">
   <div class="check">&#10003;</div>
-  <h1>Thanks! Your eval has been <span>committed</span>.</h1>
-  <div class="receipt"><strong>Receipt:</strong> {receipt}</div>
-  <p class="stat">{contributor_count} practitioners have contributed evaluations</p>
-  <p style="color:#71717a;font-size:13px;margin-top:8px;">Your receipt is a Merkle inclusion proof. Individual scores are aggregated and discarded.</p>
+  <h1>Committed. Your eval for <span>{vendor_display}</span> is in the aggregate.</h1>
+
+  <div class="receipt">
+    <strong>Your cryptographic receipt</strong><br><br>
+    <strong>Receipt ID:</strong> {receipt}<br>
+    <strong>What this proves:</strong> Your score was sealed (Pedersen commitment), added to the Merkle tree, and included in the running aggregate. The server cannot alter it, deny receiving it, or recover your individual score.
+  </div>
+
+  <p class="stat">{contributor_count} practitioners have contributed</p>
+
+  <div style="text-align:left;background:#111118;border:1px solid #1e1e2e;border-radius:8px;padding:16px;margin:20px 0;font-size:13px;color:#71717a;line-height:1.7;">
+    <strong style="color:#a1a1aa;">What just happened:</strong><br>
+    1. Your score was added to the running sum for {vendor_display}<br>
+    2. Your individual score was <strong style="color:#22c55e;">deleted</strong> — only the sum survives<br>
+    3. A commitment hash was added to the Merkle tree<br>
+    4. This receipt proves you were included — keep it<br><br>
+    <strong style="color:#a1a1aa;">What the collective now knows:</strong><br>
+    "{vendor_display}: avg X.X across {contributor_count} practitioners"<br>
+    It does NOT know: "you gave it a 9."
+  </div>
+
   <div class="actions">
-    <a href="/contribute" class="primary">Share with a colleague</a>
+    <a href="/contribute" class="primary">Rate another tool</a>
+    <a href="/contribute">Share with a colleague at RSA</a>
     <a href="/">Back to nur.saramena.us</a>
   </div>
 </div>
