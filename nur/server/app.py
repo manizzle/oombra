@@ -2769,6 +2769,21 @@ window.addEventListener('scroll', function() {
     </select>
     <div id="competitors-section" style="display:none;"></div>
 
+    <label>Replacing anything? <span class="optional">(optional)</span></label>
+    <select name="replacing">
+      <option value="">Not replacing / new purchase</option>
+      <option value="crowdstrike">CrowdStrike</option>
+      <option value="sentinelone">SentinelOne</option>
+      <option value="microsoft_defender">Microsoft Defender</option>
+      <option value="cortex_xdr">Cortex XDR</option>
+      <option value="splunk">Splunk</option>
+      <option value="elastic">Elastic</option>
+      <option value="qradar">IBM QRadar</option>
+      <option value="carbon_black">Carbon Black</option>
+      <option value="other">Other (being replaced)</option>
+    </select>
+    <div class="note">This churn data helps the collective understand what's working and what isn't.</div>
+
     <label>Overall score <span class="required">*</span></label>
     <div class="score-display" id="overall-val">5</div>
     <input type="range" name="overall_score" min="1" max="10" value="5" oninput="document.getElementById('overall-val').textContent=this.value">
@@ -2973,6 +2988,9 @@ async function submitVoice() {
         also_evaluated = form.getlist("also_evaluated")
         if also_evaluated:
             payload["data"]["also_evaluated"] = list(also_evaluated)
+        replacing = str(form.get("replacing", "")).strip()
+        if replacing:
+            payload["data"]["replacing"] = replacing
 
         # Store through trustless pipeline
         db = get_db()
@@ -3229,9 +3247,16 @@ async function submitVoice() {
   </div>
 
   <div id="step4" class="step">
-    <h2>Who&#8217;d you compare it to?</h2>
-    <div class="competitor-chips" id="competitor-chips">
-      <p style="color:#71717a;font-size:14px;">Loading competitors...</p>
+    <h2>Replacing anything?</h2>
+    <div class="tool-grid" style="margin-bottom:16px;">
+      <button class="tool-btn" onclick="setReplacing('nothing')">New purchase</button>
+      <button class="tool-btn" onclick="setReplacing('other')">Yes, replacing...</button>
+    </div>
+    <div id="replacing-chips" style="display:none;">
+      <p style="color:#71717a;font-size:13px;margin-bottom:8px;">What are you replacing?</p>
+      <div class="competitor-chips" id="competitor-chips">
+        <p style="color:#71717a;font-size:14px;">Loading...</p>
+      </div>
     </div>
     <button class="next-btn" onclick="nextStep(5)">Next &#8594;</button>
     <button class="skip-btn" onclick="nextStep(5)">Skip</button>
@@ -3297,9 +3322,21 @@ function nextStep(n) {
   currentStep = n;
 }
 
+var replacingVendor = "";
+
 function setBuyAgain(val) {
   buyAgain = val;
   nextStep(4);
+}
+
+function setReplacing(val) {
+  if (val === "nothing") {
+    replacingVendor = "";
+    nextStep(5);
+  } else {
+    document.getElementById("replacing-chips").style.display = "block";
+    // Reuse competitor chips as replacing options
+  }
 }
 
 function fetchCompetitors(vendor) {
@@ -3353,6 +3390,7 @@ function submitQuick() {
   formData.append("overall_score", score);
   formData.append("would_buy", buyAgain === true ? "yes" : buyAgain === false ? "no" : "");
   formData.append("email", email);
+  if (replacingVendor) formData.append("replacing", replacingVendor);
   competitors.forEach(function(c) { formData.append("also_evaluated", c); });
   fetch("/contribute", { method: "POST", body: formData, redirect: "follow" })
     .then(function(resp) {
