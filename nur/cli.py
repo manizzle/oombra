@@ -850,6 +850,40 @@ def scrape_hhs(api_url, api_key, json_output):
                 click.echo(f"    {b['entity']} — {b['affected']:,} affected ({b['type']})")
 
 
+@main.command("scrape-pacer")
+@click.option("--api-url", default=None)
+@click.option("--api-key", default=None)
+@click.option("--max", "max_cases", default=25, help="Max cases to search")
+@click.option("--json", "json_output", is_flag=True)
+def scrape_pacer(api_url, api_key, max_cases, json_output):
+    """Scrape PACER for breach lawsuits — court records (costs $0.10/page)."""
+    import asyncio
+
+    from .feeds.pacer import scrape_and_ingest
+
+    api_url = _get_api_url(api_url)
+    api_key = _get_api_key(api_key)
+    if not api_url:
+        click.echo("  No server URL. Run: nur init")
+        return
+
+    click.echo("  Note: PACER charges $0.10/page. First $30/quarter is free.")
+    results = asyncio.run(scrape_and_ingest(api_url, api_key, max_cases=max_cases))
+
+    if json_output:
+        click.echo(json.dumps(results, indent=2))
+    else:
+        click.echo("\n  PACER Court Records")
+        click.echo(f"  {'=' * 35}")
+        click.echo(f"  Cases found: {results['total']}")
+        click.echo(f"  Ingested: {results['ingested']}")
+        click.echo(f"  Errors: {results['errors']}")
+        if results.get("cases"):
+            click.echo("\n  Breach cases:")
+            for c in results["cases"][:10]:
+                click.echo(f"    {c['case']} ({c['court']}, {c['date']})")
+
+
 # ── Up (full loop — server + feeds + ready) ──────────────────────────────────
 
 @main.command()
