@@ -780,6 +780,44 @@ def scrape(feed, list_feeds, dry_run, api_url, api_key):
     click.echo()
 
 
+# ── SEC EDGAR breach scraper ─────────────────────────────────────────────────
+
+@main.command("scrape-sec")
+@click.option("--api-url", default=None, help="Server URL (default: from nur init)")
+@click.option("--api-key", default=None, help="API key (default: from nur init)")
+@click.option("--max", "max_filings", default=50, help="Max filings to scrape")
+@click.option("--json", "json_output", is_flag=True, help="Output results as JSON")
+def scrape_sec(api_url, api_key, max_filings, json_output):
+    """Scrape SEC EDGAR for cybersecurity breach filings (8-K Item 1.05)."""
+    import asyncio
+    from .sec_breach import scrape_and_ingest
+
+    api_url = _get_api_url(api_url)
+    api_key = _get_api_key(api_key)
+    if not api_url:
+        click.echo("  No server URL. Run: nur init")
+        return
+
+    results = asyncio.run(scrape_and_ingest(api_url, api_key, max_filings))
+
+    if json_output:
+        click.echo(json.dumps(results, indent=2))
+    else:
+        click.echo("\n  SEC EDGAR Cybersecurity Breach Scraper")
+        click.echo(f"  {'=' * 45}")
+        click.echo(f"  Filings found: {results['total']}")
+        click.echo(f"  Ingested: {results['ingested']}")
+        click.echo(f"  Errors: {results['errors']}")
+        if results["filings"]:
+            click.echo("\n  Recent breaches:")
+            for f in results["filings"][:10]:
+                techs = ", ".join(f["techniques"][:3]) if f["techniques"] else "unknown"
+                rems = ", ".join(f["remediation"][:3]) if f["remediation"] else "unknown"
+                click.echo(f"    {f['company']} ({f['date']})")
+                click.echo(f"      techniques: {techs}")
+                click.echo(f"      remediation: {rems}")
+
+
 # ── Up (full loop — server + feeds + ready) ──────────────────────────────────
 
 @main.command()
