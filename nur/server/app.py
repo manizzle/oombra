@@ -2675,11 +2675,21 @@ window.addEventListener('scroll', function() {
         competitors = get_competitors(vendor, cat)
         return {"vendor": vendor, "category": cat, "competitors": competitors}
 
+    @app.get("/api/v1/vendor-search")
+    async def vendor_search(q: str, limit: int = 20):
+        """Autocomplete vendor search — returns matching vendor names."""
+        if not q or len(q) < 2:
+            return {"results": []}
+        q_lower = q.lower()
+        matches = [v for v in VENDORS if q_lower in v.lower()][:limit]
+        return {"results": matches}
+
     # ── Web contribute form (mobile-first, no auth) ──────────────────
 
     @app.get("/contribute", response_class=HTMLResponse)
     async def contribute_form():
-        _vendor_options = "\n      ".join(f'<option value="{v}">' for v in VENDORS)
+        # Only include top 50 vendors in HTML — rest via API autocomplete
+        _vendor_options = "\n      ".join(f'<option value="{v}">' for v in VENDORS[:50])
         _html = """<!DOCTYPE html>
 <html lang="en">
 <head>
