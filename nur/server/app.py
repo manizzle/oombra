@@ -2745,7 +2745,7 @@ window.addEventListener('scroll', function() {
     <p style="color:#555;font-size:11px;margin-top:8px;">Example: "I use CrowdStrike for EDR, pay about 50K a year, support is great, 9 out of 10, would buy again"</p>
     <div id="voice-done" style="display:none;margin-top:12px;">
       <p style="color:#22c55e;font-weight:600;margin-bottom:8px;">Recorded!</p>
-      <input type="email" id="voice-email" placeholder="Work email (required)" style="width:100%;padding:12px;background:#0a0a0f;border:1px solid #1e1e2e;border-radius:8px;color:#e4e4e7;font-size:16px;font-family:'Inter',sans-serif;margin-bottom:8px;">
+      <input type="email" id="voice-email" placeholder="Work email (optional)" style="width:100%;padding:12px;background:#0a0a0f;border:1px solid #1e1e2e;border-radius:8px;color:#e4e4e7;font-size:16px;font-family:'Inter',sans-serif;margin-bottom:8px;">
       <button type="button" id="voice-submit" onclick="submitVoice()" style="width:100%;padding:14px;background:#22c55e;color:#0a0a0f;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">Submit voice eval</button>
     </div>
   </div>
@@ -2942,10 +2942,6 @@ async function toggleRecording() {
 
 async function submitVoice() {
   const email = document.getElementById('voice-email').value.trim();
-  if (!email || !email.includes('@')) {
-    alert('Work email required');
-    return;
-  }
   const blob = new Blob(audioChunks, { type: 'audio/webm' });
   const formData = new FormData();
   formData.append('audio', blob, 'eval.webm');
@@ -3064,15 +3060,16 @@ a{{color:#4ecdc4;text-decoration:none}}</style></head>
     async def contribute_voice(request: Request):
         """Accept a voice recording for eval. Store audio for later processing."""
         form = await request.form()
-        email = str(form.get("email", "")).strip().lower()
+        email = str(form.get("email", "")).strip().lower() or None
         audio = form.get("audio")
 
-        if not email or "@" not in email:
-            raise HTTPException(status_code=400, detail="Work email required")
-
-        domain = email.split("@")[1]
-        if domain in _FREE_EMAIL_DOMAINS:
-            raise HTTPException(status_code=400, detail=f"Work email required. {domain} not accepted.")
+        # Validate email only if provided
+        if email:
+            if "@" not in email:
+                raise HTTPException(status_code=400, detail="Invalid email format")
+            domain = email.split("@")[1]
+            if domain in _FREE_EMAIL_DOMAINS:
+                raise HTTPException(status_code=400, detail=f"Work email required. {domain} not accepted.")
 
         # Store audio file
         import uuid
