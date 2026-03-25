@@ -12,6 +12,12 @@ services:
     image: ghcr.io/manizzle/nur:latest
     ports:
       - "${NUR_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     environment:
       - NUR_DB_URL=postgresql+asyncpg://nur:${POSTGRES_PASSWORD:-nur}@postgres:5432/nur
       - NUR_API_KEY=${NUR_API_KEY:-}
