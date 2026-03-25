@@ -2850,6 +2850,22 @@ let categorySelect = document.querySelector('select[name="category"]');
 vendorInput.addEventListener('change', fetchVendorMeta);
 vendorInput.addEventListener('blur', fetchVendorMeta);
 
+// Live vendor autocomplete via /api/v1/vendor-search
+let vendorList = document.getElementById('vendor-list');
+let searchTimeout = null;
+vendorInput.addEventListener('input', function() {
+  clearTimeout(searchTimeout);
+  let q = vendorInput.value.trim();
+  if (q.length < 2) return;
+  searchTimeout = setTimeout(async () => {
+    try {
+      let resp = await fetch('/api/v1/vendor-search?q=' + encodeURIComponent(q));
+      let data = await resp.json();
+      vendorList.innerHTML = data.results.map(v => '<option value="' + v + '">').join('');
+    } catch(e) {}
+  }, 200);
+});
+
 async function fetchVendorMeta() {
   let vendor = vendorInput.value.trim();
   if (!vendor) return;
