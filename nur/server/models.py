@@ -49,6 +49,13 @@ class Contribution(Base):
     top_friction: Mapped[str | None] = mapped_column(Text)
     notes: Mapped[str | None] = mapped_column(Text)
 
+    # Expanded eval fields
+    annual_cost: Mapped[float | None] = mapped_column(Float)
+    support_quality: Mapped[float | None] = mapped_column(Float)
+    decision_factor: Mapped[str | None] = mapped_column(String(50))
+    also_evaluated: Mapped[str | None] = mapped_column(Text)  # JSON array string
+    replacing: Mapped[str | None] = mapped_column(String(100))
+
     # AttackMap fields (stored as JSON)
     threat_name: Mapped[str | None] = mapped_column(String(200))
     techniques_json: Mapped[str | None] = mapped_column(Text)  # JSON array

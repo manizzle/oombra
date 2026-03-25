@@ -76,6 +76,12 @@ class Database:
             top_strength=d.get("top_strength"),
             top_friction=d.get("top_friction"),
             notes=d.get("notes"),
+            annual_cost=d.get("annual_cost"),
+            support_quality=d.get("support_quality"),
+            decision_factor=d.get("decision_factor"),
+            also_evaluated=json.dumps(d["also_evaluated"]) if d.get("also_evaluated") else None,
+            replacing=d.get("replacing"),
+            source=d.get("source", ctx.get("source")),
         )
         async with self.session() as s:
             s.add(contrib)
@@ -244,6 +250,76 @@ class Database:
                 "by_type": {r[0]: r[1] for r in by_type.all()},
                 "unique_vendors": unique_vendors.scalar() or 0,
             }
+
+    async def get_contributions(
+        self,
+        source: str | None = None,
+        vendor: str | None = None,
+        category: str | None = None,
+        contrib_type: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> dict:
+        """Query contributions with filters. Returns anonymized records (no PII)."""
+        async with self.session() as s:
+            stmt = select(Contribution).order_by(Contribution.received_at.desc())
+            count_stmt = select(func.count(Contribution.id))
+
+            if source:
+                stmt = stmt.where(Contribution.source == source)
+                count_stmt = count_stmt.where(Contribution.source == source)
+            if vendor:
+                stmt = stmt.where(Contribution.vendor == vendor)
+                count_stmt = count_stmt.where(Contribution.vendor == vendor)
+            if category:
+                stmt = stmt.where(Contribution.category == category)
+                count_stmt = count_stmt.where(Contribution.category == category)
+            if contrib_type:
+                stmt = stmt.where(Contribution.contrib_type == contrib_type)
+                count_stmt = count_stmt.where(Contribution.contrib_type == contrib_type)
+
+            total = (await s.execute(count_stmt)).scalar() or 0
+            result = await s.execute(stmt.offset(offset).limit(limit))
+            rows = result.scalars().all()
+
+            # Source breakdown for this filter set
+            source_stmt = select(
+                Contribution.source, func.count().label("count"),
+            ).group_by(Contribution.source)
+            if vendor:
+                source_stmt = source_stmt.where(Contribution.vendor == vendor)
+            if category:
+                source_stmt = source_stmt.where(Contribution.category == category)
+            if contrib_type:
+                source_stmt = source_stmt.where(Contribution.contrib_type == contrib_type)
+            source_counts = {r[0] or "unknown": r[1] for r in (await s.execute(source_stmt)).all()}
+
+        return {
+            "total": total,
+            "offset": offset,
+            "limit": limit,
+            "by_source": source_counts,
+            "contributions": [
+                {
+                    "id": r.id,
+                    "contrib_type": r.contrib_type,
+                    "received_at": r.received_at.isoformat() if r.received_at else None,
+                    "source": r.source,
+                    "vendor": r.vendor,
+                    "category": r.category,
+                    "overall_score": r.overall_score,
+                    "would_buy": r.would_buy,
+                    "annual_cost": r.annual_cost,
+                    "support_quality": r.support_quality,
+                    "decision_factor": r.decision_factor,
+                    "replacing": r.replacing,
+                    "also_evaluated": json.loads(r.also_evaluated) if r.also_evaluated else None,
+                    "industry": r.industry,
+                    "org_size": r.org_size,
+                }
+                for r in rows
+            ],
+        }
 
     # ── Aggregate refresh ────────────────────────────────────────────────
 

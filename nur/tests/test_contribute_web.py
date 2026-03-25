@@ -31,7 +31,6 @@ def _valid_form(**overrides):
         "category": "edr",
         "overall_score": "7.0",
         "would_buy": "yes",
-        "email": "analyst@acmecorp.com",
         "support_quality": "8",
     }
     data.update(overrides)
@@ -85,22 +84,7 @@ async def test_unknown_vendor_stored_as_is():
     assert agg["vendor"] == "MyCustomTool"
 
 
-# ── Test 4: Free email rejection ─────────────────────────────────────────────
-
-@pytest.mark.asyncio
-async def test_free_email_rejected():
-    """Submit with gmail.com → 400 error HTML page."""
-    app, db = await _make_app()
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test", follow_redirects=False,
-    ) as c:
-        resp = await c.post("/contribute", data=_valid_form(email="user@gmail.com"))
-    assert resp.status_code == 400
-    assert "gmail.com" in resp.text
-    assert "Submission Error" in resp.text
-
-
-# ── Test 5: Missing vendor ───────────────────────────────────────────────────
+# ── Test 4: Missing vendor ────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
 async def test_missing_vendor_error():
@@ -117,10 +101,9 @@ async def test_missing_vendor_error():
 # ── Test 6: support_quality=0 accepted ───────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_support_quality_zero_accepted():
-    """Submit with support_quality=0 → stored as 0.0, not dropped."""
+async def test_support_quality_clamped():
+    """Submit with support_quality=0 → clamped to 1.0 (min of valid range)."""
     app, db = await _make_app()
-    # We need to capture the payload passed to store_eval_record
     captured = {}
     original_store = db.store_eval_record
 
@@ -134,7 +117,7 @@ async def test_support_quality_zero_accepted():
     ) as c:
         resp = await c.post("/contribute", data=_valid_form(support_quality="0"))
     assert resp.status_code == 303
-    assert captured["data"]["data"]["support_quality"] == 0.0
+    assert captured["data"]["data"]["support_quality"] == 1.0
 
 
 # ── Test 7: Proof failure resilience ─────────────────────────────────────────

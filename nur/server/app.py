@@ -1744,6 +1744,24 @@ nur report incident.json</pre>
         db = get_db()
         return await db.get_stats()
 
+    @app.get("/contributions")
+    async def list_contributions(
+        source: str | None = None,
+        vendor: str | None = None,
+        category: str | None = None,
+        contrib_type: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ):
+        """Browse contributions filtered by source, vendor, category, or type.
+        All data is already anonymized — no PII is stored or returned."""
+        db = get_db()
+        limit = min(limit, 500)
+        return await db.get_contributions(
+            source=source, vendor=vendor, category=category,
+            contrib_type=contrib_type, limit=limit, offset=offset,
+        )
+
     # ── Contribute routes ─────────────────────────────────────────────
 
     @app.post("/contribute/submit")
@@ -1759,6 +1777,8 @@ nur report incident.json</pre>
         notes = d.get("notes", "")
         if isinstance(notes, str) and len(notes) > 10000:
             raise HTTPException(status_code=400, detail="Notes too long (max 10,000 chars)")
+        if "source" not in d:
+            d["source"] = "api"
         db = get_db()
         cid = await db.store_eval_record(body)
         # BDP profile tracking
@@ -2745,7 +2765,6 @@ window.addEventListener('scroll', function() {
     <p style="color:#555;font-size:11px;margin-top:8px;">Example: "I use CrowdStrike for EDR, pay about 50K a year, support is great, 9 out of 10, would buy again"</p>
     <div id="voice-done" style="display:none;margin-top:12px;">
       <p style="color:#22c55e;font-weight:600;margin-bottom:8px;">Recorded!</p>
-      <input type="email" id="voice-email" placeholder="Work email (required)" style="width:100%;padding:12px;background:#0a0a0f;border:1px solid #1e1e2e;border-radius:8px;color:#e4e4e7;font-size:16px;font-family:'Inter',sans-serif;margin-bottom:8px;">
       <button type="button" id="voice-submit" onclick="submitVoice()" style="width:100%;padding:14px;background:#22c55e;color:#0a0a0f;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;">Submit voice eval</button>
     </div>
   </div>
@@ -2825,19 +2844,14 @@ window.addEventListener('scroll', function() {
       <option value="analyst_report">Analyst report</option>
     </select>
 
-    <label>Work email <span class="required">*</span></label>
-    <input type="email" name="email" required placeholder="you@company.com">
-    <div class="note">Required for verification. Gmail/Yahoo not accepted.</div>
-
     <button type="submit">Submit eval</button>
   </form>
 
   <div class="privacy-note">
     <strong>What happens to your data:</strong><br><br>
     <strong>1. Your scores go into a running average.</strong> We add your 9/10 to the sum, increment the count, and <em>delete your individual score</em>. The server literally cannot retrieve it after commit.<br><br>
-    <strong>2. Your email is never linked to your scores.</strong> Email is for verification only (to block spam). It's stored separately from eval data with no join path.<br><br>
-    <strong>3. You get a cryptographic receipt.</strong> A Pedersen commitment hash + Merkle inclusion proof. This proves your eval was included in the aggregate — the server can't deny receiving it or alter it after the fact.<br><br>
-    <strong>4. Nobody can reverse-engineer your score.</strong> The aggregate says "42 practitioners scored CrowdStrike 9.1 avg." It does not say "Hospital X gave it a 9." That data doesn't exist anymore.<br><br>
+    <strong>2. You get a cryptographic receipt.</strong> A Pedersen commitment hash + Merkle inclusion proof. This proves your eval was included in the aggregate — the server can't deny receiving it or alter it after the fact.<br><br>
+    <strong>3. Nobody can reverse-engineer your score.</strong> The aggregate says "42 practitioners scored CrowdStrike 9.1 avg." It does not say "Hospital X gave it a 9." That data doesn't exist anymore.<br><br>
     <strong>What the collective gets from your 60 seconds:</strong> one more real data point that makes the aggregate more accurate for everyone. Give one eval, get forty back.
   </div>
   <a href="/" class="back-link">nur.saramena.us</a>
@@ -2923,7 +2937,7 @@ async function toggleRecording() {
         document.getElementById('voice-done').style.display = 'block';
         btn.textContent = 'Re-record';
         btn.style.borderColor = '#22c55e';
-        status.textContent = 'Recording saved. Add your email and submit.';
+        status.textContent = 'Recording saved. Click submit.';
       };
       mediaRecorder.start();
       isRecording = true;
@@ -2941,15 +2955,9 @@ async function toggleRecording() {
 }
 
 async function submitVoice() {
-  const email = document.getElementById('voice-email').value.trim();
-  if (!email || !email.includes('@')) {
-    alert('Work email required');
-    return;
-  }
   const blob = new Blob(audioChunks, { type: 'audio/webm' });
   const formData = new FormData();
   formData.append('audio', blob, 'eval.webm');
-  formData.append('email', email);
 
   document.getElementById('voice-submit').textContent = 'Submitting...';
   document.getElementById('voice-submit').disabled = true;
@@ -2996,20 +3004,21 @@ a{{color:#4ecdc4;text-decoration:none}}</style></head>
         annual_cost = str(form.get("annual_cost", "")).strip()
         support_quality = form.get("support_quality")
         decision_factor = str(form.get("decision_factor", "")).strip()
-        email = str(form.get("email", "")).strip().lower()
 
         # Validate
-        if not vendor or not email or "@" not in email:
-            return _contribute_error("Vendor and work email required")
+        if not vendor:
+            return _contribute_error("Vendor name is required")
 
-        domain = email.split("@")[1]
-        if domain in _FREE_EMAIL_DOMAINS:
-            return _contribute_error(f"Work email required. {domain} not accepted.")
+        # Allowed values for server-side validation
+        _ALLOWED_CATEGORIES = {"edr", "siem", "cloud_security", "identity", "email_security", "network_security", "vulnerability_management", "waf", "ndr", "soar", "compliance", "security_awareness", "mdr", "other", "general"}
+        _ALLOWED_DECISIONS = {"detection_quality", "price", "support", "integration", "compliance", "executive_mandate", "peer_recommendation", "analyst_report"}
 
         # Build payload matching /contribute/submit shape
-        payload: dict[str, Any] = {"data": {"vendor": vendor, "category": category or "general"}}
+        safe_category = category if category in _ALLOWED_CATEGORIES else "general"
+        payload: dict[str, Any] = {"data": {"vendor": vendor, "category": safe_category}}
+        payload["data"]["source"] = "web"
         if overall_score:
-            payload["data"]["overall_score"] = float(overall_score)
+            payload["data"]["overall_score"] = max(1.0, min(10.0, float(overall_score)))
         if would_buy:
             payload["data"]["would_buy"] = would_buy == "yes"
         if annual_cost:
@@ -3019,8 +3028,8 @@ a{{color:#4ecdc4;text-decoration:none}}</style></head>
                 pass
         sq_str = str(support_quality).strip() if support_quality is not None else ""
         if sq_str != "":
-            payload["data"]["support_quality"] = float(sq_str)
-        if decision_factor:
+            payload["data"]["support_quality"] = max(1.0, min(10.0, float(sq_str)))
+        if decision_factor and decision_factor in _ALLOWED_DECISIONS:
             payload["data"]["decision_factor"] = decision_factor
         also_evaluated = form.getlist("also_evaluated")
         if also_evaluated:
@@ -3064,15 +3073,7 @@ a{{color:#4ecdc4;text-decoration:none}}</style></head>
     async def contribute_voice(request: Request):
         """Accept a voice recording for eval. Store audio for later processing."""
         form = await request.form()
-        email = str(form.get("email", "")).strip().lower()
         audio = form.get("audio")
-
-        if not email or "@" not in email:
-            raise HTTPException(status_code=400, detail="Work email required")
-
-        domain = email.split("@")[1]
-        if domain in _FREE_EMAIL_DOMAINS:
-            raise HTTPException(status_code=400, detail=f"Work email required. {domain} not accepted.")
 
         # Store audio file
         import uuid
@@ -3089,7 +3090,7 @@ a{{color:#4ecdc4;text-decoration:none}}</style></head>
         # Create a placeholder contribution
         db = get_db()
         engine = get_proof_engine()
-        payload = {"data": {"vendor": "voice-pending", "category": "pending", "notes_audio": audio_id}}
+        payload = {"data": {"vendor": "voice-pending", "category": "pending", "notes_audio": audio_id, "source": "voice"}}
         cid = await db.store_eval_record(payload)
         receipt = engine.commit_contribution("voice-pending", "pending", {"audio_id": audio_id})
 
@@ -3247,8 +3248,6 @@ a{{color:#4ecdc4;text-decoration:none}}</style></head>
   .next-btn { width: 100%; padding: 16px; background: #22c55e; color: #0a0a0f; border: none; border-radius: 8px; font-size: 18px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; margin-top: 16px; -webkit-tap-highlight-color: transparent; }
   .next-btn:active { background: #16a34a; }
   .skip-btn { width: 100%; padding: 12px; background: transparent; color: #71717a; border: none; font-size: 14px; cursor: pointer; font-family: 'Inter', sans-serif; margin-top: 8px; }
-  #quick-email { width: 100%; padding: 14px 16px; background: #111118; border: 1px solid #1e1e2e; border-radius: 8px; color: #e4e4e7; font-size: 16px; font-family: 'Inter', sans-serif; margin-bottom: 16px; -webkit-appearance: none; }
-  #quick-email:focus { outline: none; border-color: #22c55e; }
   .branding { text-align: center; margin-bottom: 16px; font-size: 1.2rem; color: #fafafa; font-weight: 700; }
   .branding span { color: #22c55e; }
   .subtitle { text-align: center; color: #71717a; font-size: 0.8rem; margin-bottom: 20px; }
@@ -3258,7 +3257,7 @@ a{{color:#4ecdc4;text-decoration:none}}</style></head>
 <body>
 <div class="container">
   <div class="branding">nur <span>quick eval</span></div>
-  <p class="subtitle">5 taps + email. 15 seconds.</p>
+  <p class="subtitle">5 taps. 15 seconds.</p>
   <div class="progress" id="progress">
     <div class="dot active"></div>
     <div class="dot"></div>
@@ -3306,7 +3305,6 @@ a{{color:#4ecdc4;text-decoration:none}}</style></head>
 
   <div id="step5" class="step">
     <h2>Almost done</h2>
-    <input type="email" id="quick-email" placeholder="Work email" required>
     <div class="error-msg" id="email-error"></div>
     <button class="next-btn" onclick="submitQuick()">Submit &#8594;</button>
   </div>
@@ -3413,14 +3411,8 @@ function fetchCompetitors(vendor) {
 }
 
 function submitQuick() {
-  var email = document.getElementById("quick-email").value.trim();
   var errorEl = document.getElementById("email-error");
   errorEl.style.display = "none";
-  if (!email || email.indexOf("@") === -1) {
-    errorEl.textContent = "Work email required";
-    errorEl.style.display = "block";
-    return;
-  }
   var vendor = selectedVendor;
   if (!vendor) {
     errorEl.textContent = "Please go back and select a vendor";
@@ -3431,7 +3423,6 @@ function submitQuick() {
   formData.append("vendor", vendor);
   formData.append("overall_score", score);
   formData.append("would_buy", buyAgain === true ? "yes" : buyAgain === false ? "no" : "");
-  formData.append("email", email);
   if (replacingVendor) formData.append("replacing", replacingVendor);
   competitors.forEach(function(c) { formData.append("also_evaluated", c); });
   fetch("/contribute", { method: "POST", body: formData, redirect: "follow" })
