@@ -9,3 +9,4 @@ build/
 *.db
 .nur/
 nur.pem
+.gstack/

@@ -2960,6 +2960,16 @@ async function submitVoice() {
 </html>"""
         return _html.replace("%%VENDOR_OPTIONS%%", _vendor_options)
 
+    def _contribute_error(message: str, status_code: int = 400) -> HTMLResponse:
+        from fastapi.responses import HTMLResponse
+        html = f'''<!DOCTYPE html><html><head><title>Error</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{{background:#0a0a0a;color:#e0e0e0;font-family:system-ui;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}}
+.box{{max-width:480px;padding:2rem;border:1px solid #333;border-radius:8px;text-align:center}}
+a{{color:#4ecdc4;text-decoration:none}}</style></head>
+<body><div class="box"><h2>Submission Error</h2><p>{message}</p><a href="/contribute">&larr; Back to form</a></div></body></html>'''
+        return HTMLResponse(content=html, status_code=status_code)
+
     @app.post("/contribute")
     async def contribute_web_form(request: Request):
         form = await request.form()
@@ -2974,11 +2984,11 @@ async function submitVoice() {
 
         # Validate
         if not vendor or not email or "@" not in email:
-            raise HTTPException(status_code=400, detail="Vendor and work email required")
+            return _contribute_error("Vendor and work email required")
 
         domain = email.split("@")[1]
         if domain in _FREE_EMAIL_DOMAINS:
-            raise HTTPException(status_code=400, detail=f"Work email required. {domain} not accepted.")
+            return _contribute_error(f"Work email required. {domain} not accepted.")
 
         # Build payload matching /contribute/submit shape
         payload: dict[str, Any] = {"data": {"vendor": vendor, "category": category or "general"}}
@@ -2991,8 +3001,9 @@ async function submitVoice() {
                 payload["data"]["annual_cost"] = float(annual_cost.replace("$", "").replace(",", ""))
             except (ValueError, TypeError):
                 pass
-        if support_quality and str(support_quality) != "0":
-            payload["data"]["support_quality"] = float(support_quality)
+        sq_str = str(support_quality).strip() if support_quality is not None else ""
+        if sq_str != "":
+            payload["data"]["support_quality"] = float(sq_str)
         if decision_factor:
             payload["data"]["decision_factor"] = decision_factor
         also_evaluated = form.getlist("also_evaluated")
@@ -3007,10 +3018,16 @@ async function submitVoice() {
         cid = await db.store_eval_record(payload)
 
         # Proof layer
-        from .proofs import translate_eval
-        engine = get_proof_engine()
-        v, cat, values = translate_eval(payload)
-        receipt = engine.commit_contribution(v, cat, values)
+        receipt_id = cid[:16]  # fallback receipt
+        try:
+            from .proofs import translate_eval
+            engine = get_proof_engine()
+            v, cat, values = translate_eval(payload)
+            receipt = engine.commit_contribution(v, cat, values)
+            receipt_id = receipt.receipt_id
+        except Exception:
+            import logging
+            logging.getLogger("nur").exception("Proof commit failed for contribution %s", cid)
 
         # BDP tracking
         profile = get_or_create_profile(None)
@@ -3022,7 +3039,6 @@ async function submitVoice() {
         # Redirect to thank-you page
         from fastapi.responses import RedirectResponse
         import urllib.parse
-        receipt_id = receipt.receipt_id
         return RedirectResponse(
             url=f"/contribute/thanks?receipt={receipt_id}&vendor={urllib.parse.quote(vendor)}&score={payload['data'].get('overall_score', '')}",
             status_code=303,

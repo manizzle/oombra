@@ -52,12 +52,18 @@ class Database:
         # Support both wire format {"context": {}, "data": {...}} and flat format {"vendor": ...}
         d = data.get("data", data)
         ctx = data.get("context", {})
+        # Normalize vendor name against canonical VENDORS list
+        vendor = d.get("vendor")
+        if vendor and isinstance(vendor, str):
+            from ..vendors import VENDORS
+            _vendor_lookup = {v.lower(): v for v in VENDORS}
+            vendor = _vendor_lookup.get(vendor.strip().lower(), vendor.strip())
         contrib = Contribution(
             contrib_type="eval",
             industry=ctx.get("industry"),
             org_size=ctx.get("org_size"),
             role=ctx.get("role"),
-            vendor=d.get("vendor"),
+            vendor=vendor,
             category=d.get("category"),
             overall_score=d.get("overall_score"),
             detection_rate=d.get("detection_rate"),
