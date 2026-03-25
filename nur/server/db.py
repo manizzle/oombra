@@ -156,6 +156,11 @@ class Database:
     # ── Query helpers ────────────────────────────────────────────────────
 
     async def get_vendor_aggregate(self, vendor: str) -> dict | None:
+        # Normalize to canonical name so lookups match stored aggregates
+        if vendor and isinstance(vendor, str):
+            from ..vendors import VENDORS
+            _vendor_lookup = {v.lower(): v for v in VENDORS}
+            vendor = _vendor_lookup.get(vendor.strip().lower(), vendor.strip())
         async with self.session() as s:
             result = await s.execute(
                 select(AggregatedScore).where(AggregatedScore.vendor == vendor)

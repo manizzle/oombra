@@ -51,8 +51,8 @@ async def _get_vendor_detail(vendor_id: str) -> dict:
         "vendor_id": vid,
         "category": category,
         "eval_count": count,
-        "avg_score": round(score, 2) if score else None,
-        "weighted_score": round(score, 2) if score else None,
+        "avg_score": round(score, 2) if score is not None else None,
+        "weighted_score": round(score, 2) if score is not None else None,
         "confidence": conf,
         "source_count": len(sources),
         "sources": sources,
@@ -143,8 +143,8 @@ async def search_category(name: str):
             "vendor_display": display,
             "vendor_id": vid,
             "eval_count": count,
-            "avg_score": round(score, 2) if score else None,
-            "weighted_score": round(score, 2) if score else None,
+            "avg_score": round(score, 2) if score is not None else None,
+            "weighted_score": round(score, 2) if score is not None else None,
             "confidence": conf,
         }
 
