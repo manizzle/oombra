@@ -18,25 +18,33 @@ mkdir -p nur && cd nur
 # ── Pull files ─────────────────────────────────────────────────
 echo "  Pulling config files..."
 curl -sSL https://raw.githubusercontent.com/manizzle/nur/main/docker-compose.prod.yml -o docker-compose.yml
-curl -sSL https://raw.githubusercontent.com/manizzle/nur/main/.env.example -o .env
 curl -sSL https://raw.githubusercontent.com/manizzle/nur/main/Caddyfile -o Caddyfile
 
-# ── Generate secrets ───────────────────────────────────────────
-API_KEY=$(head -c 32 /dev/urandom | base64 | tr -d '/+=' | head -c 32)
-PG_PASS=$(head -c 16 /dev/urandom | base64 | tr -d '/+=' | head -c 16)
+# ── Create .env only if it doesn't exist (never overwrite) ────
+if [ ! -f ".env" ]; then
+    curl -sSL https://raw.githubusercontent.com/manizzle/nur/main/.env.example -o .env
 
-sed -i.bak "s/^NUR_API_KEY=.*/NUR_API_KEY=${API_KEY}/" .env
-sed -i.bak "s/^# POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=${PG_PASS}/" .env
-rm -f .env.bak
+    # ── Generate secrets ───────────────────────────────────────
+    API_KEY=$(head -c 32 /dev/urandom | base64 | tr -d '/+=' | head -c 32)
+    PG_PASS=$(head -c 16 /dev/urandom | base64 | tr -d '/+=' | head -c 16)
 
-# ── Domain ─────────────────────────────────────────────────────
-echo ""
-read -p "  Domain (press Enter for localhost): " DOMAIN
-DOMAIN=${DOMAIN:-localhost}
-
-if [ "$DOMAIN" != "localhost" ]; then
-    sed -i.bak "s/^# NUR_DOMAIN=.*/NUR_DOMAIN=${DOMAIN}/" .env
+    sed -i.bak "s/^NUR_API_KEY=.*/NUR_API_KEY=${API_KEY}/" .env
+    sed -i.bak "s/^# POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=${PG_PASS}/" .env
     rm -f .env.bak
+
+    # ── Domain ─────────────────────────────────────────────────
+    echo ""
+    read -p "  Domain (press Enter for localhost): " DOMAIN
+    DOMAIN=${DOMAIN:-localhost}
+
+    if [ "$DOMAIN" != "localhost" ]; then
+        sed -i.bak "s/^# NUR_DOMAIN=.*/NUR_DOMAIN=${DOMAIN}/" .env
+        rm -f .env.bak
+    fi
+else
+    echo "  .env already exists, keeping current config"
+    DOMAIN=$(grep '^NUR_DOMAIN=' .env 2>/dev/null | cut -d= -f2 || echo "localhost")
+    API_KEY=$(grep '^NUR_API_KEY=' .env 2>/dev/null | cut -d= -f2 || echo "")
 fi
 
 # ── Start ──────────────────────────────────────────────────────

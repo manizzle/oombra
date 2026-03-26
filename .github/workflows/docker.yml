@@ -57,7 +57,14 @@ jobs:
           script: |
             cd /home/admin/nur
 
-            # Sync config files from repo (compose, Caddyfile)
+            # Guard: ensure NUR_DOMAIN is set (prevents SSL regression)
+            if ! grep -q '^NUR_DOMAIN=' .env 2>/dev/null; then
+              echo "FATAL: NUR_DOMAIN not set in .env — refusing to deploy (would break SSL)"
+              exit 1
+            fi
+            echo "NUR_DOMAIN=$(grep '^NUR_DOMAIN=' .env | cut -d= -f2)"
+
+            # Sync config files from repo (compose, Caddyfile) — never touch .env
             curl -sSL https://raw.githubusercontent.com/manizzle/nur/main/docker-compose.prod.yml -o docker-compose.yml
             curl -sSL https://raw.githubusercontent.com/manizzle/nur/main/Caddyfile -o Caddyfile
 
@@ -77,14 +84,15 @@ jobs:
               sleep 5
             done
 
-            # Verify through Caddy (follow redirects)
+            # Verify HTTPS is working (not just HTTP through Caddy)
+            DOMAIN=$(grep '^NUR_DOMAIN=' .env | cut -d= -f2)
             for i in 1 2 3 4 5; do
-              HTTP=$(curl -sL -o /dev/null -w "%{http_code}" --max-time 10 http://localhost:80/health || echo "000")
+              HTTP=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 10 "https://${DOMAIN}/health" || echo "000")
               if [ "$HTTP" = "200" ]; then
-                echo "Deploy verified through Caddy: HTTP $HTTP"
+                echo "Deploy verified via HTTPS: HTTP $HTTP"
                 exit 0
               fi
-              echo "Caddy check attempt $i: HTTP $HTTP, waiting..."
+              echo "HTTPS check attempt $i: HTTP $HTTP, waiting..."
               sleep 5
             done
-            echo "WARNING: Deploy may not be healthy yet"
+            echo "WARNING: HTTPS may not be healthy yet — check Caddy logs"
