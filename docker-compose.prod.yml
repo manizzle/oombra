@@ -9,7 +9,7 @@
 
 services:
   nur-prod:
-    image: ghcr.io/manizzle/nur:latest
+    image: ${NUR_IMAGE:-ghcr.io/manizzle/nur:latest}
     ports:
       - "${NUR_PORT:-8000}:8000"
     healthcheck:

@@ -62,37 +62,120 @@ jobs:
               echo "FATAL: NUR_DOMAIN not set in .env — refusing to deploy (would break SSL)"
               exit 1
             fi
-            echo "NUR_DOMAIN=$(grep '^NUR_DOMAIN=' .env | cut -d= -f2)"
+            DOMAIN=$(grep '^NUR_DOMAIN=' .env | cut -d= -f2)
+            echo "NUR_DOMAIN=$DOMAIN"
 
-            # Sync config files from repo (compose, Caddyfile) — never touch .env
+            # ── Save current image for rollback ──────────────────────────────
+            PREV_IMAGE=$(docker inspect --format='{{.Config.Image}}' nur-nur-prod-1 2>/dev/null || echo "")
+            if [ -n "$PREV_IMAGE" ]; then
+              echo "Saved rollback image: $PREV_IMAGE"
+            else
+              echo "No previous container found (first deploy or container removed)"
+            fi
+
+            # ── Helper: check backend health ─────────────────────────────────
+            check_backend() {
+              local label="$1"
+              local attempts="${2:-20}"
+              for i in $(seq 1 $attempts); do
+                HTTP=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://localhost:8000/health || echo "000")
+                if [ "$HTTP" = "200" ]; then
+                  echo "$label healthy: HTTP $HTTP"
+                  return 0
+                fi
+                echo "$label (attempt $i/$attempts): HTTP $HTTP"
+                sleep 5
+              done
+              return 1
+            }
+
+            # ── Helper: dump diagnostic logs ─────────────────────────────────
+            dump_logs() {
+              echo ""
+              echo "--- docker compose ps ---"
+              docker compose ps -a
+              echo ""
+              echo "--- nur-prod container logs (last 100 lines) ---"
+              docker compose logs --tail=100 nur-prod
+              echo ""
+              echo "--- postgres container logs (last 50 lines) ---"
+              docker compose logs --tail=50 postgres
+              echo ""
+              echo "--- caddy container logs (last 50 lines) ---"
+              docker compose logs --tail=50 caddy
+            }
+
+            # ── Helper: rollback to previous image ───────────────────────────
+            rollback() {
+              if [ -z "$PREV_IMAGE" ]; then
+                echo "No previous image to roll back to — site will remain down"
+                return 1
+              fi
+              echo ""
+              echo "╔══════════════════════════════════════════╗"
+              echo "║  ROLLING BACK to: $PREV_IMAGE"
+              echo "╚══════════════════════════════════════════╝"
+              echo ""
+
+              # Pin compose to the previous image instead of :latest
+              NUR_IMAGE="$PREV_IMAGE" docker compose up -d --no-deps nur-prod
+
+              if check_backend "Rollback" 10; then
+                echo "Rollback succeeded — site is back on previous version"
+                return 0
+              else
+                echo "Rollback ALSO failed — site is down, manual intervention needed"
+                dump_logs
+                return 1
+              fi
+            }
+
+            # ── Sync config files from repo (never touch .env) ───────────────
             curl -sSL https://raw.githubusercontent.com/manizzle/nur/main/docker-compose.prod.yml -o docker-compose.yml
             curl -sSL https://raw.githubusercontent.com/manizzle/nur/main/Caddyfile -o Caddyfile
 
-            # Pull new image and restart all services (remove orphaned old containers)
+            # ── Deploy new image ─────────────────────────────────────────────
             docker compose pull nur-prod
             docker compose up -d --remove-orphans
             echo "Waiting for app startup..."
 
-            # Verify backend health directly (not through Caddy redirect)
-            for i in $(seq 1 20); do
-              HTTP=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://localhost:8000/health || echo "000")
-              if [ "$HTTP" = "200" ]; then
-                echo "Backend healthy: HTTP $HTTP"
-                break
-              fi
-              echo "Waiting for backend (attempt $i): HTTP $HTTP"
-              sleep 5
-            done
+            # ── Health check: backend ────────────────────────────────────────
+            if ! check_backend "Backend" 20; then
+              echo ""
+              echo "=========================================="
+              echo "DEPLOY FAILED: Backend never became healthy"
+              echo "=========================================="
+              dump_logs
+              rollback
+              exit 1
+            fi
 
-            # Verify HTTPS is working (not just HTTP through Caddy)
-            DOMAIN=$(grep '^NUR_DOMAIN=' .env | cut -d= -f2)
+            # ── Health check: HTTPS ──────────────────────────────────────────
+            HTTPS_OK=false
             for i in 1 2 3 4 5; do
               HTTP=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 10 "https://${DOMAIN}/health" || echo "000")
               if [ "$HTTP" = "200" ]; then
                 echo "Deploy verified via HTTPS: HTTP $HTTP"
-                exit 0
+                HTTPS_OK=true
+                break
               fi
               echo "HTTPS check attempt $i: HTTP $HTTP, waiting..."
               sleep 5
             done
-            echo "WARNING: HTTPS may not be healthy yet — check Caddy logs"
+
+            if [ "$HTTPS_OK" = "false" ]; then
+              echo ""
+              echo "=========================================="
+              echo "DEPLOY FAILED: HTTPS health check failed"
+              echo "=========================================="
+              echo ""
+              echo "--- caddy container logs (last 100 lines) ---"
+              docker compose logs --tail=100 caddy
+              rollback
+              exit 1
+            fi
+
+            echo ""
+            echo "══════════════════════════════════════"
+            echo "  Deploy successful"
+            echo "══════════════════════════════════════"
