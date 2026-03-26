@@ -32,6 +32,7 @@ import secrets as _secrets_mod
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from .db import Database
 from .proofs import ProofEngine
@@ -1757,7 +1758,13 @@ nur report incident.json</pre>
 
     @app.get("/health")
     async def health():
-        return {"status": "ok"}
+        try:
+            db = get_db()
+            async with db.session() as s:
+                await s.execute(text("SELECT 1"))
+            return {"status": "ok"}
+        except Exception:
+            return JSONResponse(status_code=503, content={"status": "unhealthy"})
 
     # ── Stats ─────────────────────────────────────────────────────────
 

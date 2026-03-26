@@ -24,7 +24,13 @@ from .models import (
 
 class Database:
     def __init__(self, url: str = "sqlite+aiosqlite:///nur.db"):
-        self.engine = create_async_engine(url, echo=False)
+        engine_kwargs: dict = {"echo": False}
+        if "postgresql" in url:
+            engine_kwargs.update(
+                pool_size=10, max_overflow=5,
+                pool_pre_ping=True, pool_recycle=300,
+            )
+        self.engine = create_async_engine(url, **engine_kwargs)
         self.session_factory = async_sessionmaker(self.engine, expire_on_commit=False)
 
     async def init(self) -> None:

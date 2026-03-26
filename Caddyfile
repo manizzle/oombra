@@ -1,5 +1,5 @@
 {$NUR_DOMAIN:localhost} {
-    reverse_proxy nur-prod:8000 {
+    reverse_proxy {$NUR_UPSTREAM:nur-prod:8000} {
         transport http {
             read_timeout 30s
         }

@@ -8,7 +8,7 @@
 #   docker compose up -d
 
 services:
-  nur:
+  nur-prod:
     image: ghcr.io/manizzle/nur:latest
     ports:
       - "${NUR_PORT:-8000}:8000"
@@ -49,6 +49,7 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # NUR_UPSTREAM must match the app service name above
   caddy:
     image: caddy:2-alpine
     ports:
@@ -56,11 +57,12 @@ services:
       - "443:443"
     environment:
       - NUR_DOMAIN=${NUR_DOMAIN:-localhost}
+      - NUR_UPSTREAM=nur-prod:8000
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy-data:/data
     depends_on:
-      - nur
+      - nur-prod
     restart: unless-stopped
 
 volumes:

@@ -71,6 +71,7 @@ services:
       - production
 
   # ── Caddy reverse proxy (HTTPS + domain) ─────────────────────
+  # NUR_UPSTREAM must match the production service name above
   caddy:
     image: caddy:2-alpine
     ports:
@@ -78,6 +79,7 @@ services:
       - "443:443"
     environment:
       - NUR_DOMAIN=${NUR_DOMAIN:-localhost}
+      - NUR_UPSTREAM=nur-prod:8000
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy-data:/data
