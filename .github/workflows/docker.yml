@@ -134,9 +134,12 @@ jobs:
             curl -sSL https://raw.githubusercontent.com/manizzle/nur/main/docker-compose.prod.yml -o docker-compose.yml
             curl -sSL https://raw.githubusercontent.com/manizzle/nur/main/Caddyfile -o Caddyfile
 
-            # ── Deploy new image ─────────────────────────────────────────────
+            # ── Ensure postgres + caddy are running (no-op if already up) ──
+            docker compose up -d postgres caddy
+
+            # ── Deploy only the app container ───────────────────────────────
             docker compose pull nur-prod
-            docker compose up -d --remove-orphans
+            docker compose up -d --no-deps nur-prod
             echo "Waiting for app startup..."
 
             # ── Health check: backend ────────────────────────────────────────
