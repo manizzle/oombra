@@ -15,9 +15,9 @@
 
 ---
 
-The Blind for security — give one eval, get forty back.
+Every company is an algorithm — 20+ decision points, all starving for data. nur is the data layer that feeds vendor selection and threat response with cryptographically verified practitioner intelligence.
 
-Attackers share everything. Defenders share nothing. nur fixes that. A social network for security intelligence where the integration shares and the human gets remediation back.
+Attackers share everything. Defenders share nothing. nur fixes that. Every handoff between decisions is a data contract — nur fills those contracts with real practitioner intelligence, not vendor marketing. The integration shares and the human gets remediation back.
 
 - **Wartime** — under attack? Upload IOCs, get remediation steps that your peers actually used. Not a vendor's whitepaper — what real practitioners did when they got hit by the same threat actor.
 - **Peacetime** — evaluating tools? Get real practitioner benchmarks: pricing, support quality, detection rates, and what people actually chose and why.

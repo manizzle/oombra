@@ -56,7 +56,7 @@ Additionally, vendors pay for featured listings, verified badges, and lead gener
 nur is the only platform that combines (1) real practitioner data, (2) cryptographic privacy guarantees, and (3) multi-dimensional intelligence (price + support + detection + decision) in one place.
 
 ## What do you understand that others don't?
-Product = protocol + users. The protocol enables trust. The users create value. At 1,000 users, switching cost is infinite — you'd lose the collective intelligence of every security team in your vertical. 10 users = interesting. 100 = useful. 1,000 = indispensable.
+Every company is an algorithm — 20+ decision points, all algorithmic. Every handoff between them is a data contract. Today most of those contracts are empty: the "Select Vendor" diamond has no real practitioner data, the "Accept/Mitigate/Transfer" diamond has no peer remediation intel. nur fills data contracts. Product = protocol + users. The protocol enables trust. The users create value. At 1,000 users, switching cost is infinite — you'd lose the collective intelligence of every security team in your vertical. 10 users = interesting. 100 = useful. 1,000 = indispensable.
 
 The security intelligence problem isn't a technology problem — it's a trust problem. ISACs tried to solve sharing with legal agreements. Threat intel platforms tried with anonymization. Both failed because defenders won't share if they can't verify the platform is honest.
 
