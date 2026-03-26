@@ -55,44 +55,137 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
+            set -euo pipefail
             cd /home/admin/nur
 
-            # Guard: ensure NUR_DOMAIN is set (prevents SSL regression)
+            # ── Guards ──────────────────────────────────────────────────────
             if ! grep -q '^NUR_DOMAIN=' .env 2>/dev/null; then
               echo "FATAL: NUR_DOMAIN not set in .env — refusing to deploy (would break SSL)"
               exit 1
             fi
-            echo "NUR_DOMAIN=$(grep '^NUR_DOMAIN=' .env | cut -d= -f2)"
+            DOMAIN=$(grep '^NUR_DOMAIN=' .env | cut -d= -f2)
+            echo "NUR_DOMAIN=$DOMAIN"
 
-            # Sync config files from repo (compose, Caddyfile) — never touch .env
+            # ── Save current image for rollback ─────────────────────────────
+            PREV_IMAGE=$(docker inspect --format='{{.Config.Image}}' nur-nur-prod-1 2>/dev/null || echo "")
+            if [ -n "$PREV_IMAGE" ]; then
+              echo "Saved rollback image: $PREV_IMAGE"
+            else
+              echo "No previous container found (first deploy or container removed)"
+            fi
+
+            # ── Helpers ─────────────────────────────────────────────────────
+            check_backend() {
+              local label="$1" attempts="${2:-20}"
+              for i in $(seq 1 "$attempts"); do
+                HTTP=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://localhost:8000/health 2>/dev/null || echo "000")
+                if [ "$HTTP" = "200" ]; then
+                  echo "$label backend healthy (attempt $i/$attempts)"
+                  return 0
+                fi
+                echo "$label backend (attempt $i/$attempts): HTTP $HTTP"
+                sleep 5
+              done
+              return 1
+            }
+
+            check_https() {
+              local label="$1" attempts="${2:-5}"
+              for i in $(seq 1 "$attempts"); do
+                HTTP=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 10 "https://${DOMAIN}/health" 2>/dev/null || echo "000")
+                if [ "$HTTP" = "200" ]; then
+                  echo "$label HTTPS healthy (attempt $i/$attempts)"
+                  return 0
+                fi
+                echo "$label HTTPS (attempt $i/$attempts): HTTP $HTTP"
+                sleep 5
+              done
+              return 1
+            }
+
+            # Full end-to-end: backend + HTTPS must both pass
+            verify_site() {
+              local label="$1"
+              check_backend "$label" "${2:-20}" && check_https "$label" "${3:-5}"
+            }
+
+            dump_logs() {
+              echo ""
+              echo "--- docker compose ps ---"
+              docker compose ps -a
+              echo ""
+              echo "--- nur-prod logs (last 100) ---"
+              docker compose logs --tail=100 nur-prod 2>&1 || true
+              echo ""
+              echo "--- postgres logs (last 50) ---"
+              docker compose logs --tail=50 postgres 2>&1 || true
+              echo ""
+              echo "--- caddy logs (last 50) ---"
+              docker compose logs --tail=50 caddy 2>&1 || true
+            }
+
+            rollback() {
+              if [ -z "$PREV_IMAGE" ]; then
+                echo "CRITICAL: No previous image to roll back to — site is down"
+                dump_logs
+                return 1
+              fi
+              echo ""
+              echo "╔══════════════════════════════════════════╗"
+              echo "║  ROLLING BACK to: $PREV_IMAGE"
+              echo "╚══════════════════════════════════════════╝"
+              echo ""
+              NUR_IMAGE="$PREV_IMAGE" docker compose up -d --no-deps nur-prod
+
+              if verify_site "Rollback" 10 5; then
+                echo ""
+                echo "Rollback succeeded — site is back on previous version"
+                return 0
+              else
+                echo ""
+                echo "CRITICAL: Rollback ALSO failed — site is down"
+                dump_logs
+                return 1
+              fi
+            }
+
+            # ── Sync config files from repo (never touch .env) ──────────────
             curl -sSL https://raw.githubusercontent.com/manizzle/nur/main/docker-compose.prod.yml -o docker-compose.yml
             curl -sSL https://raw.githubusercontent.com/manizzle/nur/main/Caddyfile -o Caddyfile
 
-            # Pull new image and restart all services (remove orphaned old containers)
+            # ── Ensure infra is running (no-op if already up) ───────────────
+            docker compose up -d postgres caddy
+
+            # ── Deploy the app ──────────────────────────────────────────────
             docker compose pull nur-prod
-            docker compose up -d --remove-orphans
+            docker compose up -d --no-deps nur-prod
             echo "Waiting for app startup..."
 
-            # Verify backend health directly (not through Caddy redirect)
-            for i in $(seq 1 20); do
-              HTTP=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://localhost:8000/health || echo "000")
-              if [ "$HTTP" = "200" ]; then
-                echo "Backend healthy: HTTP $HTTP"
-                break
-              fi
-              echo "Waiting for backend (attempt $i): HTTP $HTTP"
-              sleep 5
-            done
+            # ── Verify end-to-end: backend + HTTPS ──────────────────────────
+            if verify_site "Deploy" 20 5; then
+              echo ""
+              echo "══════════════════════════════════════"
+              echo "  Deploy verified — site is healthy"
+              echo "══════════════════════════════════════"
+              exit 0
+            fi
 
-            # Verify HTTPS is working (not just HTTP through Caddy)
-            DOMAIN=$(grep '^NUR_DOMAIN=' .env | cut -d= -f2)
-            for i in 1 2 3 4 5; do
-              HTTP=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 10 "https://${DOMAIN}/health" || echo "000")
-              if [ "$HTTP" = "200" ]; then
-                echo "Deploy verified via HTTPS: HTTP $HTTP"
-                exit 0
-              fi
-              echo "HTTPS check attempt $i: HTTP $HTTP, waiting..."
-              sleep 5
-            done
-            echo "WARNING: HTTPS may not be healthy yet — check Caddy logs"
+            # ── Deploy failed — capture logs BEFORE rollback destroys them ──
+            echo ""
+            echo "=========================================="
+            echo "DEPLOY FAILED — capturing diagnostic logs"
+            echo "=========================================="
+            dump_logs
+
+            # ── Rollback and verify ─────────────────────────────────────────
+            if rollback; then
+              echo ""
+              echo "Site restored to previous version. Deploy failed."
+              exit 1
+            fi
+
+            echo ""
+            echo "=========================================="
+            echo "CRITICAL: Site is DOWN — manual intervention required"
+            echo "=========================================="
+            exit 1
