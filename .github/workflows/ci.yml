@@ -65,6 +65,41 @@ jobs:
           POSTGRES_PASSWORD: nur
         run: |
           set -euo pipefail
+          BASE_URL="http://localhost:18000"
+
+          smoke_check() {
+            curl -fsS --max-time 5 "$BASE_URL/health" >/dev/null
+
+            contribute_page="$(mktemp)"
+            curl -fsS --max-time 10 "$BASE_URL/contribute" -o "$contribute_page"
+            grep -q "Submit voice eval" "$contribute_page"
+
+            contribute_headers="$(mktemp)"
+            curl -sS --max-time 10 \
+              -D "$contribute_headers" \
+              -o /dev/null \
+              -X POST \
+              -F "vendor=CrowdStrike" \
+              -F "category=edr" \
+              -F "overall_score=8" \
+              -F "would_buy=yes" \
+              -F "support_quality=9" \
+              "$BASE_URL/contribute"
+            grep -q "^HTTP/.* 303" "$contribute_headers"
+            grep -qi "^location: /contribute/thanks?" "$contribute_headers"
+
+            voice_fixture="$(mktemp /tmp/nur-voice-smoke.XXXXXX.webm)"
+            printf 'smoke voice payload' > "$voice_fixture"
+            voice_response="$(mktemp)"
+            curl -fsS --max-time 10 \
+              -o "$voice_response" \
+              -X POST \
+              -F "audio=@$voice_fixture;type=audio/webm" \
+              "$BASE_URL/contribute/voice"
+            grep -q '"status":"accepted"' "$voice_response"
+            grep -q '"receipt_id":' "$voice_response"
+            grep -q '"audio_id":' "$voice_response"
+          }
 
           cleanup() {
             docker compose -f docker-compose.prod.yml down -v || true
@@ -74,12 +109,17 @@ jobs:
           docker compose -f docker-compose.prod.yml up -d postgres nur-prod
 
           for i in $(seq 1 30); do
-            if curl -fsS --max-time 5 http://localhost:18000/health >/dev/null; then
+            if curl -fsS --max-time 5 "$BASE_URL/health" >/dev/null; then
               echo "Backend healthy on attempt $i/30"
-              exit 0
+              break
             fi
             sleep 2
           done
+
+          if smoke_check; then
+            echo "Smoke checks passed"
+            exit 0
+          fi
 
           echo "--- docker compose ps ---"
           docker compose -f docker-compose.prod.yml ps -a

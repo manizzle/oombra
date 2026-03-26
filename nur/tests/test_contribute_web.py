@@ -1,6 +1,7 @@
 """Tests for the /contribute web form POST handler — full submission flow."""
 from __future__ import annotations
 
+import os
 import pytest
 from unittest.mock import patch, MagicMock
 from httpx import AsyncClient, ASGITransport
@@ -200,3 +201,45 @@ async def test_multi_submission_aggregation():
     assert agg is not None
     assert agg["avg_score"] == 7.0
     assert agg["contribution_count"] == 2
+
+
+# ── Test 12: Public web form remains open when API key auth is enabled ──────
+
+@pytest.mark.asyncio
+async def test_contribute_form_open_with_master_key():
+    """POST /contribute stays public even when API clients require a key."""
+    os.environ["NUR_API_KEY"] = "test-secret-key"
+    try:
+        app, db = await _make_app()
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test", follow_redirects=False,
+        ) as c:
+            resp = await c.post("/contribute", data=_valid_form())
+        assert resp.status_code == 303
+        assert "/contribute/thanks" in resp.headers["location"]
+    finally:
+        os.environ.pop("NUR_API_KEY", None)
+
+
+# ── Test 13: Voice upload remains open when API key auth is enabled ─────────
+
+@pytest.mark.asyncio
+async def test_voice_submit_open_with_master_key():
+    """POST /contribute/voice stays public even when API clients require a key."""
+    os.environ["NUR_API_KEY"] = "test-secret-key"
+    try:
+        app, db = await _make_app()
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test",
+        ) as c:
+            resp = await c.post(
+                "/contribute/voice",
+                files={"audio": ("eval.webm", b"voice-bytes", "audio/webm")},
+            )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "accepted"
+        assert data["receipt_id"]
+        assert data["audio_id"]
+    finally:
+        os.environ.pop("NUR_API_KEY", None)

@@ -5,8 +5,6 @@ on:
     workflows: ["CI"]
     types: [completed]
     branches: [main]
-  release:
-    types: [published]
 
 env:
   REGISTRY: ghcr.io
@@ -15,7 +13,7 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'release' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     permissions:
       contents: read
       packages: write
@@ -95,6 +93,19 @@ jobs:
               return 1
             }
 
+            check_public_pages() {
+              local base_url="$1" label="$2" curl_flags="${3:-}"
+              local contribute_page
+              contribute_page=$(mktemp)
+              if curl $curl_flags -fsS --max-time 10 "${base_url}/contribute" -o "$contribute_page" \
+                && grep -q "Submit voice eval" "$contribute_page"; then
+                echo "$label contribute page healthy"
+                return 0
+              fi
+              echo "$label contribute page check failed"
+              return 1
+            }
+
             check_https() {
               local label="$1" attempts="${2:-5}"
               for i in $(seq 1 "$attempts"); do
@@ -112,7 +123,10 @@ jobs:
             # Full end-to-end: backend + HTTPS must both pass
             verify_site() {
               local label="$1"
-              check_backend "$label" "${2:-20}" && check_https "$label" "${3:-5}"
+              check_backend "$label" "${2:-20}" \
+                && check_public_pages "http://localhost:8000" "$label backend" \
+                && check_https "$label" "${3:-5}" \
+                && check_public_pages "https://${DOMAIN}" "$label https" "-k"
             }
 
             dump_logs() {

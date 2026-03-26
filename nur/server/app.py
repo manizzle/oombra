@@ -172,14 +172,18 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
 
     # ── API key + signature auth middleware ──────────────────────────────
     master_key = os.environ.get("NUR_API_KEY")
+    public_web_write_paths = {"/contribute", "/contribute/voice"}
 
     @app.middleware("http")
     async def api_key_auth(request: Request, call_next):
         write_paths = (
+            (
                 request.url.path.startswith("/contribute/")
-                or request.url.path.startswith("/ingest/")
-                or request.url.path == "/analyze"
+                and request.url.path not in public_web_write_paths
             )
+            or request.url.path.startswith("/ingest/")
+            or request.url.path == "/analyze"
+        )
         if master_key and write_paths and request.method == "POST":
             provided = request.headers.get("X-API-Key")
             if not provided:
@@ -3006,7 +3010,7 @@ async function submitVoice() {
       window.location.href = '/contribute/thanks?receipt=' + data.receipt_id + '&vendor=voice-eval';
     } else {
       const err = await resp.json();
-      alert(err.detail || 'Error submitting. Try the form below.');
+      alert(err.detail || err.error || 'Error submitting. Try the form below.');
       document.getElementById('voice-submit').textContent = 'Submit voice eval';
       document.getElementById('voice-submit').disabled = false;
     }

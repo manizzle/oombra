@@ -42,6 +42,13 @@ nur report incident.json
 Or contribute via web — no CLI needed:
 **[nur.saramena.us/contribute](https://nur.saramena.us/contribute)** — rate your security tool in 60 seconds
 
+Local image smoke test:
+
+```bash
+scripts/smoke-image.sh
+scripts/smoke-image.sh --image ghcr.io/manizzle/nur:<sha> --pull
+```
+
 ---
 
 ## Architecture
