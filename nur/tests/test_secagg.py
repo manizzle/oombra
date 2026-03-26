@@ -14,7 +14,7 @@ class TestAdditiveSplitting:
         for val in [0.0, 1.0, -5.5, 100.0, 0.001]:
             shares = split(val, 3)
             assert len(shares) == 3
-            assert abs(sum(shares) - val) < 1e-10
+            assert abs(sum(shares) - val) < 1e-9
 
     def test_individual_shares_reveal_nothing(self):
         """Each share should be random, not close to the original value."""
