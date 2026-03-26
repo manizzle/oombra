@@ -548,7 +548,7 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
       <div>
         <h1>nur</h1>
         <div class="hero-subtitle">collective security intelligence</div>
-        <p class="hero-copy">Your industry should be smarter together than any single company is alone.</p>
+        <p class="hero-copy">Every company is an algorithm &mdash; 20+ decisions, all starving for data. nur is the data layer that feeds them.</p>
         <div class="cta-row">
           <a class="btn btn-primary" href="/register">Get Started <span>&rarr;</span></a>
           <a class="btn btn-secondary" href="/dashboard">Dashboard</a>
@@ -590,6 +590,28 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
       <article class="card">
         <h3>Verify</h3>
         <p>Every aggregate comes with a cryptographic proof. Merkle trees, commitment hashes, server signatures. Math, not promises.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" style="border-top:1px solid #1e1e2e;">
+    <div class="section-heading">
+      <span class="section-label">Why It Matters</span>
+      <h2>Your company is an algorithm.</h2>
+      <p>20+ decisions run your org &mdash; vendor selection, threat triage, budget approval, compliance review. Every handoff between them is a data contract. Most of those contracts are empty today.</p>
+    </div>
+    <div class="card-grid">
+      <article class="card">
+        <h3>Vendor Selection</h3>
+        <p>The &ldquo;Select Vendor&rdquo; diamond needs detection rates, pricing, and support data from real practitioners &mdash; not Gartner quadrants.</p>
+      </article>
+      <article class="card">
+        <h3>Threat Response</h3>
+        <p>The &ldquo;Accept / Mitigate / Transfer&rdquo; diamond needs what peers actually did when they got hit &mdash; not a vendor whitepaper.</p>
+      </article>
+      <article class="card">
+        <h3>Every Handoff</h3>
+        <p>nur fills data contracts with cryptographically verified intelligence. Each receipt is a signed data contract between your org and the collective.</p>
       </article>
     </div>
   </section>
