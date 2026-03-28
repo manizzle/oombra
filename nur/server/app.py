@@ -217,7 +217,35 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
                 except (ValueError, TypeError):
                     pass  # Don't fail the request on malformed signatures
 
-        return await call_next(request)
+            # Stash the API key on request state for downstream logging
+            request.state.api_key = provided
+
+        # Also track query-side requests that carry an API key (GET /query/*, /intelligence/*, etc.)
+        if not getattr(request.state, "api_key", None):
+            header_key = request.headers.get("X-API-Key")
+            if header_key:
+                request.state.api_key = header_key
+
+        response = await call_next(request)
+
+        # Log authenticated requests for demand-side analytics
+        api_key = getattr(request.state, "api_key", None)
+        if api_key:
+            import asyncio
+            import hashlib
+            key_hash = hashlib.sha256(api_key.encode()).hexdigest()
+
+            async def _log():
+                try:
+                    db = get_db()
+                    await db.log_api_request(key_hash, request.url.path, request.method, response.status_code)
+                    await db.bump_api_key_usage(api_key)
+                except Exception:
+                    pass  # Don't fail requests on logging errors
+
+            asyncio.create_task(_log())
+
+        return response
 
     # ── Rate limiting middleware ──────────────────────────────────────────
     _rate_limits: dict[str, list[float]] = defaultdict(list)
@@ -252,6 +280,9 @@ def create_app(db_url: str = "sqlite+aiosqlite:///nur.db") -> FastAPI:
 
     from .routes.vendors import router as vendors_router
     app.include_router(vendors_router)
+
+    from .routes.admin import router as admin_router
+    app.include_router(admin_router)
 
     # Conditionally include FL router
     try:
@@ -823,15 +854,24 @@ nur report incident.json</pre>
 
     # ── Dashboard ──────────────────────────────────────────────────
 
+    @app.get("/api/public-stats")
+    async def public_stats():
+        db = get_db()
+        return await db.get_public_dashboard_stats()
+
     @app.get("/dashboard", response_class=HTMLResponse)
     async def dashboard():
         db = get_db()
-        stats = await db.get_stats()
+        stats = await db.get_public_dashboard_stats()
         total = stats.get("total_contributions", 0)
         by_type = stats.get("by_type", {})
         iocs = by_type.get("ioc_bundle", 0)
         attacks = by_type.get("attack_map", 0)
         evals = by_type.get("eval", 0)
+        velocity = stats.get("velocity_pct", 0)
+        industries = stats.get("unique_industries", 0)
+        categories = stats.get("unique_categories", 0)
+        users = stats.get("total_users", 0)
 
         return f"""<!DOCTYPE html>
 <html lang="en">
@@ -1207,19 +1247,39 @@ nur report incident.json</pre>
     </div>
   </div>
 
+  <!-- Network Growth -->
+  <div class="dash-section full">
+    <div class="section-title">Network Growth</div>
+    <div class="stat-grid">
+      <div class="stat-box">
+        <span class="num" style="color:{'#22c55e' if velocity >= 0 else '#ef4444'}">{'+'if velocity >= 0 else ''}{velocity}%</span>
+        <span class="label">weekly velocity</span>
+      </div>
+      <div class="stat-box">
+        <span class="num">{industries}</span>
+        <span class="label">industries</span>
+      </div>
+      <div class="stat-box">
+        <span class="num">{categories}</span>
+        <span class="label">categories</span>
+      </div>
+      <div class="stat-box">
+        <span class="num">{users}</span>
+        <span class="label">practitioners</span>
+      </div>
+    </div>
+    <div class="chart-wrap" style="margin-top:20px;min-height:200px;">
+      <canvas id="growthChart" height="180"></canvas>
+    </div>
+  </div>
+
   <!-- Attack Intelligence -->
   <div class="dash-section">
     <div class="section-title">Attack Intelligence</div>
-    <div class="info-panel">
-      <div class="info-heading">Healthcare Ransomware</div>
-      <div class="info-copy">
-        Initial access: Spearphishing (89%)<br>
-        Avg dwell time: 4.2 days<br>
-        Most missed technique: T1490 (71%)<br>
-        Ransom paid: 12% of cases<br>
-        Avg recovery: 2.1 weeks
-      </div>
-      <a class="inline-link" href="/intelligence/patterns/healthcare">view all patterns &rarr;</a>
+    <div class="info-panel" id="attack-intel-panel">
+      <div class="info-heading">Top Techniques</div>
+      <div class="info-copy" id="attack-intel-copy">Loading...</div>
+      <a class="inline-link" href="/intelligence/threat-map">view threat map &rarr;</a>
     </div>
   </div>
 
@@ -1346,57 +1406,102 @@ nur report incident.json</pre>
       document.getElementById('techniqueEmpty').style.display = 'block';
     }});
 
-  // ── Tools by category (bar chart) ──────────────────────────
-  // Show how many tools we track per category
-  var catData = {{
-    'EDR': 10, 'SIEM': 4, 'CNAPP': 3, 'IAM': 2, 'PAM': 3,
-    'Email': 2, 'ZTNA': 3, 'Vuln Mgmt': 3, 'WAF': 3, 'NDR': 2, 'Threat Intel': 1,
-  }};
-  var catLabels = Object.keys(catData);
-  var catCounts = Object.values(catData);
-  var catColors = catCounts.map(function(c) {{ return greenGradient(c, 10); }});
+  // ── Tools by category (bar chart, data-driven) ────────────
+  fetch('/stats')
+    .then(function(r) {{ return r.json(); }})
+    .then(function(data) {{
+      // Use top vendors as the market chart data
+      var vendorCounts = {{}};
+      // Fetch top categories from public stats
+      fetch('/api/public-stats')
+        .then(function(r) {{ return r.json(); }})
+        .catch(function() {{ return {{}}; }});
+    }});
 
-  new Chart(document.getElementById('marketChart'), {{
-    type: 'bar',
-    data: {{
-      labels: catLabels,
-      datasets: [{{
-        label: 'Vendors Tracked',
-        data: catCounts,
-        backgroundColor: catColors,
-        borderColor: 'transparent',
-        borderWidth: 0,
-        borderRadius: 8,
-      }}]
-    }},
-    options: {{
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {{
-        legend: {{ display: false }},
-        tooltip: {{
-          backgroundColor: '#111118',
-          titleColor: '#fafafa',
-          bodyColor: '#e4e4e7',
-          borderColor: '#1e1e2e',
-          borderWidth: 1,
-          titleFont: {{ family: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }},
-          bodyFont: {{ family: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }},
+  // Fetch real category data from stats
+  fetch('/query/techniques')
+    .then(function(r) {{ return r.json(); }})
+    .then(function(techs) {{
+      if (!techs || !techs.length) {{
+        document.getElementById('marketChart').style.display = 'none';
+        document.getElementById('marketEmpty').style.display = 'block';
+        return;
+      }}
+      var labels = techs.slice(0, 12).map(function(t) {{ return t.technique_id + ' ' + (t.technique_name || ''); }});
+      var counts = techs.slice(0, 12).map(function(t) {{ return t.count; }});
+      var maxC = Math.max.apply(null, counts);
+      var colors = counts.map(function(c) {{ return greenGradient(c, maxC); }});
+      new Chart(document.getElementById('marketChart'), {{
+        type: 'bar',
+        data: {{
+          labels: labels,
+          datasets: [{{ label: 'Observations', data: counts, backgroundColor: colors, borderRadius: 8, borderWidth: 0 }}]
         }},
-      }},
-      scales: {{
-        x: {{
-          grid: {{ color: '#1e1e2e' }},
-          ticks: {{ color: '#a1a1aa', font: {{ family: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }} }},
-        }},
-        y: {{
-          grid: {{ display: false }},
-          ticks: {{ color: '#e4e4e7', font: {{ size: 11, family: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }} }},
-        }},
-      }},
-    }},
-  }});
+        options: {{
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+          plugins: {{ legend: {{ display: false }} }},
+          scales: {{
+            x: {{ grid: {{ color: '#1e1e2e' }} }},
+            y: {{ grid: {{ display: false }}, ticks: {{ color: '#e4e4e7', font: {{ size: 10 }} }} }}
+          }}
+        }}
+      }});
+    }})
+    .catch(function() {{
+      document.getElementById('marketChart').style.display = 'none';
+      document.getElementById('marketEmpty').style.display = 'block';
+    }});
+
+  // ── Attack Intelligence (data-driven) ──────────────────────
+  fetch('/query/techniques')
+    .then(function(r) {{ return r.json(); }})
+    .then(function(techs) {{
+      var el = document.getElementById('attack-intel-copy');
+      if (!techs || !techs.length) {{
+        el.textContent = 'No attack data yet. Share attack maps to populate.';
+        return;
+      }}
+      var html = techs.slice(0, 5).map(function(t) {{
+        return t.technique_id + ' ' + (t.technique_name || '') + ': <strong>' + t.count + '</strong> observations';
+      }}).join('<br>');
+      el.innerHTML = html;
+    }})
+    .catch(function() {{
+      document.getElementById('attack-intel-copy').textContent = 'Unable to load intelligence data.';
+    }});
+
+  // ── Growth sparkline (30-day contributions) ────────────────
+  fetch('/api/public-stats')
+    .then(function(r) {{ return r.json(); }})
+    .catch(function() {{ return null; }});
+
+  // Simple growth chart using stats refresh data
+  var growthCanvas = document.getElementById('growthChart');
+  if (growthCanvas) {{
+    // We'll populate from the contributions-timeline if available, else show a placeholder
+    fetch('/stats')
+      .then(function(r) {{ return r.json(); }})
+      .then(function(s) {{
+        var total = s.total_contributions || 0;
+        // Show a simple summary; the real time-series is on admin dashboard
+        new Chart(growthCanvas, {{
+          type: 'bar',
+          data: {{
+            labels: ['IOC Bundles', 'Attack Maps', 'Tool Evals'],
+            datasets: [{{
+              data: [s.by_type.ioc_bundle || 0, s.by_type.attack_map || 0, s.by_type.eval || 0],
+              backgroundColor: ['#22c55e', '#16a34a', '#65a30d'],
+              borderRadius: 8
+            }}]
+          }},
+          options: {{
+            responsive: true, maintainAspectRatio: false,
+            plugins: {{ legend: {{ display: false }} }},
+            scales: {{ y: {{ beginAtZero: true }}, x: {{ grid: {{ display: false }} }} }}
+          }}
+        }});
+      }});
+  }}
 
   // ── Auto-refresh stats ─────────────────────────────────────
   function refreshStats() {{
@@ -1760,7 +1865,12 @@ nur report incident.json</pre>
         if isinstance(notes, str) and len(notes) > 10000:
             raise HTTPException(status_code=400, detail="Notes too long (max 10,000 chars)")
         db = get_db()
-        cid = await db.store_eval_record(body)
+        _api_key = request.headers.get("X-API-Key")
+        _sbh = None
+        if _api_key:
+            import hashlib as _hl
+            _sbh = _hl.sha256(_api_key.encode()).hexdigest()
+        cid = await db.store_eval_record(body, submitted_by_hash=_sbh)
         # BDP profile tracking
         _bdp_key = request.headers.get("X-API-Key")
         _bdp_profile = get_or_create_profile(_bdp_key)
@@ -1782,7 +1892,12 @@ nur report incident.json</pre>
         if len(techniques) > 500:
             raise HTTPException(status_code=400, detail="Too many techniques (max 500)")
         db = get_db()
-        cid = await db.store_attack_map(body)
+        _api_key = request.headers.get("X-API-Key")
+        _sbh = None
+        if _api_key:
+            import hashlib as _hl
+            _sbh = _hl.sha256(_api_key.encode()).hexdigest()
+        cid = await db.store_attack_map(body, submitted_by_hash=_sbh)
         # BDP profile tracking
         _bdp_profile = get_or_create_profile(request.headers.get("X-API-Key"))
         _bdp_profile.contribution_types.add("attack_map")
@@ -1800,7 +1915,12 @@ nur report incident.json</pre>
         if len(iocs) > 10000:
             raise HTTPException(status_code=400, detail="Too many IOCs (max 10,000)")
         db = get_db()
-        cid = await db.store_ioc_bundle(body)
+        _api_key = request.headers.get("X-API-Key")
+        _sbh = None
+        if _api_key:
+            import hashlib as _hl
+            _sbh = _hl.sha256(_api_key.encode()).hexdigest()
+        cid = await db.store_ioc_bundle(body, submitted_by_hash=_sbh)
         # BDP profile tracking
         _bdp_profile = get_or_create_profile(request.headers.get("X-API-Key"))
         _bdp_profile.contribution_types.add("ioc_bundle")

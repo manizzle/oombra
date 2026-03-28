@@ -26,7 +26,7 @@ Attackers share everything. Defenders share nothing. nur fixes that. A social ne
 
 **Data model:** Query data (threat models, IOCs, stacks) flows in. Response data (tool intel, remediation, pricing) flows back. 10 users = interesting. 100 = useful. 1,000 = indispensable.
 
-> [nur.saramena.us](https://nur.saramena.us) — [dashboard](https://nur.saramena.us/dashboard) · [docs](https://nur.saramena.us/guide) · [register](https://nur.saramena.us/register)
+> [nur.saramena.us](https://nur.saramena.us) — [dashboard](https://nur.saramena.us/dashboard) · [admin](https://nur.saramena.us/admin/dashboard) · [docs](https://nur.saramena.us/guide) · [register](https://nur.saramena.us/register)
 
 ---
 

@@ -8,6 +8,7 @@ Usage:
 """
 from __future__ import annotations
 
+import datetime
 import json
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
@@ -19,6 +20,7 @@ from sqlalchemy import select, func, text
 
 from .models import (
     Base, Contribution, IOCHash, AttackTechnique, AggregatedScore,
+    APIKeyRecord, PendingVerification, APIRequestLog,
 )
 
 
@@ -47,13 +49,14 @@ class Database:
 
     # ── Store contributions ──────────────────────────────────────────────
 
-    async def store_eval_record(self, data: dict[str, Any]) -> str:
+    async def store_eval_record(self, data: dict[str, Any], submitted_by_hash: str | None = None) -> str:
         """Store an EvalRecord contribution. Returns contribution ID."""
         # Support both wire format {"context": {}, "data": {...}} and flat format {"vendor": ...}
         d = data.get("data", data)
         ctx = data.get("context", {})
         contrib = Contribution(
             contrib_type="eval",
+            submitted_by_hash=submitted_by_hash,
             industry=ctx.get("industry"),
             org_size=ctx.get("org_size"),
             role=ctx.get("role"),
@@ -78,12 +81,13 @@ class Database:
         await self._refresh_aggregate(contrib.vendor)
         return cid
 
-    async def store_attack_map(self, data: dict[str, Any]) -> str:
+    async def store_attack_map(self, data: dict[str, Any], submitted_by_hash: str | None = None) -> str:
         """Store an AttackMap contribution. Returns contribution ID."""
         techniques = data.get("techniques", [])
         remediation = data.get("remediation", [])
         contrib = Contribution(
             contrib_type="attack_map",
+            submitted_by_hash=submitted_by_hash,
             industry=data.get("context", {}).get("industry"),
             org_size=data.get("context", {}).get("org_size"),
             role=data.get("context", {}).get("role"),
@@ -118,11 +122,12 @@ class Database:
                 ))
         return cid
 
-    async def store_ioc_bundle(self, data: dict[str, Any]) -> str:
+    async def store_ioc_bundle(self, data: dict[str, Any], submitted_by_hash: str | None = None) -> str:
         """Store an IOCBundle contribution. Returns contribution ID."""
         iocs = data.get("iocs", [])
         contrib = Contribution(
             contrib_type="ioc_bundle",
+            submitted_by_hash=submitted_by_hash,
             industry=data.get("context", {}).get("industry"),
             org_size=data.get("context", {}).get("org_size"),
             role=data.get("context", {}).get("role"),
@@ -361,6 +366,353 @@ class Database:
                     "actions": actions,
                 })
         return remediations
+
+    # ── Dashboard analytics ───────────────────────────────────────────
+
+    async def get_contributions_over_time(self, days: int = 90) -> list[dict]:
+        """Daily contribution counts for the last N days."""
+        cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=days)
+        async with self.session() as s:
+            result = await s.execute(
+                select(
+                    func.date(Contribution.received_at).label("day"),
+                    func.count().label("count"),
+                )
+                .where(Contribution.received_at >= cutoff)
+                .group_by(text("day"))
+                .order_by(text("day"))
+            )
+            return [{"date": str(r[0]), "count": r[1]} for r in result.all()]
+
+    async def get_contributions_by_type_over_time(self, days: int = 90) -> list[dict]:
+        """Daily contribution counts grouped by type."""
+        cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=days)
+        async with self.session() as s:
+            result = await s.execute(
+                select(
+                    func.date(Contribution.received_at).label("day"),
+                    Contribution.contrib_type,
+                    func.count().label("count"),
+                )
+                .where(Contribution.received_at >= cutoff)
+                .group_by(text("day"), Contribution.contrib_type)
+                .order_by(text("day"))
+            )
+            return [{"date": str(r[0]), "type": r[1], "count": r[2]} for r in result.all()]
+
+    _DISTRIBUTION_COLUMNS = {"industry", "org_size", "role"}
+
+    async def get_distribution(self, column: str) -> list[dict]:
+        """Distribution of contributions by a bucketed column (industry/org_size/role)."""
+        if column not in self._DISTRIBUTION_COLUMNS:
+            return []
+        col = getattr(Contribution, column)
+        async with self.session() as s:
+            result = await s.execute(
+                select(col, func.count().label("count"))
+                .where(col.isnot(None))
+                .group_by(col)
+                .order_by(text("count DESC"))
+            )
+            return [{"value": r[0], "count": r[1]} for r in result.all()]
+
+    async def get_top_vendors(self, limit: int = 20) -> list[dict]:
+        """Top vendors by contribution count."""
+        async with self.session() as s:
+            result = await s.execute(
+                select(Contribution.vendor, func.count().label("count"))
+                .where(Contribution.vendor.isnot(None))
+                .group_by(Contribution.vendor)
+                .order_by(text("count DESC"))
+                .limit(limit)
+            )
+            return [{"vendor": r[0], "count": r[1]} for r in result.all()]
+
+    async def get_top_categories(self, limit: int = 20) -> list[dict]:
+        """Top categories by contribution count."""
+        async with self.session() as s:
+            result = await s.execute(
+                select(Contribution.category, func.count().label("count"))
+                .where(Contribution.category.isnot(None))
+                .group_by(Contribution.category)
+                .order_by(text("count DESC"))
+                .limit(limit)
+            )
+            return [{"category": r[0], "count": r[1]} for r in result.all()]
+
+    async def get_users_over_time(self, days: int = 90) -> list[dict]:
+        """Daily registration counts."""
+        cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=days)
+        async with self.session() as s:
+            result = await s.execute(
+                select(
+                    func.date(APIKeyRecord.created_at).label("day"),
+                    func.count().label("count"),
+                )
+                .where(APIKeyRecord.created_at >= cutoff)
+                .group_by(text("day"))
+                .order_by(text("day"))
+            )
+            return [{"date": str(r[0]), "count": r[1]} for r in result.all()]
+
+    async def get_user_activity_distribution(self) -> dict:
+        """Active vs inactive users and request count distribution."""
+        thirty_days_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=30)
+        async with self.session() as s:
+            total = (await s.execute(select(func.count(APIKeyRecord.id)))).scalar() or 0
+            active = (await s.execute(
+                select(func.count(APIKeyRecord.id))
+                .where(APIKeyRecord.last_used >= thirty_days_ago)
+            )).scalar() or 0
+            # Request count buckets
+            buckets = {"0": 0, "1-10": 0, "11-100": 0, "101-1000": 0, "1000+": 0}
+            rows = (await s.execute(select(APIKeyRecord.request_count))).scalars().all()
+            for rc in rows:
+                if rc == 0:
+                    buckets["0"] += 1
+                elif rc <= 10:
+                    buckets["1-10"] += 1
+                elif rc <= 100:
+                    buckets["11-100"] += 1
+                elif rc <= 1000:
+                    buckets["101-1000"] += 1
+                else:
+                    buckets["1000+"] += 1
+        return {
+            "total_users": total,
+            "active_last_30d": active,
+            "inactive": total - active,
+            "request_count_buckets": buckets,
+        }
+
+    async def get_tier_distribution(self) -> list[dict]:
+        """User count by tier."""
+        async with self.session() as s:
+            result = await s.execute(
+                select(APIKeyRecord.tier, func.count().label("count"))
+                .group_by(APIKeyRecord.tier)
+            )
+            return [{"tier": r[0], "count": r[1]} for r in result.all()]
+
+    async def get_invite_metrics(self) -> dict:
+        """Viral coefficient and invite chain metrics."""
+        async with self.session() as s:
+            total_users = (await s.execute(select(func.count(APIKeyRecord.id)))).scalar() or 0
+            inviters = (await s.execute(
+                select(func.count(APIKeyRecord.id))
+                .where(APIKeyRecord.invite_count > 0)
+            )).scalar() or 0
+            total_invited = (await s.execute(
+                select(func.sum(APIKeyRecord.invite_count))
+            )).scalar() or 0
+            invited_users = (await s.execute(
+                select(func.count(APIKeyRecord.id))
+                .where(APIKeyRecord.invited_by.isnot(None))
+            )).scalar() or 0
+        viral_coefficient = (total_invited / total_users) if total_users > 0 else 0
+        return {
+            "total_users": total_users,
+            "inviters": inviters,
+            "inviter_pct": round(inviters / total_users * 100, 1) if total_users > 0 else 0,
+            "total_invited": total_invited or 0,
+            "invited_users": invited_users,
+            "viral_coefficient": round(viral_coefficient, 3),
+        }
+
+    async def get_api_usage_over_time(self, days: int = 30) -> list[dict]:
+        """Daily API request counts from the request log."""
+        cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=days)
+        async with self.session() as s:
+            result = await s.execute(
+                select(
+                    func.date(APIRequestLog.timestamp).label("day"),
+                    func.count().label("count"),
+                )
+                .where(APIRequestLog.timestamp >= cutoff)
+                .group_by(text("day"))
+                .order_by(text("day"))
+            )
+            return [{"date": str(r[0]), "count": r[1]} for r in result.all()]
+
+    async def get_network_health(self) -> dict:
+        """Supply/demand ratio, velocity, and coverage metrics."""
+        now = datetime.datetime.now(datetime.timezone.utc)
+        seven_days_ago = now - datetime.timedelta(days=7)
+        fourteen_days_ago = now - datetime.timedelta(days=14)
+
+        async with self.session() as s:
+            total_contributions = (await s.execute(select(func.count(Contribution.id)))).scalar() or 0
+            total_users = (await s.execute(select(func.count(APIKeyRecord.id)))).scalar() or 0
+
+            this_week = (await s.execute(
+                select(func.count(Contribution.id))
+                .where(Contribution.received_at >= seven_days_ago)
+            )).scalar() or 0
+            last_week = (await s.execute(
+                select(func.count(Contribution.id))
+                .where(
+                    Contribution.received_at >= fourteen_days_ago,
+                    Contribution.received_at < seven_days_ago,
+                )
+            )).scalar() or 0
+
+            unique_industries = (await s.execute(
+                select(func.count(func.distinct(Contribution.industry)))
+                .where(Contribution.industry.isnot(None))
+            )).scalar() or 0
+            unique_categories = (await s.execute(
+                select(func.count(func.distinct(Contribution.category)))
+                .where(Contribution.category.isnot(None))
+            )).scalar() or 0
+
+        velocity_pct = round((this_week - last_week) / last_week * 100, 1) if last_week > 0 else (100.0 if this_week > 0 else 0.0)
+        supply_demand_ratio = round(total_contributions / total_users, 2) if total_users > 0 else total_contributions
+
+        return {
+            "total_contributions": total_contributions,
+            "total_users": total_users,
+            "supply_demand_ratio": supply_demand_ratio,
+            "this_week": this_week,
+            "last_week": last_week,
+            "velocity_pct": velocity_pct,
+            "unique_industries": unique_industries,
+            "unique_categories": unique_categories,
+        }
+
+    async def get_engagement_funnel(self) -> dict:
+        """Funnel: registered → verified → contributed → queried → returned."""
+        thirty_days_ago = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=30)
+        async with self.session() as s:
+            registered = (await s.execute(select(func.count(APIKeyRecord.id)))).scalar() or 0
+            verified = (await s.execute(
+                select(func.count(PendingVerification.id))
+                .where(PendingVerification.verified.is_(True))
+            )).scalar() or 0
+            contributed = (await s.execute(
+                select(func.count(func.distinct(Contribution.submitted_by_hash)))
+                .where(Contribution.submitted_by_hash.isnot(None))
+            )).scalar() or 0
+            queried = (await s.execute(
+                select(func.count(func.distinct(APIRequestLog.api_key_hash)))
+                .where(APIRequestLog.endpoint.like("/query%"))
+            )).scalar() or 0
+            # "Returned" = users with activity on >1 distinct day
+            returned_sub = (
+                select(
+                    APIRequestLog.api_key_hash,
+                    func.count(func.distinct(func.date(APIRequestLog.timestamp))).label("days"),
+                )
+                .group_by(APIRequestLog.api_key_hash)
+                .subquery()
+            )
+            returned = (await s.execute(
+                select(func.count()).select_from(returned_sub).where(returned_sub.c.days > 1)
+            )).scalar() or 0
+
+        return {
+            "registered": registered,
+            "verified": verified,
+            "contributed": contributed,
+            "queried": queried,
+            "returned": returned,
+        }
+
+    async def get_retention_cohorts(self, weeks: int = 8) -> list[dict]:
+        """Weekly registration cohorts with retention at 1, 2, 4 weeks."""
+        now = datetime.datetime.now(datetime.timezone.utc)
+        cutoff = now - datetime.timedelta(weeks=weeks)
+        async with self.session() as s:
+            # Get users registered in the window
+            users = (await s.execute(
+                select(APIKeyRecord.api_key, APIKeyRecord.created_at)
+                .where(APIKeyRecord.created_at >= cutoff)
+            )).all()
+
+            if not users:
+                return []
+
+            # Build a map of api_key_hash → set of active dates
+            import hashlib
+            key_hashes = {}
+            key_cohort_week = {}
+            for api_key, created in users:
+                h = hashlib.sha256(api_key.encode()).hexdigest()
+                key_hashes[h] = created
+                week_start = created - datetime.timedelta(days=created.weekday())
+                key_cohort_week[h] = week_start.date()
+
+            if key_hashes:
+                logs = (await s.execute(
+                    select(APIRequestLog.api_key_hash, APIRequestLog.timestamp)
+                    .where(APIRequestLog.api_key_hash.in_(list(key_hashes.keys())))
+                )).all()
+            else:
+                logs = []
+
+            activity: dict[str, set] = {}
+            for kh, ts in logs:
+                activity.setdefault(kh, set()).add(ts.date())
+
+            # Group by cohort week
+            cohorts: dict[str, dict] = {}
+            for kh, week_date in key_cohort_week.items():
+                wk = str(week_date)
+                if wk not in cohorts:
+                    cohorts[wk] = {"week": wk, "size": 0, "retained_1w": 0, "retained_2w": 0, "retained_4w": 0}
+                cohorts[wk]["size"] += 1
+                created = key_hashes[kh]
+                dates = activity.get(kh, set())
+                for d in dates:
+                    days_after = (d - created.date()).days
+                    if 7 <= days_after < 14:
+                        cohorts[wk]["retained_1w"] += 1
+                        break
+                for d in dates:
+                    days_after = (d - created.date()).days
+                    if 14 <= days_after < 21:
+                        cohorts[wk]["retained_2w"] += 1
+                        break
+                for d in dates:
+                    days_after = (d - created.date()).days
+                    if 28 <= days_after < 35:
+                        cohorts[wk]["retained_4w"] += 1
+                        break
+
+        return sorted(cohorts.values(), key=lambda c: c["week"])
+
+    async def get_public_dashboard_stats(self) -> dict:
+        """Extended stats safe for public display."""
+        health = await self.get_network_health()
+        stats = await self.get_stats()
+        return {
+            **stats,
+            "velocity_pct": health["velocity_pct"],
+            "this_week": health["this_week"],
+            "unique_industries": health["unique_industries"],
+            "unique_categories": health["unique_categories"],
+            "total_users": health["total_users"],
+        }
+
+    async def log_api_request(self, api_key_hash: str, endpoint: str, method: str, status: int) -> None:
+        """Log an API request for demand-side analytics."""
+        async with self.session() as s:
+            s.add(APIRequestLog(
+                api_key_hash=api_key_hash,
+                endpoint=endpoint,
+                method=method,
+                response_status=status,
+            ))
+
+    async def bump_api_key_usage(self, api_key: str) -> None:
+        """Increment request_count and update last_used for an API key."""
+        async with self.session() as s:
+            result = await s.execute(
+                select(APIKeyRecord).where(APIKeyRecord.api_key == api_key)
+            )
+            record = result.scalar_one_or_none()
+            if record:
+                record.request_count = (record.request_count or 0) + 1
+                record.last_used = datetime.datetime.now(datetime.timezone.utc)
 
     # ── Scrape dedup ────────────────────────────────────────────────────
 

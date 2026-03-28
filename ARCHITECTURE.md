@@ -71,6 +71,15 @@ The client computes SHA-256 of the canonical JSON payload *before* submission. T
 
 10 users = interesting. 100 = useful. 1,000 = indispensable. The protocol enables trust. The users create value. At scale, switching cost is infinite — you'd lose the collective intelligence of every security team in your vertical.
 
+### Network Analytics
+
+Two dashboards track network health:
+
+- **Public dashboard** (`/dashboard`) — contribution velocity, type breakdown, industry/category coverage, top techniques. All aggregate, no individual data.
+- **Admin dashboard** (`/admin/dashboard`) — supply-side (contributions over time, by type/industry/org_size/role), demand-side (registrations, API usage, tier distribution), engagement funnel (registered → verified → contributed → queried → returned), viral coefficient (k-factor from invite system), and retention cohorts. Protected by `NUR_API_KEY`.
+
+Demand-side tracking uses `APIRequestLog` (SHA-256 of API key, endpoint, timestamp) — no PII. Funnel tracking links contributions to API keys via `submitted_by_hash` (SHA-256, not reversible to email).
+
 ## Regulatory Compliance
 
 See [COMPLIANCE.md](COMPLIANCE.md) for the full legal analysis covering CIRCIA, NERC CIP, SEC 8-K, state breach laws, and CISA 2015 safe harbor protections.

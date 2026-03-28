@@ -58,6 +58,9 @@ class Contribution(Base):
     # IOCBundle — individual IOCs stored in ioc_hashes table
     ioc_count: Mapped[int | None] = mapped_column(Integer)
 
+    # Submitter tracking (SHA-256 of API key — anonymous, for funnel metrics)
+    submitted_by_hash: Mapped[str | None] = mapped_column(String(64))
+
     # Incident response metadata
     remediation_json: Mapped[str | None] = mapped_column(Text)  # JSON array of RemediationAction
     time_to_detect: Mapped[str | None] = mapped_column(String(20))
@@ -206,3 +209,22 @@ class ScrapedItem(Base):
     source_id: Mapped[str | None] = mapped_column(String(500), nullable=True)  # accession number, case number, URL
     ingested_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     metadata_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON blob
+
+
+class APIRequestLog(Base):
+    """Per-request log for demand-side analytics. No PII beyond API key hash."""
+    __tablename__ = "api_request_logs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    api_key_hash: Mapped[str] = mapped_column(String(64), nullable=False)  # SHA-256 of key, not raw
+    endpoint: Mapped[str] = mapped_column(String(200), nullable=False)
+    method: Mapped[str] = mapped_column(String(10), nullable=False)
+    timestamp: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    response_status: Mapped[int | None] = mapped_column(Integer)
+
+    __table_args__ = (
+        Index("ix_reqlog_timestamp", "timestamp"),
+        Index("ix_reqlog_keyhash", "api_key_hash"),
+    )
