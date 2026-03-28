@@ -1,0 +1,34 @@
+Label,Type,Description,Timing,Priority,Trust Risk,Free Value,Paid Value
+Murtaza,party,Solo founder,Now,P0,None,N/A,N/A
+Yusuf Ezzy,party,CISO at Optum/Genoa. $10K pilot via WWT. 90-day.,Now,P1,Low — trusted intro,N/A,$10K pilot
+Jeff Johnson,party,WWT CISO practice lead. Channel to BofA Albertsons PG&E,Now,P1,Low,N/A,Distribution
+WWT,party,Reseller/distribution partner,Now,P1,Low,N/A,Revenue share
+Yushea,party,Non-security eval contacts. Kairo relationship,Near,P2,Medium,Eval submissions,Expansion
+Travis Biehn,party,Security practitioner. Validated client-side arch. Flagged TEE attestation,Done,P1,None,Architecture review,N/A
+Rachel Vrabec,party,Runs Canary (privacy co). Wants Canary to rank well. GTM person pointed at ISACs,Near,P2,Low,Vendor profile,Featured listing
+Nika K (cybersectools),party,Independently pointed at ISACs as channel,Done,P2,None,N/A,N/A
+Nate,party,Referenced advisor. Suggested PIR for queries,Done,P2,None,Architecture feedback,N/A
+E-ISAC,party,Energy sector ISAC. First ISAC target,Near,P1,Medium — institutional,ISAC member access,Enterprise tier
+ISACs (general),party,Distribution channel for practitioners who already share intel,Near,P1,Medium,Community tier,Enterprise tier
+Practitioners (supply),party,Have evals attack maps IOCs remediation intel,Now,P0,Low,Contribute + receipts,N/A
+CISOs (demand),party,Want vendor intel threat data remediation,Now,P0,Low,N/A,Pro/Enterprise
+Vendors,party,Want rankings featured listings lead gen,Near,P1,Medium — adversarial incentive,Free listing,Featured $2-5K/mo
+Non-security evaluators,party,IT managers procurement MSP operators (Yushea contacts),Later,P3,Medium,Eval submissions,N/A
+BofA,party,WWT client — Jeff Johnson relationship,Later,P2,Low,N/A,Enterprise
+Albertsons,party,WWT client — Jeff Johnson relationship,Later,P2,Low,N/A,Enterprise
+PG&E,party,WWT client — Jeff Johnson relationship,Later,P2,Low,N/A,Enterprise
+Canary,party,Privacy company run by Rachel. Example vendor,Near,P2,Low,Free listing,Featured listing
+Vendor Evaluations,data_source,Detection price support performance decision intel,Now,P0,Low,Yes,Yes
+Attack Maps,data_source,MITRE ATT&CK aligned kill chains with remediation,Now,P0,Low,Yes,Yes
+IOC Bundles,data_source,Indicators of compromise linked to vendors,Now,P0,Medium — rainbow table risk,Yes,Yes
+Threat Models,data_source,Stack + vertical inputs,Now,P1,Low,N/A,Yes
+37 Live Threat Feeds,data_source,658K+ IOCs scraped,Now,P0,None — automated,Yes,Yes
+3000+ Vendor Taxonomy,data_source,Categories metadata,Now,P0,None,Yes,Yes
+Community (Free),product_surface,Data acquisition engine. Contribute + receipts,Now,P0,N/A,Core loop,N/A
+Pro ($99/mo),product_surface,Market maps vendor rankings threat analysis,Near,P1,N/A,N/A,$99/mo
+Enterprise ($499/mo),product_surface,API vendor dashboard compliance reports,Near,P1,N/A,N/A,$499/mo
+Vendor Featured Listings,revenue_stream,Lead gen verified badges,$2-5K/mo,Near,P1,N/A,$2-5K/mo
+WWT Pilot,revenue_stream,First revenue via reseller,Now,P0,N/A,N/A,$10K
+Community Tier Revenue,revenue_stream,$0 — data acquisition engine,Now,P0,N/A,Data flywheel,N/A
+Pro Tier Revenue,revenue_stream,$99/mo per subscriber,Near,P1,N/A,N/A,Recurring
+Enterprise Tier Revenue,revenue_stream,$499/mo per subscriber,Near,P1,N/A,N/A,Recurring

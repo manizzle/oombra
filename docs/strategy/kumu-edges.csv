@@ -1,0 +1,52 @@
+From,To,Type,Description,Strength
+Practitioners (supply),Vendor Evaluations,contributes,Submit anonymous evals,5
+Practitioners (supply),Attack Maps,contributes,Share attack technique observations,4
+Practitioners (supply),IOC Bundles,contributes,Share hashed IOCs,4
+Non-security evaluators,Vendor Evaluations,contributes,IT/procurement evals,2
+Yushea,Non-security evaluators,recruits,Kairo relationship brings non-security contacts,3
+Vendor Evaluations,Community (Free),contributes,Feeds community tier,5
+Attack Maps,Community (Free),contributes,Feeds community tier,5
+IOC Bundles,Community (Free),contributes,Feeds community tier,5
+Threat Models,Pro ($99/mo),contributes,Feeds pro tier analysis,4
+37 Live Threat Feeds,Community (Free),contributes,Automated IOC ingestion,5
+3000+ Vendor Taxonomy,Community (Free),contributes,Category structure,5
+Community (Free),Pro ($99/mo),contributes,Community data powers pro analytics,5
+Community (Free),Enterprise ($499/mo),contributes,Community data powers enterprise,5
+Pro ($99/mo),Pro Tier Revenue,contributes,Generates revenue,5
+Enterprise ($499/mo),Enterprise Tier Revenue,contributes,Generates revenue,5
+CISOs (demand),Pro ($99/mo),receives,Market maps vendor rankings,5
+CISOs (demand),Enterprise ($499/mo),receives,API dashboard compliance,4
+Yusuf Ezzy,Enterprise ($499/mo),receives,Org optimization + vendor decisions,5
+Vendors,Community (Free),receives,See aggregate scores,3
+Practitioners (supply),Community (Free),receives,Contribute and get intelligence back,5
+CISOs (demand),Pro Tier Revenue,pays,$99/mo subscription,4
+CISOs (demand),Enterprise Tier Revenue,pays,$499/mo subscription,5
+Vendors,Vendor Featured Listings,pays,$2-5K/mo for listings,4
+Rachel Vrabec,Vendor Featured Listings,pays,Wants Canary featured,3
+Canary,Vendor Featured Listings,pays,Featured listing candidate,3
+Yusuf Ezzy,WWT Pilot,pays,$10K through WWT,5
+BofA,Enterprise Tier Revenue,pays,Potential via WWT,2
+Albertsons,Enterprise Tier Revenue,pays,Potential via WWT,2
+PG&E,Enterprise Tier Revenue,pays,Potential via WWT,2
+Jeff Johnson,WWT,distributes,CISO practice lead,5
+WWT,Yusuf Ezzy,distributes,Reseller channel for pilot,5
+WWT,BofA,distributes,Jeff's client,3
+WWT,Albertsons,distributes,Jeff's client,3
+WWT,PG&E,distributes,Jeff's client,3
+ISACs (general),Practitioners (supply),distributes,Voice sessions seed platform data,4
+E-ISAC,Practitioners (supply),distributes,Energy sector first target,4
+Rachel Vrabec,ISACs (general),distributes,GTM person pointed at ISACs,3
+Nika K (cybersectools),ISACs (general),distributes,Independently pointed at ISACs,3
+Murtaza,Jeff Johnson,distributes,Direct relationship,5
+Murtaza,Yusuf Ezzy,distributes,Direct relationship,5
+Murtaza,Yushea,distributes,Direct relationship,4
+Murtaza,Rachel Vrabec,distributes,Direct relationship,3
+Murtaza,E-ISAC,distributes,First ISAC outreach target,4
+Murtaza,Travis Biehn,distributes,Direct relationship,4
+Murtaza,Nika K (cybersectools),distributes,Direct relationship,3
+Travis Biehn,Murtaza,trusts,Validated client-side architecture,5
+Nate,Murtaza,trusts,PIR suggestion = engagement with architecture,4
+Practitioners (supply),Community (Free),trusts,Math not promises — protocol trust,5
+E-ISAC,ISACs (general),distributes,Energy sector subset,4
+Yusuf Ezzy,E-ISAC,distributes,Potential intro to E-ISAC contact,3
+Jeff Johnson,E-ISAC,distributes,Backup intro path to E-ISAC,2
