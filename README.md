@@ -152,6 +152,19 @@ Work email required · keypair auth · signed requests · rate limiting · min-k
 
 </details>
 
+<details>
+<summary>CI/CD pipeline</summary>
+
+| Stage | What |
+|-------|------|
+| Test | pytest across Python 3.11/3.12/3.13 with coverage reporting |
+| Lint | ruff check on every push/PR |
+| Security | bandit static analysis, Dependabot dependency scanning, Trivy container scanning |
+| Build | Docker image → GitHub Container Registry |
+| Deploy | Auto-deploy to production with health checks and automated rollback |
+
+</details>
+
 Full analysis: [THREAT_MODEL.md](THREAT_MODEL.md) · [COMPLIANCE.md](COMPLIANCE.md)
 
 ---
